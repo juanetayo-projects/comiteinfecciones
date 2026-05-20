@@ -1,17 +1,49 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { KeyRound, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import { KeyRound, Eye, EyeOff, CheckCircle2, Loader2 } from 'lucide-react'
 
 export default function ResetPassword() {
   const { updatePassword } = useAuth()
   const navigate = useNavigate()
-  const [password,  setPassword]  = useState('')
-  const [confirm,   setConfirm]   = useState('')
-  const [showPwd,   setShowPwd]   = useState(false)
-  const [loading,   setLoading]   = useState(false)
-  const [error,     setError]     = useState('')
-  const [success,   setSuccess]   = useState(false)
+  const [password,      setPassword]      = useState('')
+  const [confirm,       setConfirm]       = useState('')
+  const [showPwd,       setShowPwd]       = useState(false)
+  const [loading,       setLoading]       = useState(false)
+  const [error,         setError]         = useState('')
+  const [success,       setSuccess]       = useState(false)
+  const [sessionReady,  setSessionReady]  = useState(false)
+
+  // Restaurar sesión desde el hash guardado por main.jsx antes de que
+  // HashRouter pudiera destruirlo.
+  useEffect(() => {
+    async function initSession() {
+      const storedHash = sessionStorage.getItem('supabase_recovery_hash')
+
+      if (storedHash) {
+        sessionStorage.removeItem('supabase_recovery_hash')
+        const params     = new URLSearchParams(storedHash)
+        const accessToken  = params.get('access_token')
+        const refreshToken = params.get('refresh_token')
+
+        if (accessToken && refreshToken) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token:  accessToken,
+            refresh_token: refreshToken,
+          })
+          if (sessionError) {
+            setError('El enlace de recuperación expiró o ya fue usado. Solicita uno nuevo desde el login.')
+            return
+          }
+        }
+      }
+
+      setSessionReady(true)
+    }
+
+    initSession()
+  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -49,13 +81,40 @@ export default function ResetPassword() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-6">
-          {success ? (
+
+          {/* Enlace expirado */}
+          {!sessionReady && error && (
+            <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <p className="text-sm font-semibold text-red-600">Enlace inválido o expirado</p>
+              <p className="text-sm text-slate-500">{error}</p>
+              <button
+                onClick={() => navigate('/login')}
+                className="btn-primary mt-2 px-6 py-2"
+              >
+                Volver al login
+              </button>
+            </div>
+          )}
+
+          {/* Cargando sesión */}
+          {!sessionReady && !error && (
+            <div className="flex flex-col items-center gap-3 py-6">
+              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+              <p className="text-sm text-slate-500">Verificando enlace...</p>
+            </div>
+          )}
+
+          {/* Éxito */}
+          {sessionReady && success && (
             <div className="flex flex-col items-center gap-3 py-4">
               <CheckCircle2 className="w-12 h-12 text-emerald-500" />
               <p className="text-base font-semibold text-slate-800">¡Contraseña actualizada!</p>
               <p className="text-sm text-slate-500">Redirigiendo al dashboard...</p>
             </div>
-          ) : (
+          )}
+
+          {/* Formulario */}
+          {sessionReady && !success && (
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
@@ -103,6 +162,7 @@ export default function ResetPassword() {
               </button>
             </form>
           )}
+
         </div>
       </div>
     </div>
