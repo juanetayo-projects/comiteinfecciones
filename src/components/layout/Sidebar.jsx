@@ -51,10 +51,17 @@ export default function Sidebar({ open, onClose }) {
         open ? 'translate-x-0' : '-translate-x-full'
       )}>
         {/* Logo */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-slate-100">
-          <div>
-            <p className="text-sm font-bold text-slate-900 leading-tight">Comité de Infecciones</p>
-            <p className="text-[10px] text-slate-400 leading-tight">Clínica Santa Bárbara</p>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <img
+              src="./logo_cacsb2.png"
+              alt="Clínica Santa Bárbara"
+              className="h-8 w-auto"
+            />
+            <div>
+              <p className="text-xs font-bold text-slate-900 leading-tight">Comité de Infecciones</p>
+              <p className="text-[10px] text-slate-400 leading-tight">Clínica Santa Bárbara</p>
+            </div>
           </div>
           <button onClick={onClose} className="lg:hidden p-1 rounded text-slate-400 hover:text-slate-600">
             <X className="w-4 h-4" />
