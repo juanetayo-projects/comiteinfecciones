@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { formatDate, estadoBadgeColor, estadoLabel, cumpleBadge, cumpleLabel, SERVICIOS } from '../../lib/utils'
+import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
 import { Plus, Eye, Pencil, Trash2, ShieldAlert, BarChart3 } from 'lucide-react'
@@ -44,7 +44,7 @@ export default function Aislamiento() {
     { key: 'profesional',      header: 'Profesional',      sortable: true },
     { key: 'tipo_aislamiento', header: 'Tipo Aislamiento', sortable: true },
     { key: 'adherencia',       header: 'Adherencia',       sortable: true,
-      render: v => <span className={`badge ${cumpleBadge(v)}`}>{cumpleLabel(v)}</span> },
+      render: v => <span className={`badge ${v === 'CUMPLE' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>{v ?? '—'}</span> },
     { key: 'estado',           header: 'Estado',           sortable: true,
       render: v => <span className={`badge ${estadoBadgeColor(v)}`}>{estadoLabel(v)}</span> },
     { key: 'nombre_evaluado',  header: 'Evaluado' },
@@ -52,8 +52,7 @@ export default function Aislamiento() {
 
   const exportData = data.map(r => ({
     ...r,
-    adherencia: cumpleLabel(r.adherencia),
-    estado:     estadoLabel(r.estado),
+    estado: estadoLabel(r.estado),
   }))
 
   return (

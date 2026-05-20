@@ -5,20 +5,27 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import { SERVICIOS } from '../../lib/utils'
 import { ArrowLeft, Save } from 'lucide-react'
 
-const OPCIONES = [
-  { value: 'cumple',    label: 'Cumple' },
-  { value: 'no_cumple', label: 'No Cumple' },
-  { value: 'na',        label: 'N/A' },
+// 4 opciones según estructura Excel
+const OPCIONES_MOMENTO = [
+  { value: 'CUMPLE',      label: 'Cumple' },
+  { value: 'NO CUMPLE',   label: 'No Cumple' },
+  { value: 'NO EVALUADO', label: 'No Evaluado' },
+  { value: 'NO REALIZA',  label: 'No Realiza' },
 ]
 
 const PERFILES = [
-  'Médico', 'Médico Residente', 'Enfermera(o) Jefe',
-  'Auxiliar de Enfermería', 'Instrumentador(a)', 'Fisioterapeuta',
-  'Nutricionista', 'Camillero', 'Personal de Limpieza',
-  'Estudiante', 'Visitante', 'Otro',
+  'AUXILIAR', 'ENFERMERA (O)', 'MEDICO', 'MEDICO ESPECIALISTA',
+  'FISIOTERAPEUTA', 'TERAPEUTA RESPIRATORIO', 'INTERNO', 'NUTRICIONISTA',
+]
+
+// Opciones para porta accesorios según Excel
+const PORTA_ACCESORIOS_OPC = [
+  { value: 'CADENA',               label: 'Cadena' },
+  { value: 'NO PORTA ACCESORIOS',  label: 'No Porta Accesorios' },
+  { value: 'PULSERAS',             label: 'Pulseras' },
+  { value: 'RELOJ',                label: 'Reloj' },
 ]
 
 const MOMENTOS = [
@@ -30,27 +37,34 @@ const MOMENTOS = [
 ]
 
 const schema = z.object({
-  fecha_evaluacion:       z.string().min(1, 'Requerido'),
-  servicio_evaluado:      z.string().min(1, 'Requerido'),
-  nombre_evaluado:        z.string().min(2, 'Requerido'),
-  perfil_colaborador:     z.string().min(1, 'Requerido'),
+  fecha_evaluacion:        z.string().min(1, 'Requerido'),
+  servicio_evaluado:       z.string().min(1, 'Requerido'),
+  nombre_evaluado:         z.string().min(2, 'Requerido'),
+  perfil_colaborador:      z.string().min(1, 'Requerido'),
   nombre_quien_diligencia: z.string().optional(),
-  momento_1:              z.string().default('na'),
-  momento_2:              z.string().default('na'),
-  momento_3:              z.string().default('na'),
-  momento_4:              z.string().default('na'),
-  momento_5:              z.string().default('na'),
-  unas_cortas_esmalte:    z.string().default('na'),
-  porta_accesorios:       z.string().default('na'),
+  momento_1:               z.string().default(''),
+  momento_2:               z.string().default(''),
+  momento_3:               z.string().default(''),
+  momento_4:               z.string().default(''),
+  momento_5:               z.string().default(''),
+  unas_cortas_esmalte:     z.boolean().default(false),
+  porta_accesorios:        z.string().default(''),
   retroalimenta_trabajador: z.boolean().default(false),
-  observaciones:          z.string().optional(),
+  observaciones:           z.string().optional(),
   soporte_no_cumplimiento: z.string().optional(),
-  estado:                 z.string().default('pendiente'),
+  estado:                  z.string().default('pendiente'),
 })
 
+// Servicios del hospital para la lista
+const SERVICIOS_HM = [
+  'UCI', 'URGENCIAS', 'HOSPITALIZACIÓN', 'HOSPITALIZACIÓN 2',
+  'CIRUGIA', 'HEMODINAMIA', 'PEDIATRIA', 'NEONATOS',
+  'CONSULTA EXTERNA', 'LABORATORIO', 'IMAGENOLOGIA',
+]
+
 function calcSumatoria(values) {
-  const campos = ['momento_1','momento_2','momento_3','momento_4','momento_5']
-  return campos.filter(c => values[c] === 'cumple').length
+  return ['momento_1','momento_2','momento_3','momento_4','momento_5']
+    .filter(c => values[c] === 'CUMPLE').length
 }
 
 export default function HigieneManosForn() {
@@ -65,16 +79,17 @@ export default function HigieneManosForn() {
     defaultValues: {
       fecha_evaluacion: new Date().toISOString().slice(0, 10),
       estado: 'pendiente',
-      momento_1: 'na', momento_2: 'na', momento_3: 'na',
-      momento_4: 'na', momento_5: 'na',
-      unas_cortas_esmalte: 'na', porta_accesorios: 'na',
+      momento_1: '', momento_2: '', momento_3: '', momento_4: '', momento_5: '',
+      porta_accesorios: '',
     },
   })
 
   const values    = watch()
   const sumatoria = calcSumatoria(values)
-  const resultado = sumatoria >= 4 ? 'Cumple' : sumatoria > 0 ? 'No Cumple' : ''
-  const pct       = sumatoria > 0 ? Math.round((sumatoria / 5) * 100) : 0
+  const evaluados = ['momento_1','momento_2','momento_3','momento_4','momento_5']
+    .filter(c => values[c] === 'CUMPLE' || values[c] === 'NO CUMPLE').length
+  const resultado = evaluados === 0 ? '' : sumatoria >= 4 ? 'CUMPLE' : 'NO CUMPLE'
+  const pct       = evaluados > 0 ? Math.round((sumatoria / 5) * 100) : 0
 
   useEffect(() => {
     if (isEdit) {
@@ -112,6 +127,7 @@ export default function HigieneManosForn() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
         {/* Datos generales */}
         <div className="card p-5">
           <h3 className="section-title mb-4">Datos Generales</h3>
@@ -125,7 +141,7 @@ export default function HigieneManosForn() {
               <label className="label">Servicio *</label>
               <select className="input" {...register('servicio_evaluado')}>
                 <option value="">Seleccionar...</option>
-                {SERVICIOS.map(s => <option key={s} value={s}>{s}</option>)}
+                {SERVICIOS_HM.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               {errors.servicio_evaluado && <p className="text-xs text-red-600 mt-1">{errors.servicio_evaluado.message}</p>}
             </div>
@@ -153,9 +169,9 @@ export default function HigieneManosForn() {
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="section-title">5 Momentos OMS</h3>
-            {sumatoria > 0 && (
+            {resultado && (
               <div className={`px-3 py-1 rounded-full text-sm font-semibold border
-                ${resultado === 'Cumple'
+                ${resultado === 'CUMPLE'
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   : 'bg-red-50 text-red-700 border-red-200'}`}>
                 {sumatoria}/5 — {pct}% — {resultado}
@@ -167,7 +183,8 @@ export default function HigieneManosForn() {
               <div key={m.name} className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-sm text-slate-700 sm:col-span-2">{m.label}</label>
                 <select className="input" {...register(m.name)}>
-                  {OPCIONES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  <option value="">—</option>
+                  {OPCIONES_MOMENTO.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
             ))}
@@ -179,16 +196,18 @@ export default function HigieneManosForn() {
           <h3 className="section-title mb-4">Criterios Adicionales</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label">Uñas cortas / sin esmalte</label>
-              <select className="input" {...register('unas_cortas_esmalte')}>
-                {OPCIONES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <label className="label">Porta Accesorios</label>
+              <select className="input" {...register('porta_accesorios')}>
+                <option value="">Seleccionar...</option>
+                {PORTA_ACCESORIOS_OPC.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Porta accesorios (anillos, pulseras)</label>
-              <select className="input" {...register('porta_accesorios')}>
-                {OPCIONES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <label className="flex items-center gap-2.5 cursor-pointer mt-6">
+                <input type="checkbox" className="w-4 h-4 rounded accent-indigo-600"
+                  {...register('unas_cortas_esmalte')} />
+                <span className="text-sm text-slate-700">Uñas cortas y esmalte integro</span>
+              </label>
             </div>
           </div>
           <div className="mt-4">
@@ -205,7 +224,8 @@ export default function HigieneManosForn() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
               <label className="label">Observaciones</label>
-              <textarea rows={3} className="input resize-none" placeholder="Notas adicionales..." {...register('observaciones')} />
+              <textarea rows={3} className="input resize-none"
+                placeholder="Notas adicionales..." {...register('observaciones')} />
             </div>
             <div>
               <label className="label">Soporte de No Cumplimiento</label>

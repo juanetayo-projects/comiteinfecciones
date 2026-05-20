@@ -5,8 +5,53 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import { SERVICIOS } from '../../lib/utils'
 import { ArrowLeft, Save } from 'lucide-react'
+
+// Servicios y objetos dependientes según archivo Excel listas
+const SERVICIOS_OBJETOS = {
+  'CIRUGIA': [
+    'Arco en C',
+    'Bomba de infusion',
+    'Camilla',
+    'Maquina de anestesia (perilla)',
+    'Mesa de Mayo',
+    'Ventilador (perilla)',
+  ],
+  'HOSPITALIZACION': [
+    'Bomba de infusión',
+    'Cama (panel de control)',
+    'Colchón',
+  ],
+  'UCI': [
+    'Bomba de infusión',
+    'Cama (panel de control)',
+    'Colchón',
+    'Mindray signos vitales',
+    'Ventilador',
+  ],
+  'URGENCIAS': [
+    'Bomba de infusión',
+    'Colchoneta',
+    'Ventilador',
+  ],
+}
+
+const SERVICIOS_LUM = Object.keys(SERVICIOS_OBJETOS)
+
+function calcRango(rlu) {
+  const n = Number(rlu)
+  if (isNaN(n) || rlu === '' || rlu === undefined || rlu === null) return null
+  return n < 100 ? 'CUMPLE' : 'NO CUMPLE'
+}
+
+const RANGO_STYLE = {
+  'CUMPLE':    'bg-emerald-50 text-emerald-800 border-emerald-200',
+  'NO CUMPLE': 'bg-red-50 text-red-800 border-red-200',
+}
+const RANGO_DESC = {
+  'CUMPLE':    '< 100 RLU — Superficie limpia',
+  'NO CUMPLE': '≥ 100 RLU — Requiere acción de limpieza',
+}
 
 const schema = z.object({
   fecha_registro:    z.string().min(1, 'Requerido'),
@@ -16,39 +61,27 @@ const schema = z.object({
   estado:            z.string().default('pendiente'),
 })
 
-function calcRango(rlu) {
-  const n = Number(rlu)
-  if (isNaN(n) || rlu === '' || rlu === undefined) return null
-  if (n < 100)  return 'Aceptable'
-  if (n <= 500) return 'Aceptable Marginal'
-  return 'Inaceptable'
-}
-
-const RANGO_STYLE = {
-  'Aceptable':          'bg-emerald-50 text-emerald-800 border-emerald-200',
-  'Aceptable Marginal': 'bg-yellow-50  text-yellow-800  border-yellow-200',
-  'Inaceptable':        'bg-red-50     text-red-800     border-red-200',
-}
-const RANGO_DESC = {
-  'Aceptable':          '< 100 RLU — Superficie limpia',
-  'Aceptable Marginal': '100 – 500 RLU — Requiere acción',
-  'Inaceptable':        '> 500 RLU — Limpieza inmediata',
-}
-
 export default function LuminometriaForm() {
-  const { id }     = useParams()
-  const navigate   = useNavigate()
-  const { user }   = useAuth()
-  const isEdit     = Boolean(id)
+  const { id }   = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const isEdit   = Boolean(id)
   const [saving, setSaving] = useState(false)
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { fecha_registro: new Date().toISOString().slice(0, 10), estado: 'pendiente' },
   })
 
-  const rlu   = watch('resultado')
-  const rango = calcRango(rlu)
+  const servicio = watch('servicio_evaluado')
+  const rlu      = watch('resultado')
+  const rango    = calcRango(rlu)
+  const objetos  = servicio ? (SERVICIOS_OBJETOS[servicio] ?? []) : []
+
+  // Reset objeto when servicio changes
+  useEffect(() => {
+    if (!isEdit) setValue('objeto', '')
+  }, [servicio])
 
   useEffect(() => {
     if (isEdit) {
@@ -86,18 +119,28 @@ export default function LuminometriaForm() {
             <input type="date" className="input" {...register('fecha_registro')} />
             {errors.fecha_registro && <p className="text-xs text-red-600 mt-1">{errors.fecha_registro.message}</p>}
           </div>
+
           <div>
             <label className="label">Servicio *</label>
             <select className="input" {...register('servicio_evaluado')}>
               <option value="">Seleccionar...</option>
-              {SERVICIOS.map(s => <option key={s} value={s}>{s}</option>)}
+              {SERVICIOS_LUM.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
             {errors.servicio_evaluado && <p className="text-xs text-red-600 mt-1">{errors.servicio_evaluado.message}</p>}
           </div>
 
           <div className="sm:col-span-2">
             <label className="label">Objeto / Superficie evaluada *</label>
-            <input className="input" placeholder="Ej: Mesa de noche, Baranda de cama, Monitor, Teclado..." {...register('objeto')} />
+            {servicio ? (
+              <select className="input" {...register('objeto')}>
+                <option value="">Seleccionar objeto...</option>
+                {objetos.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            ) : (
+              <div className="input bg-slate-50 text-slate-400 cursor-not-allowed">
+                Selecciona primero un servicio
+              </div>
+            )}
             {errors.objeto && <p className="text-xs text-red-600 mt-1">{errors.objeto.message}</p>}
           </div>
 
@@ -111,7 +154,7 @@ export default function LuminometriaForm() {
           <div>
             <label className="label">Clasificación (automática)</label>
             {rango ? (
-              <div className={`px-3 py-2 rounded-lg border text-sm font-medium ${RANGO_STYLE[rango]}`}>
+              <div className={`px-3 py-2 rounded-lg border text-sm font-semibold ${RANGO_STYLE[rango]}`}>
                 {rango}
                 <p className="text-xs font-normal mt-0.5 opacity-80">{RANGO_DESC[rango]}</p>
               </div>
