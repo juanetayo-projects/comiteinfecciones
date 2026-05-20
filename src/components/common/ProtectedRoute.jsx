@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
 export default function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth()
+  const { user, loading, needsPasswordReset } = useAuth()
 
   if (loading) {
     return (
@@ -14,6 +14,9 @@ export default function ProtectedRoute({ children }) {
       </div>
     )
   }
+
+  // Usuario llegó desde el link de recuperación de contraseña
+  if (needsPasswordReset) return <Navigate to="/reset-password" replace />
 
   if (!user) return <Navigate to="/login" replace />
 

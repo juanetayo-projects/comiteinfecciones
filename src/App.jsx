@@ -5,6 +5,7 @@ import Layout from './components/layout/Layout'
 
 // Páginas
 import Login         from './pages/Login'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard     from './pages/Dashboard'
 import Kanban        from './pages/Kanban'
 import Registros     from './pages/Registros'
@@ -39,8 +40,9 @@ export default function App() {
       {/* HashRouter: compatible con GitHub Pages sin configuración adicional */}
       <HashRouter>
         <Routes>
-          {/* Pública */}
-          <Route path="/login" element={<Login />} />
+          {/* Públicas */}
+          <Route path="/login"          element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Protegidas */}
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>

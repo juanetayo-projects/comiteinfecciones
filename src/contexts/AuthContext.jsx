@@ -4,9 +4,10 @@ import { supabase } from '../lib/supabase'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user,    setUser]    = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user,              setUser]              = useState(null)
+  const [profile,           setProfile]           = useState(null)
+  const [loading,           setLoading]           = useState(true)
+  const [needsPasswordReset, setNeedsPasswordReset] = useState(false)
 
   useEffect(() => {
     // Sesión actual
@@ -17,8 +18,14 @@ export function AuthProvider({ children }) {
     })
 
     // Escuchar cambios de auth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+      if (event === 'PASSWORD_RECOVERY') {
+        // El usuario llegó desde el link de recuperación de contraseña
+        setNeedsPasswordReset(true)
+        setLoading(false)
+        return
+      }
       if (session?.user) fetchProfile(session.user.id)
       else { setProfile(null); setLoading(false) }
     })
@@ -45,7 +52,13 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
   }
 
-  const value = { user, profile, loading, signIn, signOut }
+  async function updatePassword(newPassword) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (!error) setNeedsPasswordReset(false)
+    return { error }
+  }
+
+  const value = { user, profile, loading, needsPasswordReset, signIn, signOut, updatePassword }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
