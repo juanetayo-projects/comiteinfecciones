@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
-import { Plus, Paperclip, Pencil, Trash2, Droplets, ArrowLeft } from 'lucide-react'
+import { Plus, Paperclip, Pencil, Trash2, Droplets, ArrowLeft, BarChart3 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
 
@@ -28,7 +28,7 @@ export default function CateterVesical() {
     const { data: rows } = await supabase
       .from('encuesta_cateter_vesical')
       .select('*')
-      .order('fecha_registro', { ascending: false })
+      .order('created_at', { ascending: false })
     setData(rows ?? [])
     setLoading(false)
   }
@@ -73,9 +73,14 @@ export default function CateterVesical() {
             <p className="page-subtitle">Vigilancia de sondas vesicales</p>
           </div>
         </div>
-        <Link to="/encuestas/cateter-vesical/nuevo" className="btn-primary text-xs gap-1.5">
-          <Plus className="w-3.5 h-3.5" /> Nuevo Registro
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/encuestas/cateter-vesical/dashboard" className="btn-secondary text-xs gap-1.5">
+            <BarChart3 className="w-3.5 h-3.5" /> Dashboard
+          </Link>
+          <Link to="/encuestas/cateter-vesical/nuevo" className="btn-primary text-xs gap-1.5">
+            <Plus className="w-3.5 h-3.5" /> Nuevo Registro
+          </Link>
+        </div>
       </div>
 
       <div className="card p-4">

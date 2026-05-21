@@ -35,7 +35,7 @@ export default function Luminometria() {
     const { data: rows } = await supabase
       .from('encuesta_luminometria')
       .select('*')
-      .order('fecha_registro', { ascending: false })
+      .order('created_at', { ascending: false })
     setData(rows ?? [])
     setLoading(false)
   }

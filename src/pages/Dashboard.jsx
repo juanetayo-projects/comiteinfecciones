@@ -17,13 +17,22 @@ const ENCUESTAS_CFG = {
 }
 
 const FILTROS = [
-  { value: '',             label: 'Todas' },
-  { value: 'aislamiento',  label: 'Aislamiento' },
-  { value: 'higiene',      label: 'Higiene de Manos' },
-  { value: 'luminometria', label: 'Luminometría' },
-  { value: 'ronda',        label: 'Ronda Cirugía' },
-  { value: 'dispositivos', label: 'Dispositivos' },
+  { value: '',             label: 'Todas',            activeCls: 'bg-indigo-600 text-white',  hoverCls: 'hover:bg-indigo-50 hover:text-indigo-700'  },
+  { value: 'aislamiento',  label: 'Aislamiento',      activeCls: 'bg-red-600 text-white',     hoverCls: 'hover:bg-red-50 hover:text-red-700'        },
+  { value: 'higiene',      label: 'Higiene de Manos', activeCls: 'bg-blue-600 text-white',    hoverCls: 'hover:bg-blue-50 hover:text-blue-700'      },
+  { value: 'luminometria', label: 'Luminometría',     activeCls: 'bg-amber-500 text-white',   hoverCls: 'hover:bg-amber-50 hover:text-amber-700'    },
+  { value: 'ronda',        label: 'Ronda Cirugía',    activeCls: 'bg-purple-600 text-white',  hoverCls: 'hover:bg-purple-50 hover:text-purple-700'  },
+  { value: 'dispositivos', label: 'Dispositivos',     activeCls: 'bg-emerald-600 text-white', hoverCls: 'hover:bg-emerald-50 hover:text-emerald-700'},
 ]
+
+const KPI_SUBTITLES = {
+  '':             { total: 'Suma de todos los tipos de encuesta', pct: 'Evaluaciones con CUMPLE ÷ total evaluaciones' },
+  aislamiento:    { total: 'Encuestas de aislamiento registradas', pct: 'Aislamientos CUMPLE ÷ total aislamiento' },
+  higiene:        { total: 'Observaciones de higiene registradas', pct: 'Observaciones CUMPLE (5/5 momentos) ÷ total' },
+  luminometria:   { total: 'Mediciones RLU registradas',          pct: 'Mediciones CUMPLE (≤100 RLU) ÷ total mediciones' },
+  ronda:          { total: 'Rondas de cirugía registradas',       pct: 'Rondas con profilaxis CUMPLE ÷ total rondas' },
+  dispositivos:   { total: 'Registros AVP + CV + NAV combinados',  pct: 'Índice de adherencia (en construcción)' },
+}
 
 // ─── Componentes ─────────────────────────────────────────────────────────────
 function KpiCard({ label, value, sub, color = 'indigo', icon: Icon }) {
@@ -221,10 +230,10 @@ export default function Dashboard() {
         {FILTROS.map(f => (
           <button key={f.value}
             onClick={() => setFiltro(f.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors shadow-sm ${
               filtro === f.value
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? f.activeCls
+                : `bg-slate-100 text-slate-600 ${f.hoverCls}`
             }`}>
             {f.label}
           </button>
@@ -236,17 +245,19 @@ export default function Dashboard() {
         <KpiCard
           label={filtro ? `Total — ${ENCUESTAS_CFG[filtro]?.label ?? 'Encuesta'}` : 'Total Evaluaciones'}
           value={kpiTotal}
+          sub={KPI_SUBTITLES[filtro]?.total}
           color="indigo"
           icon={filtro ? ENCUESTAS_CFG[filtro]?.icon : CheckCircle2}
         />
         <KpiCard
           label="Adherencia Global"
           value={`${kpiPct}%`}
+          sub={KPI_SUBTITLES[filtro]?.pct}
           color={kpiPct >= 80 ? 'emerald' : 'red'}
           icon={kpiPct >= 80 ? TrendingUp : TrendingDown}
         />
-        <KpiCard label="Pendientes"        value={stats.pendientes} color="amber"  icon={Clock} />
-        <KpiCard label="Tipos de Encuesta" value={5}                color="slate"  icon={AlertCircle} sub="activas" />
+        <KpiCard label="Pendientes"        value={stats.pendientes} color="amber"  icon={Clock}       sub="Encuestas sin cerrar" />
+        <KpiCard label="Tipos de Encuesta" value={5}                color="slate"  icon={AlertCircle} sub="módulos activos" />
       </div>
 
       {/* Adherencia por encuesta */}

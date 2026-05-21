@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
-import { Plus, Paperclip, Pencil, Trash2, Wind, ArrowLeft } from 'lucide-react'
+import { Plus, Paperclip, Pencil, Trash2, Wind, ArrowLeft, BarChart3 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
 
@@ -28,7 +28,7 @@ export default function PrevencionNeumonia() {
     const { data: rows } = await supabase
       .from('encuesta_prevencion_neumonia')
       .select('*')
-      .order('fecha_registro', { ascending: false })
+      .order('created_at', { ascending: false })
     setData(rows ?? [])
     setLoading(false)
   }
@@ -73,9 +73,14 @@ export default function PrevencionNeumonia() {
             <p className="page-subtitle">Neumonía asociada a ventilación mecánica</p>
           </div>
         </div>
-        <Link to="/encuestas/prevencion-neumonia/nuevo" className="btn-primary text-xs gap-1.5">
-          <Plus className="w-3.5 h-3.5" /> Nuevo Registro
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/encuestas/prevencion-neumonia/dashboard" className="btn-secondary text-xs gap-1.5">
+            <BarChart3 className="w-3.5 h-3.5" /> Dashboard
+          </Link>
+          <Link to="/encuestas/prevencion-neumonia/nuevo" className="btn-primary text-xs gap-1.5">
+            <Plus className="w-3.5 h-3.5" /> Nuevo Registro
+          </Link>
+        </div>
       </div>
 
       <div className="card p-4">

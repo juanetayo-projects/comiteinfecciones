@@ -41,11 +41,14 @@ import PrevencionNeumonia         from './pages/encuestas/PrevencionNeumonia'
 import PrevencionNeumoniaForm     from './pages/encuestas/PrevencionNeumoniaForm'
 
 // ── Dashboards ───────────────────────────────────────────────
-import AislamentoDashboard   from './pages/dashboards/AislamentoDashboard'
-import HigieneDashboard      from './pages/dashboards/HigieneDashboard'
-import LuminometriaDashboard from './pages/dashboards/LuminometriaDashboard'
-import RondaDashboard        from './pages/dashboards/RondaDashboard'
-import DispositivosDashboard from './pages/dashboards/DispositivosDashboard'
+import AislamentoDashboard        from './pages/dashboards/AislamentoDashboard'
+import HigieneDashboard           from './pages/dashboards/HigieneDashboard'
+import LuminometriaDashboard      from './pages/dashboards/LuminometriaDashboard'
+import RondaDashboard             from './pages/dashboards/RondaDashboard'
+import DispositivosDashboard      from './pages/dashboards/DispositivosDashboard'
+import AccesoVenasoDashboard      from './pages/dashboards/AccesoVenasoDashboard'
+import CateterVesicalDashboard    from './pages/dashboards/CateterVesicalDashboard'
+import PrevencionNeumoniaDashboard from './pages/dashboards/PrevencionNeumoniaDashboard'
 
 export default function App() {
   return (
@@ -90,19 +93,22 @@ export default function App() {
             <Route path="/encuestas/seguimiento-dispositivos/dashboard" element={<DispositivosDashboard />} />
 
             {/* Acceso Venoso Periférico */}
-            <Route path="/encuestas/acceso-venoso"            element={<AccesoVenoso />} />
-            <Route path="/encuestas/acceso-venoso/nuevo"      element={<AccesoVenosoForm />} />
-            <Route path="/encuestas/acceso-venoso/:id/editar" element={<AccesoVenosoForm />} />
+            <Route path="/encuestas/acceso-venoso"              element={<AccesoVenoso />} />
+            <Route path="/encuestas/acceso-venoso/nuevo"        element={<AccesoVenosoForm />} />
+            <Route path="/encuestas/acceso-venoso/:id/editar"   element={<AccesoVenosoForm />} />
+            <Route path="/encuestas/acceso-venoso/dashboard"    element={<AccesoVenasoDashboard />} />
 
             {/* Catéter Vesical */}
-            <Route path="/encuestas/cateter-vesical"            element={<CateterVesical />} />
-            <Route path="/encuestas/cateter-vesical/nuevo"      element={<CateterVesicalForm />} />
-            <Route path="/encuestas/cateter-vesical/:id/editar" element={<CateterVesicalForm />} />
+            <Route path="/encuestas/cateter-vesical"              element={<CateterVesical />} />
+            <Route path="/encuestas/cateter-vesical/nuevo"        element={<CateterVesicalForm />} />
+            <Route path="/encuestas/cateter-vesical/:id/editar"   element={<CateterVesicalForm />} />
+            <Route path="/encuestas/cateter-vesical/dashboard"    element={<CateterVesicalDashboard />} />
 
             {/* Prevención de Neumonía */}
-            <Route path="/encuestas/prevencion-neumonia"            element={<PrevencionNeumonia />} />
-            <Route path="/encuestas/prevencion-neumonia/nuevo"      element={<PrevencionNeumoniaForm />} />
-            <Route path="/encuestas/prevencion-neumonia/:id/editar" element={<PrevencionNeumoniaForm />} />
+            <Route path="/encuestas/prevencion-neumonia"              element={<PrevencionNeumonia />} />
+            <Route path="/encuestas/prevencion-neumonia/nuevo"        element={<PrevencionNeumoniaForm />} />
+            <Route path="/encuestas/prevencion-neumonia/:id/editar"   element={<PrevencionNeumoniaForm />} />
+            <Route path="/encuestas/prevencion-neumonia/dashboard"    element={<PrevencionNeumoniaDashboard />} />
 
             {/* Resto */}
             <Route path="/kanban"        element={<Kanban />} />

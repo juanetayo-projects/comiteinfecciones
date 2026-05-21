@@ -132,8 +132,8 @@ function buildSummaryHigiene(rows) {
 // ── UI: encabezado de sección ────────────────────────────────────
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-amber-50 border-l-4 border-amber-400 rounded-r-md mb-4">
-      <h3 className="text-sm font-semibold text-amber-900">{children}</h3>
+    <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
+      <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
 }
@@ -363,9 +363,9 @@ export default function Reportes() {
         <div className="space-y-4">
           {higServ.map(({ servicio, totalRegistros, perfiles }) => (
             <div key={servicio} className="card p-5">
-              <div className="px-3 py-2 bg-amber-50 border-l-4 border-amber-400 rounded-r-md mb-4 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-amber-900">{servicio}</h3>
-                <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">{totalRegistros} registros</span>
+              <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-white tracking-wide">{servicio}</h3>
+                <span className="text-xs text-white bg-indigo-500 px-2 py-0.5 rounded-full">{totalRegistros} registros</span>
               </div>
               <SummaryTable rows={perfiles} cols={COLS_HIG} />
             </div>

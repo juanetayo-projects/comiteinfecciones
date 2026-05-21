@@ -47,11 +47,10 @@ const schema = z.object({
   estado:                  z.string().default('pendiente'),
 })
 
-// Encabezado de sección con color cálido
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-amber-50 border-l-4 border-amber-400 rounded-r-md mb-4">
-      <h3 className="text-sm font-semibold text-amber-900">{children}</h3>
+    <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
+      <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
 }

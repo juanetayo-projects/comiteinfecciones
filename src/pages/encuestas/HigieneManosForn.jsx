@@ -69,8 +69,8 @@ function calcSumatoria(values) {
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-amber-50 border-l-4 border-amber-400 rounded-r-md mb-4">
-      <h3 className="text-sm font-semibold text-amber-900">{children}</h3>
+    <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
+      <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
 }
@@ -114,8 +114,8 @@ export default function HigieneManosForn() {
     const payload = {
       ...vals,
       fecha_registro: new Date().toISOString(),
-      // sumatoria_cumplimiento is a GENERATED ALWAYS AS column — DB computes it automatically
-      resultado_cumplimiento: resultado,
+      // sumatoria_cumplimiento: GENERATED ALWAYS AS — DB computes from momentos
+      // resultado_cumplimiento: GENERATED ALWAYS AS — DB computes from sumatoria
       adjuntos,
       registrado_por: user?.id,
     }

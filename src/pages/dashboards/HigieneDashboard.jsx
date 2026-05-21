@@ -257,10 +257,10 @@ export default function HigieneDashboard() {
           {/* Tablas independientes por servicio */}
           {tablasPorServicio.map(({ servicio, totalRegistros, perfiles }) => (
             <div key={servicio} className="card p-5">
-              <div className="px-3 py-2 bg-amber-50 border-l-4 border-amber-400 rounded-r-md mb-4">
+              <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-amber-900">{servicio}</h3>
-                  <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                  <h3 className="text-sm font-semibold text-white tracking-wide">{servicio}</h3>
+                  <span className="text-xs text-white bg-indigo-500 px-2 py-0.5 rounded-full">
                     {totalRegistros} registros
                   </span>
                 </div>
