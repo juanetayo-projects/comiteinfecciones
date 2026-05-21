@@ -55,6 +55,29 @@ export default function HigieneDashboard() {
   function clearFilters() { setFilters(INIT_FILTERS) }
   function setF(key, val) { setFilters(prev => ({ ...prev, [key]: val })) }
 
+  // Tabla independiente por servicio — DEBE estar ANTES del return condicional (Rules of Hooks)
+  const tablasPorServicio = useMemo(() => {
+    const serviciosSet = [...new Set(filtered.map(r => r.servicio_evaluado || 'Sin servicio'))].sort()
+    return serviciosSet.map(servicio => {
+      const filas = filtered.filter(r => (r.servicio_evaluado || 'Sin servicio') === servicio)
+      const perfilMap = {}
+      filas.forEach(r => {
+        const p = r.perfil_colaborador || 'Sin perfil'
+        if (!perfilMap[p]) perfilMap[p] = { perfil: p, total: 0, cumple: 0, noCumple: 0, sumTotal: 0 }
+        perfilMap[p].total++
+        perfilMap[p].sumTotal += r.sumatoria_cumplimiento ?? 0
+        if (r.resultado_cumplimiento === 'CUMPLE') perfilMap[p].cumple++
+        else perfilMap[p].noCumple++
+      })
+      const perfiles = Object.values(perfilMap).map(p => ({
+        ...p,
+        pct:     Math.round((p.cumple / p.total) * 100) || 0,
+        avgSuma: p.total > 0 ? (p.sumTotal / p.total).toFixed(1) : '0',
+      })).sort((a, b) => a.perfil.localeCompare(b.perfil))
+      return { servicio, totalRegistros: filas.length, perfiles }
+    })
+  }, [filtered])
+
   if (loading) return (
     <div className="p-8 flex justify-center">
       <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
@@ -96,30 +119,6 @@ export default function HigieneDashboard() {
     name: `${v}/5`,
     cantidad: filtered.filter(r => r.sumatoria_cumplimiento === v).length,
   }))
-
-  // Tabla independiente por servicio → dentro: perfil | registros | CUMPLE | NO CUMPLE | Prom.Suma | %
-  const tablasPorServicio = useMemo(() => {
-    // 1. Collect unique services from filtered data
-    const serviciosSet = [...new Set(filtered.map(r => r.servicio_evaluado || 'Sin servicio'))].sort()
-    return serviciosSet.map(servicio => {
-      const filas = filtered.filter(r => (r.servicio_evaluado || 'Sin servicio') === servicio)
-      const perfilMap = {}
-      filas.forEach(r => {
-        const p = r.perfil_colaborador || 'Sin perfil'
-        if (!perfilMap[p]) perfilMap[p] = { perfil: p, total: 0, cumple: 0, noCumple: 0, sumTotal: 0 }
-        perfilMap[p].total++
-        perfilMap[p].sumTotal += r.sumatoria_cumplimiento ?? 0
-        if (r.resultado_cumplimiento === 'CUMPLE') perfilMap[p].cumple++
-        else perfilMap[p].noCumple++
-      })
-      const perfiles = Object.values(perfilMap).map(p => ({
-        ...p,
-        pct:     Math.round((p.cumple / p.total) * 100) || 0,
-        avgSuma: p.total > 0 ? (p.sumTotal / p.total).toFixed(1) : '0',
-      })).sort((a, b) => a.perfil.localeCompare(b.perfil))
-      return { servicio, totalRegistros: filas.length, perfiles }
-    })
-  }, [filtered])
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-6">

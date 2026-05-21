@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { FileBarChart2, Filter, X, ChevronDown, ChevronUp } from 'lucide-react'
+import ExportButtons from '../components/common/ExportButtons'
 
 // ── Período ──────────────────────────────────────────────────────
 const MESES = [
@@ -150,10 +151,10 @@ function KpiPct({ label, value, sub, color }) {
     violet:  'bg-violet-50 text-violet-700 border-violet-100',
   }[color] ?? 'bg-slate-50 text-slate-700 border-slate-100'
   return (
-    <div className={`card border p-4 text-center ${cls}`}>
-      <p className={`text-3xl font-bold ${value >= 80 ? '' : 'text-red-600'}`}>{value}%</p>
-      <p className="text-xs font-medium mt-1">{label}</p>
-      {sub && <p className="text-[11px] opacity-60 mt-0.5">{sub}</p>}
+    <div className={`card border p-2.5 text-center ${cls}`}>
+      <p className={`text-2xl font-bold leading-tight ${value >= 80 ? '' : 'text-red-600'}`}>{value}%</p>
+      <p className="text-[11px] font-medium mt-0.5 leading-tight">{label}</p>
+      {sub && <p className="text-[10px] opacity-60">{sub}</p>}
     </div>
   )
 }
@@ -429,6 +430,27 @@ export default function Reportes() {
           <h1 className="page-title">Reporte de Indicadores</h1>
           <p className="page-subtitle">Consolidado de cumplimiento por tipo de encuesta — {periodoLabel}</p>
         </div>
+        <div className="ml-auto">
+          <ExportButtons
+            data={[
+              { tipo: 'Aislamiento',              pct: pctAis, registros: D.ais.length },
+              { tipo: 'Higiene de Manos',          pct: pctHig, registros: D.hig.length },
+              { tipo: 'Luminometría',              pct: pctLum, registros: D.lum.length },
+              { tipo: 'Ronda de Cirugía',          pct: pctRon, registros: D.ron.length },
+              { tipo: 'Acceso Venoso Periférico',  pct: pctAvp, registros: D.avp.length },
+              { tipo: 'Catéter Vesical',           pct: pctCv,  registros: D.cv.length  },
+              { tipo: 'Prevención NAV',            pct: pctPn,  registros: D.pn.length  },
+            ]}
+            columns={[
+              { header: 'Tipo de Encuesta',   key: 'tipo'      },
+              { header: '% Cumplimiento',     key: 'pct'       },
+              { header: 'N° Registros',       key: 'registros' },
+            ]}
+            filename={`reporte-indicadores-${periodoLabel.replace(' ', '-')}`}
+            title="Reporte de Indicadores"
+            subtitle={periodoLabel}
+          />
+        </div>
       </div>
 
       {/* Filtro de período */}
@@ -465,14 +487,14 @@ export default function Reportes() {
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
           Indicadores Globales — {periodoLabel}
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          <KpiPct label="Aislamiento"          value={pctAis} sub={`${D.ais.length} reg.`} color="blue" />
-          <KpiPct label="Higiene de Manos"     value={pctHig} sub={`${D.hig.length} reg.`} color="emerald" />
-          <KpiPct label="Luminometría"         value={pctLum} sub={`${D.lum.length} reg.`} color="amber" />
-          <KpiPct label="Ronda de Cirugía"     value={pctRon} sub={`${D.ron.length} reg.`} color="purple" />
-          <KpiPct label="Acceso Venoso Perif." value={pctAvp} sub={`${D.avp.length} reg.`} color="indigo" />
-          <KpiPct label="Catéter Vesical"      value={pctCv}  sub={`${D.cv.length}  reg.`} color="cyan" />
-          <KpiPct label="Prevención NAV"       value={pctPn}  sub={`${D.pn.length}  reg.`} color="violet" />
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          <KpiPct label="Aislamiento"    value={pctAis} sub={`${D.ais.length} reg.`} color="blue" />
+          <KpiPct label="Hig. Manos"     value={pctHig} sub={`${D.hig.length} reg.`} color="emerald" />
+          <KpiPct label="Luminometría"   value={pctLum} sub={`${D.lum.length} reg.`} color="amber" />
+          <KpiPct label="Ronda Cirugía"  value={pctRon} sub={`${D.ron.length} reg.`} color="purple" />
+          <KpiPct label="Acceso Venoso"  value={pctAvp} sub={`${D.avp.length} reg.`} color="indigo" />
+          <KpiPct label="Catéter Vesic." value={pctCv}  sub={`${D.cv.length}  reg.`} color="cyan" />
+          <KpiPct label="Prev. NAV"      value={pctPn}  sub={`${D.pn.length}  reg.`} color="violet" />
         </div>
       </div>
 

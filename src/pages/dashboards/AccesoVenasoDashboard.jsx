@@ -65,26 +65,7 @@ export default function AccesoVenasoDashboard() {
   const hasFilters = Object.values(filters).some(Boolean)
   function setF(k, v) { setFilters(p => ({ ...p, [k]: v })) }
 
-  if (loading) return (
-    <div className="p-8 flex justify-center">
-      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
-  // KPIs
-  const totalCrit = rows.length * AVP_KEYS.length
-  const cumpleCrit = rows.reduce((acc, r) => acc + AVP_KEYS.filter(k => r[k] === true).length, 0)
-  const pctAdh = porcentaje(cumpleCrit, totalCrit)
-  const totalCumple5 = rows.filter(r => AVP_KEYS.every(k => r[k] === true)).length
-  const pctCompleto  = porcentaje(totalCumple5, rows.length)
-
-  // Datos de criterios para gráfica
-  const criteriosData = AVP_KEYS.map((k, i) => {
-    const c = rows.filter(r => r[k] === true).length
-    return { name: AVP_LABELS[i], cumple: c, noCumple: rows.length - c, pct: porcentaje(c, rows.length) }
-  })
-
-  // Tendencia por semana del mes
+  // Tendencia por semana del mes — ANTES del return condicional (Rules of Hooks)
   const semanaData = useMemo(() => {
     const map = {}
     rows.forEach(r => {
@@ -104,7 +85,7 @@ export default function AccesoVenasoDashboard() {
     })).sort((a, b) => a.semana.localeCompare(b.semana))
   }, [rows])
 
-  // Resumen por ubicación
+  // Resumen por ubicación — ANTES del return condicional (Rules of Hooks)
   const summaryUb = useMemo(() => {
     const map = {}
     rows.forEach(r => {
@@ -119,6 +100,25 @@ export default function AccesoVenasoDashboard() {
     return Object.values(map).map(r => ({ ...r, pct: porcentaje(r.cumple, r.total) }))
       .sort((a, b) => b.regs - a.regs)
   }, [rows])
+
+  if (loading) return (
+    <div className="p-8 flex justify-center">
+      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+
+  // KPIs
+  const totalCrit = rows.length * AVP_KEYS.length
+  const cumpleCrit = rows.reduce((acc, r) => acc + AVP_KEYS.filter(k => r[k] === true).length, 0)
+  const pctAdh = porcentaje(cumpleCrit, totalCrit)
+  const totalCumple5 = rows.filter(r => AVP_KEYS.every(k => r[k] === true)).length
+  const pctCompleto  = porcentaje(totalCumple5, rows.length)
+
+  // Datos de criterios para gráfica
+  const criteriosData = AVP_KEYS.map((k, i) => {
+    const c = rows.filter(r => r[k] === true).length
+    return { name: AVP_LABELS[i], cumple: c, noCumple: rows.length - c, pct: porcentaje(c, rows.length) }
+  })
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-6">

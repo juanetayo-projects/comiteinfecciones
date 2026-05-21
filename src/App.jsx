@@ -12,7 +12,6 @@ import Dashboard     from './pages/Dashboard'
 import Kanban        from './pages/Kanban'
 import Registros     from './pages/Registros'
 import Reportes      from './pages/Reportes'
-import Usuarios      from './pages/Usuarios'
 import Configuracion from './pages/Configuracion'
 
 // ── Aislamiento ──────────────────────────────────────────────
@@ -114,7 +113,7 @@ export default function App() {
             <Route path="/kanban"        element={<Kanban />} />
             <Route path="/registros"     element={<Registros />} />
             <Route path="/reportes"      element={<Reportes />} />
-            <Route path="/usuarios"      element={<Usuarios />} />
+            <Route path="/usuarios"      element={<Navigate to="/configuracion" replace />} />
             <Route path="/configuracion" element={<Configuracion />} />
           </Route>
 

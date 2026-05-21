@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { BookOpen, Filter, X, Pencil } from 'lucide-react'
+import ExportButtons from '../components/common/ExportButtons'
 
 // ── Configuración de tipos ────────────────────────────────────────
 const AVP_KEYS = ['criterio_1_rotulo','criterio_2_fijacion','criterio_3_mantenimiento','criterio_4_pertinencia','criterio_5_educacion']
@@ -175,6 +176,22 @@ export default function Registros() {
         <div>
           <h1 className="page-title">Registros</h1>
           <p className="page-subtitle">Historial consolidado de todas las encuestas — últimos 100 por tipo</p>
+        </div>
+        <div className="ml-auto">
+          <ExportButtons
+            data={filtered}
+            columns={[
+              { header: 'Tipo',      key: 'tipoLabel' },
+              { header: 'Fecha',     key: 'fecha'     },
+              { header: 'Servicio',  key: 'servicio'  },
+              { header: 'Sujeto',    key: 'sujeto'    },
+              { header: 'Resultado', key: 'resultado' },
+              { header: 'Estado',    key: 'estado'    },
+            ]}
+            filename="registros"
+            title="Registros Consolidados"
+            subtitle={`${filtered.length} registros`}
+          />
         </div>
       </div>
 

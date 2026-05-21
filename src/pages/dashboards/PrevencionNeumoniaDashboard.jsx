@@ -65,27 +65,7 @@ export default function PrevencionNeumoniaDashboard() {
   const hasFilters = Object.values(filters).some(Boolean)
   function setF(k, v) { setFilters(p => ({ ...p, [k]: v })) }
 
-  if (loading) return (
-    <div className="p-8 flex justify-center">
-      <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
-  // KPIs
-  const totalCrit  = rows.length * PN_KEYS.length
-  const cumpleCrit = rows.reduce((acc, r) => acc + PN_KEYS.filter(k => r[k] === true).length, 0)
-  const pctAdh     = porcentaje(cumpleCrit, totalCrit)
-  const totalPaquete = rows.filter(r => PN_KEYS.every(k => r[k] === true)).length
-  const pctPaquete   = porcentaje(totalPaquete, rows.length)
-  const totalCasos   = rows.reduce((acc, r) => acc + (r.num_casos ?? 0), 0)
-
-  // Datos de criterios para gráfica
-  const criteriosData = PN_KEYS.map((k, i) => {
-    const c = rows.filter(r => r[k] === true).length
-    return { name: PN_LABELS[i], cumple: c, noCumple: rows.length - c }
-  })
-
-  // Tendencia semanal
+  // Tendencia semanal — ANTES del return condicional (Rules of Hooks)
   const semanaData = useMemo(() => {
     const map = {}
     rows.forEach(r => {
@@ -105,7 +85,7 @@ export default function PrevencionNeumoniaDashboard() {
     })).sort((a, b) => a.semana.localeCompare(b.semana))
   }, [rows])
 
-  // Resumen por ubicación
+  // Resumen por ubicación — ANTES del return condicional (Rules of Hooks)
   const summaryUb = useMemo(() => {
     const map = {}
     rows.forEach(r => {
@@ -121,6 +101,26 @@ export default function PrevencionNeumoniaDashboard() {
     return Object.values(map).map(r => ({ ...r, pct: porcentaje(r.cumple, r.total) }))
       .sort((a, b) => b.regs - a.regs)
   }, [rows])
+
+  if (loading) return (
+    <div className="p-8 flex justify-center">
+      <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+
+  // KPIs
+  const totalCrit  = rows.length * PN_KEYS.length
+  const cumpleCrit = rows.reduce((acc, r) => acc + PN_KEYS.filter(k => r[k] === true).length, 0)
+  const pctAdh     = porcentaje(cumpleCrit, totalCrit)
+  const totalPaquete = rows.filter(r => PN_KEYS.every(k => r[k] === true)).length
+  const pctPaquete   = porcentaje(totalPaquete, rows.length)
+  const totalCasos   = rows.reduce((acc, r) => acc + (r.num_casos ?? 0), 0)
+
+  // Datos de criterios para gráfica
+  const criteriosData = PN_KEYS.map((k, i) => {
+    const c = rows.filter(r => r[k] === true).length
+    return { name: PN_LABELS[i], cumple: c, noCumple: rows.length - c }
+  })
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-6">

@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, ClipboardList,
-  Kanban, BookOpen, FileBarChart2, Users, Settings, X,
+  Kanban, BookOpen, FileBarChart2, Settings, X,
   ShieldAlert, Hand, Microscope, Stethoscope, Activity,
   ChevronDown, ChevronRight,
 } from 'lucide-react'
@@ -106,8 +106,7 @@ export default function Sidebar({ open, onClose }) {
           <NavItem to="/reportes"      icon={FileBarChart2} label="Reportes"        iconColor="text-orange-300" />
 
           <div className="pt-2 border-t border-white/10 mt-2 space-y-0.5">
-            <NavItem to="/usuarios"      icon={Users}    label="Usuarios"      iconColor="text-teal-300"  />
-            <NavItem to="/configuracion" icon={Settings} label="Configuración" iconColor="text-white/60" />
+            <NavItem to="/configuracion" icon={Settings} label="Configuración" iconColor="text-teal-300" />
           </div>
         </nav>
 

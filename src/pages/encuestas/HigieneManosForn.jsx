@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import FileUpload from '../../components/common/FileUpload'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Save, BarChart3 } from 'lucide-react'
 
 const OPCIONES_MOMENTO = [
   { value: 'CUMPLE',      label: 'Cumple' },
@@ -114,7 +114,7 @@ export default function HigieneManosForn() {
     const payload = {
       ...vals,
       fecha_registro: new Date().toISOString(),
-      // sumatoria_cumplimiento: GENERATED ALWAYS AS — DB computes from momentos
+      sumatoria_cumplimiento: sumatoria,   // migración v5 → columna regular, hay que enviarlo
       // resultado_cumplimiento: GENERATED ALWAYS AS — DB computes from sumatoria
       adjuntos,
       registrado_por: user?.id,
@@ -132,13 +132,19 @@ export default function HigieneManosForn() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in max-w-3xl">
-      <div className="mb-6">
+      <div className="flex items-start gap-3 mb-6">
         <Link to="/encuestas/higiene-manos"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft className="w-3.5 h-3.5" /> Volver a registros
+          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors mt-1">
+          <ArrowLeft className="w-4 h-4" />
         </Link>
-        <h1 className="page-title">{isEdit ? 'Editar' : 'Nueva'} Observación — Higiene de Manos</h1>
-        <p className="page-subtitle">Verificación de los 5 momentos OMS para la higiene de manos</p>
+        <div className="flex-1">
+          <h1 className="page-title">{isEdit ? 'Editar' : 'Nueva'} Observación — Higiene de Manos</h1>
+          <p className="page-subtitle">Verificación de los 5 momentos OMS para la higiene de manos</p>
+        </div>
+        <Link to="/encuestas/higiene-manos/dashboard"
+          className="inline-flex items-center gap-1.5 btn-secondary text-xs mt-1">
+          <BarChart3 className="w-3.5 h-3.5" /> Dashboard
+        </Link>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

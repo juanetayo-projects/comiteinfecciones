@@ -42,28 +42,28 @@ function buildSummary(rows, key) {
 }
 
 function SummaryTable({ rows, nameLabel }) {
-  if (rows.length === 0) return <p className="text-sm text-slate-400 py-4 text-center">Sin datos</p>
+  if (rows.length === 0) return <p className="text-xs text-slate-400 py-4 text-center">Sin datos</p>
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full text-xs">
         <thead>
-          <tr className="border-b border-slate-200">
-            <th className="text-left pb-2 pr-4 font-medium text-slate-600">{nameLabel}</th>
-            <th className="text-center pb-2 px-2 font-medium text-emerald-600">CUMPLE</th>
-            <th className="text-center pb-2 px-2 font-medium text-red-600">NO CUMPLE</th>
-            <th className="text-center pb-2 px-2 font-medium text-slate-600">Total</th>
-            <th className="text-center pb-2 font-medium text-slate-600">% Cumpl.</th>
+          <tr className="bg-slate-800 text-white">
+            <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">{nameLabel}</th>
+            <th className="text-center px-2 py-2 font-semibold text-emerald-300">CUMPLE</th>
+            <th className="text-center px-2 py-2 font-semibold text-red-300">NO CUMPLE</th>
+            <th className="text-center px-2 py-2 font-semibold">Total</th>
+            <th className="text-center px-2 py-2 font-semibold rounded-tr-md">%</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-              <td className="py-2 pr-4 text-slate-700 font-medium">{r.nombre}</td>
-              <td className="py-2 px-2 text-center font-semibold text-emerald-600">{r.cumple}</td>
-              <td className="py-2 px-2 text-center font-semibold text-red-600">{r.noCumple}</td>
-              <td className="py-2 px-2 text-center text-slate-500">{r.total}</td>
-              <td className="py-2 text-center">
-                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold
+            <tr key={i} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-red-50 transition-colors`}>
+              <td className="px-2.5 py-1.5 text-slate-700 font-medium">{r.nombre}</td>
+              <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{r.cumple}</td>
+              <td className="px-2 py-1.5 text-center font-semibold text-red-600">{r.noCumple}</td>
+              <td className="px-2 py-1.5 text-center text-slate-500">{r.total}</td>
+              <td className="px-2 py-1.5 text-center">
+                <span className={`inline-block px-1.5 py-0.5 rounded-full font-semibold
                   ${r.pct >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                   {r.pct}%
                 </span>
@@ -228,8 +228,8 @@ export default function AislamentoDashboard() {
           {/* Gráficas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="card p-5">
-              <h3 className="section-title mb-4">Adherencia Global</h3>
-              <ResponsiveContainer width="100%" height={240}>
+              <h3 className="section-title mb-2">Adherencia Global</h3>
+              <ResponsiveContainer width="100%" height={170}>
                 <PieChart>
                   <Pie data={pieData} cx="50%" cy="50%" outerRadius={90}
                     dataKey="value" label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`}
@@ -242,8 +242,8 @@ export default function AislamentoDashboard() {
             </div>
 
             <div className="card p-5">
-              <h3 className="section-title mb-4">Adherencia por Servicio</h3>
-              <ResponsiveContainer width="100%" height={240}>
+              <h3 className="section-title mb-2">Adherencia por Servicio</h3>
+              <ResponsiveContainer width="100%" height={170}>
                 <BarChart data={barServicio} margin={{ left: -10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
@@ -257,8 +257,8 @@ export default function AislamentoDashboard() {
             </div>
 
             <div className="card p-5 lg:col-span-2">
-              <h3 className="section-title mb-4">Adherencia por Tipo de Aislamiento</h3>
-              <ResponsiveContainer width="100%" height={220}>
+              <h3 className="section-title mb-2">Adherencia por Tipo de Aislamiento</h3>
+              <ResponsiveContainer width="100%" height={155}>
                 <BarChart data={barTipo} margin={{ left: -10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
@@ -275,15 +275,15 @@ export default function AislamentoDashboard() {
           {/* Tablas resumen */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="card p-5">
-              <h3 className="section-title mb-4">Resumen por Servicio</h3>
+              <h3 className="section-title mb-2">Resumen por Servicio</h3>
               <SummaryTable rows={tableServicio} nameLabel="Servicio" />
             </div>
             <div className="card p-5">
-              <h3 className="section-title mb-4">Resumen por Profesional</h3>
+              <h3 className="section-title mb-2">Resumen por Profesional</h3>
               <SummaryTable rows={tableProfesional} nameLabel="Profesional" />
             </div>
             <div className="card p-5">
-              <h3 className="section-title mb-4">Resumen por Tipo Aislamiento</h3>
+              <h3 className="section-title mb-2">Resumen por Tipo Aislamiento</h3>
               <SummaryTable rows={tableTipo} nameLabel="Tipo" />
             </div>
           </div>
