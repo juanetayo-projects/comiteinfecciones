@@ -75,8 +75,9 @@ export default function LuminometriaForm() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const isEdit   = Boolean(id)
-  const [saving,   setSaving]   = useState(false)
-  const [adjuntos, setAdjuntos] = useState([])
+  const [saving,    setSaving]    = useState(false)
+  const [adjuntos,  setAdjuntos]  = useState([])
+  const [saveError, setSaveError] = useState('')
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -104,11 +105,15 @@ export default function LuminometriaForm() {
 
   async function onSubmit(values) {
     setSaving(true)
+    setSaveError('')
     const payload = { ...values, rango: rango ?? '', adjuntos, registrado_por: user?.id }
-    if (isEdit) {
-      await supabase.from('encuesta_luminometria').update(payload).eq('id', id)
-    } else {
-      await supabase.from('encuesta_luminometria').insert([payload])
+    const { error } = isEdit
+      ? await supabase.from('encuesta_luminometria').update(payload).eq('id', id)
+      : await supabase.from('encuesta_luminometria').insert([payload])
+    if (error) {
+      setSaveError(error.message)
+      setSaving(false)
+      return
     }
     navigate('/encuestas/luminometria')
   }
@@ -204,6 +209,12 @@ export default function LuminometriaForm() {
           <SH>Documentos Adjuntos</SH>
           <FileUpload value={adjuntos} onChange={setAdjuntos} folder="luminometria" />
         </div>
+
+        {saveError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            ⚠️ Error al guardar: {saveError}
+          </div>
+        )}
 
         <div className="flex items-center justify-end gap-3">
           <Link to="/encuestas/luminometria" className="btn-secondary">Cancelar</Link>

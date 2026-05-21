@@ -28,6 +28,7 @@ const schema = z.object({
   ubicacion_cama:              z.string().min(1, 'Requerido'),
   num_accesos:                 z.coerce.number().min(0).default(1),
   cc:                          z.string().optional(),
+  nombre_paciente:             z.string().optional(),
   criterio_1_rotulo:           z.boolean().default(false),
   criterio_2_fijacion:         z.boolean().default(false),
   criterio_3_mantenimiento:    z.boolean().default(false),
@@ -51,8 +52,9 @@ export default function AccesoVenosoForm() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const isEdit   = Boolean(id)
-  const [saving,   setSaving]   = useState(false)
-  const [adjuntos, setAdjuntos] = useState([])
+  const [saving,    setSaving]    = useState(false)
+  const [adjuntos,  setAdjuntos]  = useState([])
+  const [saveError, setSaveError] = useState('')
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -76,16 +78,20 @@ export default function AccesoVenosoForm() {
 
   async function onSubmit(values) {
     setSaving(true)
+    setSaveError('')
     const payload = {
       ...values,
       semana_mes: semanaMes,
       adjuntos,
       registrado_por: user?.id,
     }
-    if (isEdit) {
-      await supabase.from('encuesta_acceso_venoso').update(payload).eq('id', id)
-    } else {
-      await supabase.from('encuesta_acceso_venoso').insert([payload])
+    const { error } = isEdit
+      ? await supabase.from('encuesta_acceso_venoso').update(payload).eq('id', id)
+      : await supabase.from('encuesta_acceso_venoso').insert([payload])
+    if (error) {
+      setSaveError(error.message)
+      setSaving(false)
+      return
     }
     navigate('/encuestas/acceso-venoso')
   }
@@ -142,6 +148,10 @@ export default function AccesoVenosoForm() {
               <label className="label">C.C. del Paciente</label>
               <input className="input" placeholder="Número de documento" {...register('cc')} />
             </div>
+            <div>
+              <label className="label">Nombre del Paciente</label>
+              <input className="input" placeholder="Nombre completo del paciente" {...register('nombre_paciente')} />
+            </div>
           </div>
         </div>
 
@@ -190,6 +200,12 @@ export default function AccesoVenosoForm() {
           <SH>Documentos Adjuntos</SH>
           <FileUpload value={adjuntos} onChange={setAdjuntos} folder="acceso-venoso" />
         </div>
+
+        {saveError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            ⚠️ Error al guardar: {saveError}
+          </div>
+        )}
 
         <div className="flex items-center justify-end gap-3">
           <Link to="/encuestas/acceso-venoso" className="btn-secondary">Cancelar</Link>

@@ -130,6 +130,14 @@ const schema = z.object({
   rotulo_accesos_venosos:          z.string().optional(),
   rotulos_medicamentos:            z.string().optional(),
   estado:                          z.string().default('pendiente'),
+}).refine(data => {
+  if (data.hora_inicio_cirugia && data.hora_finalizacion_cirugia) {
+    return data.hora_finalizacion_cirugia >= data.hora_inicio_cirugia
+  }
+  return true
+}, {
+  message: 'La hora de finalización no puede ser anterior a la de inicio',
+  path: ['hora_finalizacion_cirugia'],
 })
 
 export default function RondaCirugiaForm() {
@@ -137,8 +145,9 @@ export default function RondaCirugiaForm() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const isEdit   = Boolean(id)
-  const [saving,   setSaving]   = useState(false)
-  const [adjuntos, setAdjuntos] = useState([])
+  const [saving,    setSaving]    = useState(false)
+  const [adjuntos,  setAdjuntos]  = useState([])
+  const [saveError, setSaveError] = useState('')
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -156,11 +165,15 @@ export default function RondaCirugiaForm() {
 
   async function onSubmit(values) {
     setSaving(true)
+    setSaveError('')
     const payload = { ...values, adjuntos, registrado_por: user?.id }
-    if (isEdit) {
-      await supabase.from('encuesta_ronda_cirugia').update(payload).eq('id', id)
-    } else {
-      await supabase.from('encuesta_ronda_cirugia').insert([payload])
+    const { error } = isEdit
+      ? await supabase.from('encuesta_ronda_cirugia').update(payload).eq('id', id)
+      : await supabase.from('encuesta_ronda_cirugia').insert([payload])
+    if (error) {
+      setSaveError(error.message)
+      setSaving(false)
+      return
     }
     navigate('/encuestas/ronda-cirugia')
   }
@@ -270,6 +283,9 @@ export default function RondaCirugiaForm() {
             <div>
               <label className="label">Hora Finalización Cirugía</label>
               <input type="time" className="input" {...register('hora_finalizacion_cirugia')} />
+              {errors.hora_finalizacion_cirugia && (
+                <p className="text-xs text-red-600 mt-1">{errors.hora_finalizacion_cirugia.message}</p>
+              )}
             </div>
             <SC label="Cumplimiento de profilaxis"                name="cumplimiento_profilaxis"          register={register} error={errors.cumplimiento_profilaxis} />
             <SC label="Refuerzo en cirugía prolongada"            name="refuerzo_antibiotico_prolongada"  register={register} error={errors.refuerzo_antibiotico_prolongada} />
@@ -309,6 +325,12 @@ export default function RondaCirugiaForm() {
           <SH>Documentos Adjuntos</SH>
           <FileUpload value={adjuntos} onChange={setAdjuntos} folder="ronda-cirugia" />
         </div>
+
+        {saveError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            ⚠️ Error al guardar: {saveError}
+          </div>
+        )}
 
         <div className="flex items-center justify-end gap-3">
           <Link to="/encuestas/ronda-cirugia" className="btn-secondary">Cancelar</Link>

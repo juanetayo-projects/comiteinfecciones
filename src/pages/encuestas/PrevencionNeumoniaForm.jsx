@@ -23,16 +23,17 @@ function calcSemanaMes(fechaStr) {
 }
 
 const schema = z.object({
-  fecha_registro:              z.string().min(1, 'Requerido'),
-  ubicacion_cama:              z.string().min(1, 'Requerido'),
-  num_casos:                   z.coerce.number().min(0).default(1),
-  documento_identificacion:    z.string().optional(),
-  criterio_1_cabecera:         z.boolean().default(false),
-  criterio_2_higiene_oral:     z.boolean().default(false),
-  criterio_3_implementos:      z.boolean().default(false),
+  fecha_registro:               z.string().min(1, 'Requerido'),
+  ubicacion_cama:               z.string().min(1, 'Requerido'),
+  num_casos:                    z.coerce.number().min(0).default(1),
+  documento_identificacion:     z.string().optional(),
+  nombre_paciente:              z.string().optional(),
+  criterio_1_cabecera:          z.boolean().default(false),
+  criterio_2_higiene_oral:      z.boolean().default(false),
+  criterio_3_implementos:       z.boolean().default(false),
   criterio_4_lista_chequeo_nav: z.boolean().default(false),
-  observacion_no_cumplimiento: z.string().optional(),
-  estado:                      z.string().default('pendiente'),
+  observacion_no_cumplimiento:  z.string().optional(),
+  estado:                       z.string().default('pendiente'),
 })
 
 function SH({ children }) {
@@ -48,8 +49,9 @@ export default function PrevencionNeumoniaForm() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const isEdit   = Boolean(id)
-  const [saving,   setSaving]   = useState(false)
-  const [adjuntos, setAdjuntos] = useState([])
+  const [saving,    setSaving]    = useState(false)
+  const [adjuntos,  setAdjuntos]  = useState([])
+  const [saveError, setSaveError] = useState('')
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -73,16 +75,20 @@ export default function PrevencionNeumoniaForm() {
 
   async function onSubmit(values) {
     setSaving(true)
+    setSaveError('')
     const payload = {
       ...values,
       semana_mes: semanaMes,
       adjuntos,
       registrado_por: user?.id,
     }
-    if (isEdit) {
-      await supabase.from('encuesta_prevencion_neumonia').update(payload).eq('id', id)
-    } else {
-      await supabase.from('encuesta_prevencion_neumonia').insert([payload])
+    const { error } = isEdit
+      ? await supabase.from('encuesta_prevencion_neumonia').update(payload).eq('id', id)
+      : await supabase.from('encuesta_prevencion_neumonia').insert([payload])
+    if (error) {
+      setSaveError(error.message)
+      setSaving(false)
+      return
     }
     navigate('/encuestas/prevencion-neumonia')
   }
@@ -139,6 +145,10 @@ export default function PrevencionNeumoniaForm() {
               <label className="label">Documento de Identificación</label>
               <input className="input" placeholder="Número de documento del paciente" {...register('documento_identificacion')} />
             </div>
+            <div>
+              <label className="label">Nombre del Paciente</label>
+              <input className="input" placeholder="Nombre completo del paciente" {...register('nombre_paciente')} />
+            </div>
           </div>
         </div>
 
@@ -182,6 +192,12 @@ export default function PrevencionNeumoniaForm() {
           <SH>Documentos Adjuntos</SH>
           <FileUpload value={adjuntos} onChange={setAdjuntos} folder="prevencion-neumonia" />
         </div>
+
+        {saveError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            ⚠️ Error al guardar: {saveError}
+          </div>
+        )}
 
         <div className="flex items-center justify-end gap-3">
           <Link to="/encuestas/prevencion-neumonia" className="btn-secondary">Cancelar</Link>

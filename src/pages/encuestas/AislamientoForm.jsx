@@ -61,8 +61,9 @@ export default function AislamientoForm() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const isEdit   = Boolean(id)
-  const [saving,   setSaving]   = useState(false)
-  const [adjuntos, setAdjuntos] = useState([])
+  const [saving,    setSaving]    = useState(false)
+  const [adjuntos,  setAdjuntos]  = useState([])
+  const [saveError, setSaveError] = useState('')
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -83,11 +84,15 @@ export default function AislamientoForm() {
 
   async function onSubmit(values) {
     setSaving(true)
+    setSaveError('')
     const payload = { ...values, adjuntos, registrado_por: user?.id }
-    if (isEdit) {
-      await supabase.from('encuesta_aislamiento').update(payload).eq('id', id)
-    } else {
-      await supabase.from('encuesta_aislamiento').insert([payload])
+    const { error } = isEdit
+      ? await supabase.from('encuesta_aislamiento').update(payload).eq('id', id)
+      : await supabase.from('encuesta_aislamiento').insert([payload])
+    if (error) {
+      setSaveError(error.message)
+      setSaving(false)
+      return
     }
     navigate('/encuestas/aislamiento')
   }
@@ -209,6 +214,12 @@ export default function AislamientoForm() {
           <SH>Documentos Adjuntos</SH>
           <FileUpload value={adjuntos} onChange={setAdjuntos} folder="aislamiento" />
         </div>
+
+        {saveError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            ⚠️ Error al guardar: {saveError}
+          </div>
+        )}
 
         <div className="flex items-center justify-end gap-3">
           <Link to="/encuestas/aislamiento" className="btn-secondary">Cancelar</Link>
