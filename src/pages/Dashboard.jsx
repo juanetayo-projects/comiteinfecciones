@@ -83,26 +83,27 @@ export default function Dashboard() {
       { data: pn },
     ] = await Promise.all([
       supabase.from('encuesta_aislamiento').select('adherencia, estado'),
-      supabase.from('encuesta_higiene_manos').select('adherencia, estado'),
-      supabase.from('encuesta_luminometria').select('adherencia, estado'),
-      supabase.from('encuesta_ronda_cirugia').select('adherencia, estado'),
-      supabase.from('encuesta_acceso_venoso').select('adherencia'),
-      supabase.from('encuesta_cateter_vesical').select('adherencia'),
-      supabase.from('encuesta_prevencion_neumonia').select('adherencia'),
+      supabase.from('encuesta_higiene_manos').select('resultado_cumplimiento, estado'),
+      supabase.from('encuesta_luminometria').select('rango, estado'),
+      supabase.from('encuesta_ronda_cirugia').select('cumplimiento_profilaxis, estado'),
+      supabase.from('encuesta_acceso_venoso').select('id'),
+      supabase.from('encuesta_cateter_vesical').select('id'),
+      supabase.from('encuesta_prevencion_neumonia').select('id'),
     ])
 
-    const calc = (arr) => ({
+    // Calcula total y cumplimientos según el campo correcto por tabla
+    const calcField = (arr, field) => ({
       total:  arr?.length ?? 0,
-      cumple: arr?.filter(r => r.adherencia === 'cumple').length ?? 0,
+      cumple: arr?.filter(r => r[field] === 'CUMPLE').length ?? 0,
     })
 
-    const a  = calc(aislamiento)
-    const h  = calc(higiene)
-    const l  = calc(luminometria)
-    const r  = calc(ronda)
-    const av = calc(avp)
-    const cv2 = calc(cv)
-    const pn2 = calc(pn)
+    const a   = calcField(aislamiento, 'adherencia')
+    const h   = calcField(higiene,      'resultado_cumplimiento')
+    const l   = calcField(luminometria, 'rango')
+    const r   = calcField(ronda,        'cumplimiento_profilaxis')
+    const av  = { total: avp?.length ?? 0,  cumple: 0 }
+    const cv2 = { total: cv?.length  ?? 0,  cumple: 0 }
+    const pn2 = { total: pn?.length  ?? 0,  cumple: 0 }
 
     const totalAll = a.total + h.total + l.total + r.total + av.total + cv2.total + pn2.total
     const cumpleAll = a.cumple + h.cumple + l.cumple + r.cumple + av.cumple + cv2.cumple + pn2.cumple
@@ -185,8 +186,8 @@ export default function Dashboard() {
                     <p className="text-xs text-slate-400">{formatDate(r.created_at)}</p>
                   </div>
                 </div>
-                <span className={`badge ${r.adherencia === 'cumple' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                  {r.adherencia === 'cumple' ? 'Cumple' : 'No Cumple'}
+                <span className={`badge ${r.adherencia === 'CUMPLE' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                  {r.adherencia === 'CUMPLE' ? 'Cumple' : 'No Cumple'}
                 </span>
               </div>
             ))}

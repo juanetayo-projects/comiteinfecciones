@@ -85,8 +85,9 @@ export default function App() {
             <Route path="/encuestas/ronda-cirugia/:id/editar" element={<RondaCirugiaForm />} />
             <Route path="/encuestas/ronda-cirugia/dashboard"  element={<RondaDashboard />} />
 
-            {/* Seguimiento Dispositivos — hub */}
-            <Route path="/encuestas/seguimiento-dispositivos" element={<SeguimientoDispositivos />} />
+            {/* Seguimiento Dispositivos — hub + dashboard */}
+            <Route path="/encuestas/seguimiento-dispositivos"           element={<SeguimientoDispositivos />} />
+            <Route path="/encuestas/seguimiento-dispositivos/dashboard" element={<DispositivosDashboard />} />
 
             {/* Acceso Venoso Periférico */}
             <Route path="/encuestas/acceso-venoso"            element={<AccesoVenoso />} />

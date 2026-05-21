@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Syringe, Droplets, Wind, ChevronRight } from 'lucide-react'
+import { Syringe, Droplets, Wind, ChevronRight, BarChart3 } from 'lucide-react'
 
 const DISPOSITIVOS = [
   {
@@ -37,11 +37,17 @@ const DISPOSITIVOS = [
 export default function SeguimientoDispositivos() {
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="mb-8">
-        <h1 className="page-title">Seguimiento de Dispositivos</h1>
-        <p className="page-subtitle mt-1">
-          Vigilancia de dispositivos invasivos — selecciona el módulo a registrar
-        </p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="page-title">Seguimiento de Dispositivos</h1>
+          <p className="page-subtitle mt-1">
+            Vigilancia de dispositivos invasivos — selecciona el módulo a registrar
+          </p>
+        </div>
+        <Link to="/encuestas/seguimiento-dispositivos/dashboard"
+          className="btn-secondary text-xs gap-1.5">
+          <BarChart3 className="w-3.5 h-3.5" /> Dashboard
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
