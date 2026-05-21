@@ -4,18 +4,22 @@ import { supabase } from '../../lib/supabase'
 import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
-import { Plus, Pencil, Trash2, Stethoscope, BarChart3 } from 'lucide-react'
+import { Plus, Paperclip, Pencil, Trash2, Stethoscope, BarChart3 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import AdjuntosModal from '../../components/common/AdjuntosModal'
 
 function cumpleColor(v) {
-  if (v === 'cumple')    return 'bg-emerald-100 text-emerald-800'
-  if (v === 'no_cumple') return 'bg-red-100 text-red-800'
+  if (v === 'CUMPLE')    return 'bg-emerald-100 text-emerald-800'
+  if (v === 'NO CUMPLE') return 'bg-red-100 text-red-800'
+  if (v === 'NO APLICA') return 'bg-slate-100 text-slate-600'
+  if (v === 'SIN DATO')  return 'bg-yellow-100 text-yellow-700'
   return 'bg-slate-100 text-slate-600'
 }
 function cumpleLabel(v) {
-  if (v === 'cumple')    return 'Cumple'
-  if (v === 'no_cumple') return 'No Cumple'
-  if (v === 'na')        return 'N/A'
+  if (v === 'CUMPLE')    return 'Cumple'
+  if (v === 'NO CUMPLE') return 'No Cumple'
+  if (v === 'NO APLICA') return 'N/A'
+  if (v === 'SIN DATO')  return 'Sin dato'
   return v || '—'
 }
 
@@ -30,8 +34,9 @@ const EXPORT_COLS = [
 ]
 
 export default function RondaCirugia() {
-  const [data,    setData]    = useState([])
-  const [loading, setLoading] = useState(true)
+  const [data,     setData]     = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [adjModal, setAdjModal] = useState(null)
   const { rol }  = useAuth()
 
   useEffect(() => { load() }, [])
@@ -107,6 +112,16 @@ export default function RondaCirugia() {
             emptyMessage="No hay registros de ronda de cirugía"
             actions={row => (
               <div className="flex items-center justify-end gap-1">
+                <button
+                  onClick={() => setAdjModal(row.adjuntos ?? [])}
+                  title={`${row.adjuntos?.length ?? 0} adjunto(s)`}
+                  className={`p-1.5 rounded-lg hover:bg-slate-100 transition-colors ${
+                    (row.adjuntos?.length > 0)
+                      ? 'text-blue-500 hover:text-blue-700'
+                      : 'text-slate-300 cursor-default'
+                  }`}>
+                  <Paperclip className="w-3.5 h-3.5" />
+                </button>
                 {rol !== 'auxiliar' && (
                   <Link to={`/encuestas/ronda-cirugia/${row.id}/editar`}
                     className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-purple-600 transition-colors">
@@ -124,6 +139,8 @@ export default function RondaCirugia() {
           />
         )}
       </div>
+
+      <AdjuntosModal adjuntos={adjModal} onClose={() => setAdjModal(null)} />
     </div>
   )
 }
