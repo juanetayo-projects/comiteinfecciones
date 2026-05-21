@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save } from 'lucide-react'
 
 // Listas extraídas del archivo Excel rondacirugia.xlsx — hoja "listas"
@@ -77,6 +78,14 @@ const OPC = [
   { value: 'SIN DATO',  label: 'Sin Dato' },
 ]
 
+function SH({ children }) {
+  return (
+    <div className="px-3 py-2 bg-amber-50 border-l-4 border-amber-400 rounded-r-md mb-4">
+      <h3 className="text-sm font-semibold text-amber-900">{children}</h3>
+    </div>
+  )
+}
+
 function SC({ label, name, register, error }) {
   return (
     <div>
@@ -97,6 +106,8 @@ const schema = z.object({
   especialidad:                    z.string().optional(),
   procedimiento:                   z.string().optional(),
   profesional:                     z.string().min(1, 'Requerido'),
+  identificacion_paciente:         z.string().optional(),
+  nombre_paciente:                 z.string().optional(),
   jabones_toallas:                 z.string().optional(),
   guardianes_fijos_rotulados:      z.string().optional(),
   buena_senalizacion:              z.string().optional(),
@@ -126,7 +137,8 @@ export default function RondaCirugiaForm() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const isEdit   = Boolean(id)
-  const [saving, setSaving] = useState(false)
+  const [saving,   setSaving]   = useState(false)
+  const [adjuntos, setAdjuntos] = useState([])
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -136,13 +148,15 @@ export default function RondaCirugiaForm() {
   useEffect(() => {
     if (isEdit) {
       supabase.from('encuesta_ronda_cirugia').select('*').eq('id', id).single()
-        .then(({ data }) => { if (data) reset(data) })
+        .then(({ data }) => {
+          if (data) { reset(data); setAdjuntos(data.adjuntos ?? []) }
+        })
     }
   }, [id])
 
   async function onSubmit(values) {
     setSaving(true)
-    const payload = { ...values, registrado_por: user?.id }
+    const payload = { ...values, adjuntos, registrado_por: user?.id }
     if (isEdit) {
       await supabase.from('encuesta_ronda_cirugia').update(payload).eq('id', id)
     } else {
@@ -166,7 +180,7 @@ export default function RondaCirugiaForm() {
 
         {/* Identificación del procedimiento */}
         <div className="card p-5">
-          <h3 className="section-title mb-4">Identificación del Procedimiento</h3>
+          <SH>Identificación del Procedimiento</SH>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">Fecha *</label>
@@ -211,12 +225,20 @@ export default function RondaCirugiaForm() {
               </select>
               {errors.profesional && <p className="text-xs text-red-600 mt-1">{errors.profesional.message}</p>}
             </div>
+            <div>
+              <label className="label">Identificación del Paciente</label>
+              <input className="input" placeholder="Número de documento" {...register('identificacion_paciente')} />
+            </div>
+            <div>
+              <label className="label">Nombre del Paciente</label>
+              <input className="input" placeholder="Nombre completo del paciente" {...register('nombre_paciente')} />
+            </div>
           </div>
         </div>
 
         {/* Condiciones del área */}
         <div className="card p-5">
-          <h3 className="section-title mb-4">Condiciones del Área Quirúrgica</h3>
+          <SH>Condiciones del Área Quirúrgica</SH>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SC label="Jabones y toallas disponibles"             name="jabones_toallas"            register={register} error={errors.jabones_toallas} />
             <SC label="Guardianes fijos y rotulados"              name="guardianes_fijos_rotulados" register={register} error={errors.guardianes_fijos_rotulados} />
@@ -230,7 +252,7 @@ export default function RondaCirugiaForm() {
 
         {/* Profilaxis antibiótica */}
         <div className="card p-5">
-          <h3 className="section-title mb-4">Profilaxis Antibiótica</h3>
+          <SH>Profilaxis Antibiótica</SH>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SC label="Antibiótico colocado antes de incisión"    name="coloca_antibiotico_antes"         register={register} error={errors.coloca_antibiotico_antes} />
             <div>
@@ -256,7 +278,7 @@ export default function RondaCirugiaForm() {
 
         {/* Prácticas del equipo */}
         <div className="card p-5">
-          <h3 className="section-title mb-4">Prácticas del Equipo Quirúrgico</h3>
+          <SH>Prácticas del Equipo Quirúrgico</SH>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SC label="Lavado de manos quirúrgico"                name="lavado_manos_quirurgico"         register={register} error={errors.lavado_manos_quirurgico} />
             <SC label="EPP completo"                              name="epp_completo"                    register={register} error={errors.epp_completo} />
@@ -268,8 +290,9 @@ export default function RondaCirugiaForm() {
           </div>
         </div>
 
-        {/* Estado */}
+        {/* Estado y adjuntos */}
         <div className="card p-5">
+          <SH>Observaciones y Estado</SH>
           <div className="max-w-xs">
             <label className="label">Estado</label>
             <select className="input" {...register('estado')}>
@@ -279,6 +302,12 @@ export default function RondaCirugiaForm() {
               <option value="cerrado">Cerrado</option>
             </select>
           </div>
+        </div>
+
+        {/* Documentos adjuntos */}
+        <div className="card p-5">
+          <SH>Documentos Adjuntos</SH>
+          <FileUpload value={adjuntos} onChange={setAdjuntos} folder="ronda-cirugia" />
         </div>
 
         <div className="flex items-center justify-end gap-3">

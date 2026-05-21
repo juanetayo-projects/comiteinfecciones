@@ -5,6 +5,7 @@ import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
 import { Plus, Pencil, Trash2, Wind, ArrowLeft } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 const EXPORT_COLS = [
   { key: 'fecha_registro',         label: 'Fecha',      width: 12 },
@@ -17,6 +18,7 @@ const EXPORT_COLS = [
 export default function PrevencionNeumonia() {
   const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(true)
+  const { rol }  = useAuth()
 
   useEffect(() => { load() }, [])
 
@@ -95,14 +97,18 @@ export default function PrevencionNeumonia() {
             emptyMessage="No hay registros de prevención de neumonía"
             actions={row => (
               <div className="flex items-center justify-end gap-1">
-                <Link to={`/encuestas/prevencion-neumonia/${row.id}/editar`}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-violet-600 transition-colors">
-                  <Pencil className="w-3.5 h-3.5" />
-                </Link>
-                <button onClick={() => handleDelete(row.id)}
-                  className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {rol !== 'auxiliar' && (
+                  <Link to={`/encuestas/prevencion-neumonia/${row.id}/editar`}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-violet-600 transition-colors">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+                {rol === 'administrador' && (
+                  <button onClick={() => handleDelete(row.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             )}
           />

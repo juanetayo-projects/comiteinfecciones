@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts'
-import { ArrowLeft, Hand } from 'lucide-react'
+import { ArrowLeft, Hand, Filter, X } from 'lucide-react'
 
 const PIE_COLORS = ['#10b981', '#f87171']
 
@@ -26,14 +26,34 @@ function KpiCard({ label, value, sub, color = 'slate' }) {
   )
 }
 
+const INIT_FILTERS = { desde: '', hasta: '', servicio: '', perfil: '' }
+
 export default function HigieneDashboard() {
-  const [data, setData]       = useState([])
+  const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState(INIT_FILTERS)
 
   useEffect(() => {
     supabase.from('encuesta_higiene_manos').select('*').order('fecha_evaluacion', { ascending: false })
       .then(({ data: rows }) => { setData(rows ?? []); setLoading(false) })
   }, [])
+
+  const servicios = useMemo(() => [...new Set(data.map(r => r.servicio_evaluado).filter(Boolean))].sort(), [data])
+  const perfiles  = useMemo(() => [...new Set(data.map(r => r.perfil_colaborador).filter(Boolean))].sort(), [data])
+
+  const filtered = useMemo(() => {
+    return data.filter(r => {
+      if (filters.desde   && r.fecha_evaluacion < filters.desde)                return false
+      if (filters.hasta   && r.fecha_evaluacion > filters.hasta)                return false
+      if (filters.servicio && r.servicio_evaluado !== filters.servicio)         return false
+      if (filters.perfil  && r.perfil_colaborador !== filters.perfil)           return false
+      return true
+    })
+  }, [data, filters])
+
+  const hasFilters = Object.values(filters).some(Boolean)
+  function clearFilters() { setFilters(INIT_FILTERS) }
+  function setF(key, val) { setFilters(prev => ({ ...prev, [key]: val })) }
 
   if (loading) return (
     <div className="p-8 flex justify-center">
@@ -41,47 +61,67 @@ export default function HigieneDashboard() {
     </div>
   )
 
-  const total    = data.length
-  const cumple   = data.filter(r => r.resultado_cumplimiento === 'CUMPLE').length
+  const total    = filtered.length
+  const cumple   = filtered.filter(r => r.resultado_cumplimiento === 'CUMPLE').length
   const noCumple = total - cumple
   const pct      = total > 0 ? Math.round((cumple / total) * 100) : 0
-
   const avgSumatoria = total > 0
-    ? (data.reduce((s, r) => s + (r.sumatoria_cumplimiento ?? 0), 0) / total).toFixed(1)
+    ? (filtered.reduce((s, r) => s + (r.sumatoria_cumplimiento ?? 0), 0) / total).toFixed(1)
     : 0
 
-  // PieChart
   const pieData = [
     { name: 'CUMPLE',    value: cumple },
     { name: 'NO CUMPLE', value: noCumple },
   ].filter(d => d.value > 0)
 
-  // Por servicio
-  const byServicio = {}
-  data.forEach(r => {
-    const s = r.servicio_evaluado || 'Sin servicio'
-    if (!byServicio[s]) byServicio[s] = { name: s, CUMPLE: 0, 'NO CUMPLE': 0 }
-    r.resultado_cumplimiento === 'CUMPLE' ? byServicio[s].CUMPLE++ : byServicio[s]['NO CUMPLE']++
-  })
-  const barServicio = Object.values(byServicio)
+  const barServicio = Object.values(
+    filtered.reduce((acc, r) => {
+      const s = r.servicio_evaluado || 'Sin servicio'
+      if (!acc[s]) acc[s] = { name: s, CUMPLE: 0, 'NO CUMPLE': 0 }
+      r.resultado_cumplimiento === 'CUMPLE' ? acc[s].CUMPLE++ : acc[s]['NO CUMPLE']++
+      return acc
+    }, {})
+  )
 
-  // Por perfil colaborador
-  const byPerfil = {}
-  data.forEach(r => {
-    const p = r.perfil_colaborador || 'Sin perfil'
-    if (!byPerfil[p]) byPerfil[p] = { name: p, CUMPLE: 0, 'NO CUMPLE': 0 }
-    r.resultado_cumplimiento === 'CUMPLE' ? byPerfil[p].CUMPLE++ : byPerfil[p]['NO CUMPLE']++
-  })
-  const barPerfil = Object.values(byPerfil)
+  const barPerfil = Object.values(
+    filtered.reduce((acc, r) => {
+      const p = r.perfil_colaborador || 'Sin perfil'
+      if (!acc[p]) acc[p] = { name: p, CUMPLE: 0, 'NO CUMPLE': 0 }
+      r.resultado_cumplimiento === 'CUMPLE' ? acc[p].CUMPLE++ : acc[p]['NO CUMPLE']++
+      return acc
+    }, {})
+  )
 
-  // Distribución sumatoria 0-5
   const sumDist = [0,1,2,3,4,5].map(v => ({
     name: `${v}/5`,
-    cantidad: data.filter(r => r.sumatoria_cumplimiento === v).length,
+    cantidad: filtered.filter(r => r.sumatoria_cumplimiento === v).length,
   }))
+
+  // Tabla por servicio + perfil
+  const tableServicioPerfil = useMemo(() => {
+    const map = {}
+    filtered.forEach(r => {
+      const key = `${r.servicio_evaluado || 'Sin servicio'}__${r.perfil_colaborador || 'Sin perfil'}`
+      if (!map[key]) map[key] = {
+        servicio: r.servicio_evaluado || 'Sin servicio',
+        perfil:   r.perfil_colaborador || 'Sin perfil',
+        total: 0, cumple: 0,
+        sumTotal: 0,
+      }
+      map[key].total++
+      map[key].sumTotal += r.sumatoria_cumplimiento ?? 0
+      if (r.resultado_cumplimiento === 'CUMPLE') map[key].cumple++
+    })
+    return Object.values(map).map(r => ({
+      ...r,
+      pct: Math.round((r.cumple / r.total) * 100),
+      avgSuma: (r.sumTotal / r.total).toFixed(1),
+    })).sort((a, b) => a.servicio.localeCompare(b.servicio) || a.perfil.localeCompare(b.perfil))
+  }, [filtered])
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-3">
         <Link to="/encuestas/higiene-manos"
           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
@@ -96,76 +136,162 @@ export default function HigieneDashboard() {
         </div>
       </div>
 
+      {/* Filtros */}
+      <div className="card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Filter className="w-4 h-4 text-slate-500" />
+          <span className="text-sm font-medium text-slate-700">Filtros</span>
+          {hasFilters && (
+            <button onClick={clearFilters}
+              className="ml-auto flex items-center gap-1 text-xs text-slate-500 hover:text-red-600 transition-colors">
+              <X className="w-3 h-3" /> Limpiar filtros
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">Desde</label>
+            <input type="date" className="input text-sm"
+              value={filters.desde} onChange={e => setF('desde', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">Hasta</label>
+            <input type="date" className="input text-sm"
+              value={filters.hasta} onChange={e => setF('hasta', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">Servicio</label>
+            <select className="input text-sm" value={filters.servicio} onChange={e => setF('servicio', e.target.value)}>
+              <option value="">Todos</option>
+              {servicios.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">Perfil Colaborador</label>
+            <select className="input text-sm" value={filters.perfil} onChange={e => setF('perfil', e.target.value)}>
+              <option value="">Todos</option>
+              {perfiles.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+        </div>
+        {hasFilters && (
+          <p className="text-xs text-indigo-600 mt-2">{total} de {data.length} registros mostrados</p>
+        )}
+      </div>
+
+      {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="Total Observaciones" value={total}          color="indigo" />
-        <KpiCard label="Cumplimiento Global"  value={`${pct}%`}     color={pct >= 80 ? 'emerald' : 'red'} sub={`${cumple} CUMPLE`} />
-        <KpiCard label="Prom. Sumatoria"      value={avgSumatoria}  color="blue" sub="momentos / observación" />
-        <KpiCard label="NO CUMPLE"            value={noCumple}      color="red" />
+        <KpiCard label="Total Observaciones" value={total}         color="indigo" />
+        <KpiCard label="Cumplimiento Global"  value={`${pct}%`}    color={pct >= 80 ? 'emerald' : 'red'} sub={`${cumple} CUMPLE`} />
+        <KpiCard label="Prom. Sumatoria"      value={avgSumatoria} color="blue" sub="momentos / observación" />
+        <KpiCard label="NO CUMPLE"            value={noCumple}     color="red" />
       </div>
 
       {total === 0 ? (
-        <div className="card p-8 text-center text-slate-400">No hay registros disponibles</div>
+        <div className="card p-8 text-center text-slate-400">No hay registros para los filtros seleccionados</div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <>
+          {/* Gráficas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="card p-5">
+              <h3 className="section-title mb-4">Resultado Global</h3>
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" outerRadius={90}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`}
+                    labelLine={false}>
+                    {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
 
-          <div className="card p-5">
-            <h3 className="section-title mb-4">Resultado Global</h3>
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" outerRadius={90}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`}
-                  labelLine={false}>
-                  {pieData.map((e, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="card p-5">
+              <h3 className="section-title mb-4">Distribución Sumatoria (0–5 momentos)</h3>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={sumDist} margin={{ left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="cantidad" fill="#3b82f6" radius={[3,3,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="card p-5">
+              <h3 className="section-title mb-4">Cumplimiento por Servicio</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={barServicio} margin={{ left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="CUMPLE"    fill="#10b981" stackId="a" />
+                  <Bar dataKey="NO CUMPLE" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="card p-5">
+              <h3 className="section-title mb-4">Cumplimiento por Perfil</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={barPerfil} margin={{ left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="CUMPLE"    fill="#10b981" stackId="a" />
+                  <Bar dataKey="NO CUMPLE" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
+          {/* Tabla detalle por servicio + perfil */}
           <div className="card p-5">
-            <h3 className="section-title mb-4">Distribución Sumatoria (0–5 momentos)</h3>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={sumDist} margin={{ left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Bar dataKey="cantidad" fill="#3b82f6" radius={[3,3,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <h3 className="section-title mb-4">Detalle por Servicio y Perfil de Colaborador</h3>
+            {tableServicioPerfil.length === 0 ? (
+              <p className="text-sm text-slate-400 py-4 text-center">Sin datos</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left pb-2 pr-4 font-medium text-slate-600">Servicio</th>
+                      <th className="text-left pb-2 pr-4 font-medium text-slate-600">Perfil Colaborador</th>
+                      <th className="text-center pb-2 px-2 font-medium text-slate-600">Registros</th>
+                      <th className="text-center pb-2 px-2 font-medium text-emerald-600">CUMPLE</th>
+                      <th className="text-center pb-2 px-2 font-medium text-blue-600">Prom. Suma</th>
+                      <th className="text-center pb-2 font-medium text-slate-600">% Cumpl.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tableServicioPerfil.map((r, i) => (
+                      <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td className="py-2 pr-4 text-slate-700 font-medium">{r.servicio}</td>
+                        <td className="py-2 pr-4 text-slate-600">{r.perfil}</td>
+                        <td className="py-2 px-2 text-center text-slate-500">{r.total}</td>
+                        <td className="py-2 px-2 text-center font-semibold text-emerald-600">{r.cumple}</td>
+                        <td className="py-2 px-2 text-center text-blue-600 font-semibold">{r.avgSuma}</td>
+                        <td className="py-2 text-center">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold
+                            ${r.pct >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                            {r.pct}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-
-          <div className="card p-5">
-            <h3 className="section-title mb-4">Cumplimiento por Servicio</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={barServicio} margin={{ left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="CUMPLE"    fill="#10b981" stackId="a" />
-                <Bar dataKey="NO CUMPLE" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="card p-5">
-            <h3 className="section-title mb-4">Cumplimiento por Perfil</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={barPerfil} margin={{ left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="CUMPLE"    fill="#10b981" stackId="a" />
-                <Bar dataKey="NO CUMPLE" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        </>
       )}
     </div>
   )

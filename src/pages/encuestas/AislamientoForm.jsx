@@ -5,20 +5,16 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save } from 'lucide-react'
 
-const SERVICIOS_AISLAMIENTO = [
-  'HOSPITALIZACIÓN 2', 'HOSPITALIZACIÓN', 'URGENCIAS', 'UCI',
-]
-
+const SERVICIOS_AISLAMIENTO = ['HOSPITALIZACIÓN 2', 'HOSPITALIZACIÓN', 'URGENCIAS', 'UCI']
 const PROFESIONALES = [
-  'AUXILIAR', 'ENFERMERA (O)', 'MEDICO', 'MEDICO ESPECIALISTA',
-  'FISIOTERAPEUTA', 'TERAPEUTA RESPIRATORIO', 'INTERNO', 'NUTRICIONISTA',
+  'AUXILIAR', 'ENFERMERA (O)', 'FISIOTERAPEUTA', 'INTERNO',
+  'MEDICO', 'MEDICO ESPECIALISTA', 'NUTRICIONISTA', 'TERAPEUTA RESPIRATORIO',
 ]
-
-const TIPOS_AISLAMIENTO = ['CONTACTO', 'COHORTIZACIÓN', 'GOTAS', 'VIA AEREA']
-
-const TIPOS_TAPABOCA = ['QUIRURGICO', 'ALTA EFICIENCIA', 'NO', 'NA']
+const TIPOS_AISLAMIENTO = ['COHORTIZACIÓN', 'CONTACTO', 'GOTAS', 'VIA AEREA']
+const TIPOS_TAPABOCA    = ['ALTA EFICIENCIA', 'NA', 'NO', 'QUIRURGICO']
 
 const CRITERIOS_BOOL = [
   { name: 'tiene_afiche',          label: 'Tiene Afiche' },
@@ -51,12 +47,22 @@ const schema = z.object({
   estado:                  z.string().default('pendiente'),
 })
 
+// Encabezado de sección con color cálido
+function SH({ children }) {
+  return (
+    <div className="px-3 py-2 bg-amber-50 border-l-4 border-amber-400 rounded-r-md mb-4">
+      <h3 className="text-sm font-semibold text-amber-900">{children}</h3>
+    </div>
+  )
+}
+
 export default function AislamientoForm() {
   const { id }   = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
   const isEdit   = Boolean(id)
-  const [saving, setSaving] = useState(false)
+  const [saving,   setSaving]   = useState(false)
+  const [adjuntos, setAdjuntos] = useState([])
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -66,13 +72,18 @@ export default function AislamientoForm() {
   useEffect(() => {
     if (isEdit) {
       supabase.from('encuesta_aislamiento').select('*').eq('id', id).single()
-        .then(({ data }) => { if (data) reset(data) })
+        .then(({ data }) => {
+          if (data) {
+            reset(data)
+            setAdjuntos(data.adjuntos ?? [])
+          }
+        })
     }
   }, [id])
 
   async function onSubmit(values) {
     setSaving(true)
-    const payload = { ...values, registrado_por: user?.id }
+    const payload = { ...values, adjuntos, registrado_por: user?.id }
     if (isEdit) {
       await supabase.from('encuesta_aislamiento').update(payload).eq('id', id)
     } else {
@@ -96,7 +107,7 @@ export default function AislamientoForm() {
 
         {/* Datos generales */}
         <div className="card p-5">
-          <h3 className="section-title mb-4">Datos Generales</h3>
+          <SH>Datos Generales</SH>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">Fecha de Registro *</label>
@@ -132,7 +143,7 @@ export default function AislamientoForm() {
 
         {/* Criterios de adherencia */}
         <div className="card p-5">
-          <h3 className="section-title mb-4">Criterios de Adherencia</h3>
+          <SH>Criterios de Adherencia</SH>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {CRITERIOS_BOOL.map(c => (
               <label key={c.name}
@@ -151,16 +162,25 @@ export default function AislamientoForm() {
           </div>
         </div>
 
-        {/* Resultado y cierre */}
+        {/* Resultado */}
         <div className="card p-5">
+          <SH>Resultado y Cierre</SH>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Adherencia — Radio buttons */}
             <div>
               <label className="label">Adherencia *</label>
-              <select className="input" {...register('adherencia')}>
-                <option value="">Seleccionar...</option>
-                <option value="CUMPLE">CUMPLE</option>
-                <option value="NO CUMPLE">NO CUMPLE</option>
-              </select>
+              <div className="flex gap-6 mt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" value="CUMPLE" className="w-4 h-4 accent-emerald-600"
+                    {...register('adherencia')} />
+                  <span className="text-sm font-medium text-emerald-700">CUMPLE</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" value="NO CUMPLE" className="w-4 h-4 accent-red-600"
+                    {...register('adherencia')} />
+                  <span className="text-sm font-medium text-red-700">NO CUMPLE</span>
+                </label>
+              </div>
             </div>
             <div>
               <label className="label">Estado</label>
@@ -173,7 +193,8 @@ export default function AislamientoForm() {
             </div>
             <div>
               <label className="label">Nombre del Evaluado</label>
-              <input className="input" placeholder="Nombre del paciente / persona evaluada" {...register('nombre_evaluado')} />
+              <input className="input" placeholder="Nombre del paciente / persona evaluada"
+                {...register('nombre_evaluado')} />
             </div>
             <div className="sm:col-span-2">
               <label className="label">Observación</label>
@@ -181,6 +202,12 @@ export default function AislamientoForm() {
                 placeholder="Notas adicionales..." {...register('observacion')} />
             </div>
           </div>
+        </div>
+
+        {/* Documentos adjuntos */}
+        <div className="card p-5">
+          <SH>Documentos Adjuntos</SH>
+          <FileUpload value={adjuntos} onChange={setAdjuntos} folder="aislamiento" />
         </div>
 
         <div className="flex items-center justify-end gap-3">

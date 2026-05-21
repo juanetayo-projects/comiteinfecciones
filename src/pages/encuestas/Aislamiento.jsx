@@ -5,6 +5,7 @@ import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
 import { Plus, Eye, Pencil, Trash2, ShieldAlert, BarChart3 } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 const EXPORT_COLS = [
   { key: 'fecha_registro',   label: 'Fecha',             width: 12 },
@@ -20,6 +21,7 @@ export default function Aislamiento() {
   const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const { rol }  = useAuth()
 
   useEffect(() => { load() }, [])
 
@@ -104,14 +106,18 @@ export default function Aislamiento() {
                   className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors">
                   <Eye className="w-3.5 h-3.5" />
                 </Link>
-                <Link to={`/encuestas/aislamiento/${row.id}/editar`}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors">
-                  <Pencil className="w-3.5 h-3.5" />
-                </Link>
-                <button onClick={() => handleDelete(row.id)}
-                  className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {rol !== 'auxiliar' && (
+                  <Link to={`/encuestas/aislamiento/${row.id}/editar`}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+                {rol === 'administrador' && (
+                  <button onClick={() => handleDelete(row.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             )}
           />

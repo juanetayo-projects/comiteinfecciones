@@ -5,6 +5,7 @@ import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
 import { Plus, Pencil, Trash2, Hand, BarChart3 } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 function cumpleColor(v) {
   if (v === 'Cumple')    return 'bg-emerald-100 text-emerald-800'
@@ -25,6 +26,7 @@ const EXPORT_COLS = [
 export default function HigieneManos() {
   const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(true)
+  const { rol }  = useAuth()
 
   useEffect(() => { load() }, [])
 
@@ -100,14 +102,18 @@ export default function HigieneManos() {
             emptyMessage="No hay registros de higiene de manos"
             actions={row => (
               <div className="flex items-center justify-end gap-1">
-                <Link to={`/encuestas/higiene-manos/${row.id}/editar`}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors">
-                  <Pencil className="w-3.5 h-3.5" />
-                </Link>
-                <button onClick={() => handleDelete(row.id)}
-                  className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {rol !== 'auxiliar' && (
+                  <Link to={`/encuestas/higiene-manos/${row.id}/editar`}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+                {rol === 'administrador' && (
+                  <button onClick={() => handleDelete(row.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             )}
           />

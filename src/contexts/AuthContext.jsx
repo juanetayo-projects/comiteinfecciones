@@ -58,7 +58,10 @@ export function AuthProvider({ children }) {
     return { error }
   }
 
-  const value = { user, profile, loading, needsPasswordReset, signIn, signOut, updatePassword }
+  // Shorthand: 'administrador' | 'coordinador' | 'auxiliar'
+  const rol = profile?.rol ?? 'auxiliar'
+
+  const value = { user, profile, rol, loading, needsPasswordReset, signIn, signOut, updatePassword }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
