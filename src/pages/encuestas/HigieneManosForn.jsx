@@ -114,7 +114,7 @@ export default function HigieneManosForn() {
     const payload = {
       ...vals,
       fecha_registro: new Date().toISOString(),
-      sumatoria_cumplimiento: sumatoria,
+      // sumatoria_cumplimiento is a GENERATED ALWAYS AS column — DB computes it automatically
       resultado_cumplimiento: resultado,
       adjuntos,
       registrado_por: user?.id,

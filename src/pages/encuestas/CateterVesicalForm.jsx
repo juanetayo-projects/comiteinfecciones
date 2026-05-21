@@ -85,7 +85,7 @@ export default function CateterVesicalForm() {
     setSaveError('')
     const payload = {
       ...values,
-      semana_mes: semanaMes,
+      // semana_mes is a GENERATED ALWAYS AS column — DB computes it from fecha_registro
       fecha_no_cumple_lista: values.fecha_no_cumple_lista || null,
       adjuntos,
       registrado_por: user?.id,

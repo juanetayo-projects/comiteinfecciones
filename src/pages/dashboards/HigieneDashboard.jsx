@@ -97,26 +97,28 @@ export default function HigieneDashboard() {
     cantidad: filtered.filter(r => r.sumatoria_cumplimiento === v).length,
   }))
 
-  // Tabla por servicio + perfil
-  const tableServicioPerfil = useMemo(() => {
-    const map = {}
-    filtered.forEach(r => {
-      const key = `${r.servicio_evaluado || 'Sin servicio'}__${r.perfil_colaborador || 'Sin perfil'}`
-      if (!map[key]) map[key] = {
-        servicio: r.servicio_evaluado || 'Sin servicio',
-        perfil:   r.perfil_colaborador || 'Sin perfil',
-        total: 0, cumple: 0,
-        sumTotal: 0,
-      }
-      map[key].total++
-      map[key].sumTotal += r.sumatoria_cumplimiento ?? 0
-      if (r.resultado_cumplimiento === 'CUMPLE') map[key].cumple++
+  // Tabla independiente por servicio → dentro: perfil | registros | CUMPLE | NO CUMPLE | Prom.Suma | %
+  const tablasPorServicio = useMemo(() => {
+    // 1. Collect unique services from filtered data
+    const serviciosSet = [...new Set(filtered.map(r => r.servicio_evaluado || 'Sin servicio'))].sort()
+    return serviciosSet.map(servicio => {
+      const filas = filtered.filter(r => (r.servicio_evaluado || 'Sin servicio') === servicio)
+      const perfilMap = {}
+      filas.forEach(r => {
+        const p = r.perfil_colaborador || 'Sin perfil'
+        if (!perfilMap[p]) perfilMap[p] = { perfil: p, total: 0, cumple: 0, noCumple: 0, sumTotal: 0 }
+        perfilMap[p].total++
+        perfilMap[p].sumTotal += r.sumatoria_cumplimiento ?? 0
+        if (r.resultado_cumplimiento === 'CUMPLE') perfilMap[p].cumple++
+        else perfilMap[p].noCumple++
+      })
+      const perfiles = Object.values(perfilMap).map(p => ({
+        ...p,
+        pct:     Math.round((p.cumple / p.total) * 100) || 0,
+        avgSuma: p.total > 0 ? (p.sumTotal / p.total).toFixed(1) : '0',
+      })).sort((a, b) => a.perfil.localeCompare(b.perfil))
+      return { servicio, totalRegistros: filas.length, perfiles }
     })
-    return Object.values(map).map(r => ({
-      ...r,
-      pct: Math.round((r.cumple / r.total) * 100),
-      avgSuma: (r.sumTotal / r.total).toFixed(1),
-    })).sort((a, b) => a.servicio.localeCompare(b.servicio) || a.perfil.localeCompare(b.perfil))
   }, [filtered])
 
   return (
@@ -252,45 +254,54 @@ export default function HigieneDashboard() {
             </div>
           </div>
 
-          {/* Tabla detalle por servicio + perfil */}
-          <div className="card p-5">
-            <h3 className="section-title mb-4">Detalle por Servicio y Perfil de Colaborador</h3>
-            {tableServicioPerfil.length === 0 ? (
-              <p className="text-sm text-slate-400 py-4 text-center">Sin datos</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="text-left pb-2 pr-4 font-medium text-slate-600">Servicio</th>
-                      <th className="text-left pb-2 pr-4 font-medium text-slate-600">Perfil Colaborador</th>
-                      <th className="text-center pb-2 px-2 font-medium text-slate-600">Registros</th>
-                      <th className="text-center pb-2 px-2 font-medium text-emerald-600">CUMPLE</th>
-                      <th className="text-center pb-2 px-2 font-medium text-blue-600">Prom. Suma</th>
-                      <th className="text-center pb-2 font-medium text-slate-600">% Cumpl.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tableServicioPerfil.map((r, i) => (
-                      <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                        <td className="py-2 pr-4 text-slate-700 font-medium">{r.servicio}</td>
-                        <td className="py-2 pr-4 text-slate-600">{r.perfil}</td>
-                        <td className="py-2 px-2 text-center text-slate-500">{r.total}</td>
-                        <td className="py-2 px-2 text-center font-semibold text-emerald-600">{r.cumple}</td>
-                        <td className="py-2 px-2 text-center text-blue-600 font-semibold">{r.avgSuma}</td>
-                        <td className="py-2 text-center">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold
-                            ${r.pct >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                            {r.pct}%
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {/* Tablas independientes por servicio */}
+          {tablasPorServicio.map(({ servicio, totalRegistros, perfiles }) => (
+            <div key={servicio} className="card p-5">
+              <div className="px-3 py-2 bg-amber-50 border-l-4 border-amber-400 rounded-r-md mb-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-amber-900">{servicio}</h3>
+                  <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                    {totalRegistros} registros
+                  </span>
+                </div>
               </div>
-            )}
-          </div>
+              {perfiles.length === 0 ? (
+                <p className="text-sm text-slate-400 py-2 text-center">Sin datos</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200">
+                        <th className="text-left pb-2 pr-4 font-medium text-slate-600">Perfil Colaborador</th>
+                        <th className="text-center pb-2 px-2 font-medium text-slate-600">Registros</th>
+                        <th className="text-center pb-2 px-2 font-medium text-emerald-600">CUMPLE</th>
+                        <th className="text-center pb-2 px-2 font-medium text-red-600">NO CUMPLE</th>
+                        <th className="text-center pb-2 px-2 font-medium text-blue-600">Prom. Suma</th>
+                        <th className="text-center pb-2 font-medium text-slate-600">% Cumpl.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {perfiles.map((p, i) => (
+                        <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                          <td className="py-2 pr-4 text-slate-700 font-medium">{p.perfil}</td>
+                          <td className="py-2 px-2 text-center text-slate-500">{p.total}</td>
+                          <td className="py-2 px-2 text-center font-semibold text-emerald-600">{p.cumple}</td>
+                          <td className="py-2 px-2 text-center font-semibold text-red-500">{p.noCumple}</td>
+                          <td className="py-2 px-2 text-center text-blue-600 font-semibold">{p.avgSuma}</td>
+                          <td className="py-2 text-center">
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold
+                              ${p.pct >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                              {p.pct}%
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
         </>
       )}
     </div>
