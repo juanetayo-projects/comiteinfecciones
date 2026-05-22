@@ -63,13 +63,14 @@ const schema = z.object({
 })
 
 function calcSumatoria(values) {
+  // Cuenta CUMPLE + NO EVALUADO (ambos suman al cumplimiento)
   return ['momento_1','momento_2','momento_3','momento_4','momento_5']
-    .filter(c => values[c] === 'CUMPLE').length
+    .filter(c => values[c] === 'CUMPLE' || values[c] === 'NO EVALUADO').length
 }
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
+    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -220,7 +221,7 @@ export default function HigieneManosForn() {
                 : <span className="text-sm text-slate-400">—</span>
               }
             </div>
-            <p className="text-xs text-slate-400 ml-auto">CUMPLE = todos los 5 momentos</p>
+            <p className="text-xs text-slate-400 ml-auto">Sumatoria: CUMPLE + NO EVALUADO</p>
           </div>
         </div>
 

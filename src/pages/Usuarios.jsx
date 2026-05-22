@@ -22,7 +22,7 @@ const ROLE_LABEL = {
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
+    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -256,7 +256,7 @@ export default function Usuarios() {
     <div className="p-6 lg:p-8 animate-fade-in space-y-6">
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-xl shadow-lg text-sm animate-fade-in">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1a4fa0] text-white px-4 py-2.5 rounded-xl shadow-lg text-sm animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           {toast}
         </div>
@@ -311,7 +311,7 @@ export default function Usuarios() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-800 text-white">
+                <tr className="bg-[#1a4fa0] text-white">
                   <th className="text-left px-4 py-3 font-semibold text-xs rounded-tl-none">Nombre</th>
                   <th className="text-left px-4 py-3 font-semibold text-xs">ID / UUID</th>
                   <th className="text-center px-4 py-3 font-semibold text-xs">Rol</th>

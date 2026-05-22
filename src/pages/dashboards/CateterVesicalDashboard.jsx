@@ -14,7 +14,7 @@ function porcentaje(c, t) { return t > 0 ? Math.round((c / t) * 100) : 0 }
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
+    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -236,7 +236,7 @@ export default function CateterVesicalDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-800 text-white">
+                  <tr className="bg-[#1a4fa0] text-white">
                     <th className="text-left px-3 py-2.5 font-semibold rounded-tl-lg text-xs">Ubicación / Cama</th>
                     <th className="text-center px-3 py-2.5 font-semibold text-xs">Registros</th>
                     <th className="text-center px-3 py-2.5 font-semibold text-xs text-cyan-300">Criterios Cumplidos</th>

@@ -47,7 +47,7 @@ function SummaryTable({ rows, nameLabel }) {
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="bg-slate-800 text-white">
+          <tr className="bg-[#1a4fa0] text-white">
             <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">{nameLabel}</th>
             <th className="text-center px-2 py-2 font-semibold text-emerald-300">CUMPLE</th>
             <th className="text-center px-2 py-2 font-semibold text-red-300">NO CUMPLE</th>

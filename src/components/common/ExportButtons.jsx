@@ -12,7 +12,7 @@ export default function ExportButtons({ data, columns, filename, title, subtitle
         Excel
       </button>
       <button
-        onClick={() => exportToPDF(data, columns, filename, title, subtitle)}
+        onClick={async () => { await exportToPDF(data, columns, filename, title, subtitle) }}
         className="btn-secondary text-xs gap-1.5"
       >
         <FileText className="w-3.5 h-3.5 text-red-600" />

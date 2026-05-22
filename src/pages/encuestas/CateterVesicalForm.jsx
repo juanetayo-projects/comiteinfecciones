@@ -45,7 +45,7 @@ const schema = z.object({
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
+    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )

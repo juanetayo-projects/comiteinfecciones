@@ -41,7 +41,7 @@ const schema = z.object({
   uso_guante:              z.boolean().default(false),
   cuelga_bata:             z.boolean().default(false),
   higiene_manos_despues:   z.boolean().default(false),
-  adherencia:              z.string().optional(),
+  adherencia:              z.string().min(1, 'Debe seleccionar CUMPLE o NO CUMPLE'),
   nombre_evaluado:         z.string().optional(),
   observacion:             z.string().optional(),
   estado:                  z.string().default('pendiente'),
@@ -49,7 +49,7 @@ const schema = z.object({
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
+    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -172,7 +172,7 @@ export default function AislamientoForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Adherencia — Radio buttons */}
             <div>
-              <label className="label">Adherencia *</label>
+              <label className="label">Criterio de Adherencia *</label>
               <div className="flex gap-6 mt-2">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="radio" value="CUMPLE" className="w-4 h-4 accent-emerald-600"
@@ -185,6 +185,7 @@ export default function AislamientoForm() {
                   <span className="text-sm font-medium text-red-700">NO CUMPLE</span>
                 </label>
               </div>
+              {errors.adherencia && <p className="text-xs text-red-600 mt-1">{errors.adherencia.message}</p>}
             </div>
             <div>
               <label className="label">Estado</label>

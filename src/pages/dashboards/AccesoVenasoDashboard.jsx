@@ -14,7 +14,7 @@ function porcentaje(c, t) { return t > 0 ? Math.round((c / t) * 100) : 0 }
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
+    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -190,13 +190,13 @@ export default function AccesoVenasoDashboard() {
         <div className="card p-8 text-center text-slate-400">No hay registros para los filtros seleccionados</div>
       ) : (
         <>
-          {/* Gráficas */}
+          {/* Gráfica criterios + tabla en 2 columnas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Criterios */}
+            {/* Criterios bar chart */}
             <div className="card p-5">
               <h3 className="section-title mb-1">Criterios de Adherencia</h3>
               <p className="text-xs text-slate-400 mb-3">% cumplimiento por criterio — {rows.length} registros</p>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={criteriosData} margin={{ left: -10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
@@ -209,60 +209,60 @@ export default function AccesoVenasoDashboard() {
               </ResponsiveContainer>
             </div>
 
-            {/* Tendencia semanal */}
-            {semanaData.length > 1 && (
-              <div className="card p-5">
-                <h3 className="section-title mb-1">Tendencia Semanal</h3>
-                <p className="text-xs text-slate-400 mb-3">% adherencia por semana del mes</p>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={semanaData} margin={{ left: -10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="semana" tick={{ fontSize: 11 }} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
-                    <Tooltip formatter={v => `${v}%`} />
-                    <Line type="monotone" dataKey="pct" name="% Adherencia"
-                      stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }}
-                      label={{ position: 'top', fontSize: 10, formatter: v => `${v}%` }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-
-          {/* Tabla resumen por ubicación */}
-          <div className="card p-5">
-            <SH>Resumen por Ubicación / Cama</SH>
-            <p className="text-xs text-slate-400 mb-3">
-              % Adherencia = criterios CUMPLE ÷ (registros × {AVP_KEYS.length} criterios por registro)
-            </p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-slate-800 text-white">
-                    <th className="text-left px-3 py-2.5 font-semibold rounded-tl-lg text-xs">Ubicación / Cama</th>
-                    <th className="text-center px-3 py-2.5 font-semibold text-xs">Registros</th>
-                    <th className="text-center px-3 py-2.5 font-semibold text-xs text-emerald-300">Criterios Cumplidos</th>
-                    <th className="text-center px-3 py-2.5 font-semibold text-xs rounded-tr-lg">% Adherencia</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summaryUb.map((r, i) => (
-                    <tr key={i} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-indigo-50 transition-colors`}>
-                      <td className="px-3 py-2.5 font-medium text-slate-700">{r.ub}</td>
-                      <td className="px-3 py-2.5 text-center text-slate-500">{r.regs}</td>
-                      <td className="px-3 py-2.5 text-center font-semibold text-emerald-600">{r.cumple} / {r.total}</td>
-                      <td className="px-3 py-2.5 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold
-                          ${r.pct >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                          {r.pct}%
-                        </span>
-                      </td>
+            {/* Tabla resumen por ubicación */}
+            <div className="card p-5">
+              <SH>Resumen por Ubicación / Cama</SH>
+              <p className="text-xs text-slate-400 mb-3">
+                % Adherencia = criterios CUMPLE ÷ (registros × {AVP_KEYS.length} criterios)
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-[#1a4fa0] text-white">
+                      <th className="text-left px-3 py-2 font-semibold rounded-tl-lg">Ubicación / Cama</th>
+                      <th className="text-center px-3 py-2 font-semibold">Registros</th>
+                      <th className="text-center px-3 py-2 font-semibold text-emerald-300">Criterios ✓</th>
+                      <th className="text-center px-3 py-2 font-semibold rounded-tr-lg">% Adher.</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {summaryUb.map((r, i) => (
+                      <tr key={i} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-indigo-50 transition-colors`}>
+                        <td className="px-3 py-2 font-medium text-slate-700">{r.ub}</td>
+                        <td className="px-3 py-2 text-center text-slate-500">{r.regs}</td>
+                        <td className="px-3 py-2 text-center font-semibold text-emerald-600">{r.cumple} / {r.total}</td>
+                        <td className="px-3 py-2 text-center">
+                          <span className={`inline-block px-1.5 py-0.5 rounded-full font-semibold
+                            ${r.pct >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                            {r.pct}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
+
+          {/* Tendencia semanal — ancho completo */}
+          {semanaData.length > 1 && (
+            <div className="card p-5">
+              <h3 className="section-title mb-1">Tendencia Semanal</h3>
+              <p className="text-xs text-slate-400 mb-3">% adherencia por semana del mes</p>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={semanaData} margin={{ left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="semana" tick={{ fontSize: 11 }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
+                  <Tooltip formatter={v => `${v}%`} />
+                  <Line type="monotone" dataKey="pct" name="% Adherencia"
+                    stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }}
+                    label={{ position: 'top', fontSize: 10, formatter: v => `${v}%` }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </>
       )}
     </div>

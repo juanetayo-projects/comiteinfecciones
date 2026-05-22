@@ -14,66 +14,73 @@ const TIPOS_CFG = [
     key:'ais', label:'Aislamiento',        color:'blue',
     table:'encuesta_aislamiento',       dateField:'fecha_registro',
     editPath: id => `/encuestas/aislamiento/${id}/editar`,
-    getServicio: r => r.servicio,
-    getSujeto:   r => r.nombre_evaluado || '',
-    getResultado: r => r.adherencia || '',
+    getServicio:    r => r.servicio,
+    getSujeto:      r => r.nombre_evaluado || '',
+    getResultado:   r => r.adherencia || '',
+    getProfesional: r => r.profesional || '',
   },
   {
     key:'hig', label:'Higiene de Manos',   color:'emerald',
     table:'encuesta_higiene_manos',     dateField:'fecha_evaluacion',
     editPath: id => `/encuestas/higiene-manos/${id}/editar`,
-    getServicio: r => r.servicio_evaluado,
-    getSujeto:   r => r.nombre_evaluado || '',
-    getResultado: r => r.resultado_cumplimiento || '',
+    getServicio:    r => r.servicio_evaluado,
+    getSujeto:      r => r.nombre_evaluado || '',
+    getResultado:   r => r.resultado_cumplimiento || '',
+    getProfesional: r => r.perfil_colaborador || '',
   },
   {
     key:'lum', label:'Luminometría',       color:'amber',
     table:'encuesta_luminometria',      dateField:'fecha_registro',
     editPath: id => `/encuestas/luminometria/${id}/editar`,
-    getServicio: r => r.servicio_evaluado,
-    getSujeto:   r => r.objeto || '',
-    getResultado: r => r.rango || '',
+    getServicio:    r => r.servicio_evaluado,
+    getSujeto:      r => r.objeto || '',
+    getResultado:   r => r.rango || '',
+    getProfesional: r => '',
   },
   {
     key:'ron', label:'Ronda Cirugía',      color:'purple',
     table:'encuesta_ronda_cirugia',     dateField:'fecha_registro',
     editPath: id => `/encuestas/ronda-cirugia/${id}/editar`,
-    getServicio: r => r.servicio,
-    getSujeto:   r => r.especialidad || '',
-    getResultado: r => r.cumplimiento_profilaxis || '',
+    getServicio:    r => r.servicio,
+    getSujeto:      r => r.especialidad || '',
+    getResultado:   r => r.cumplimiento_profilaxis || '',
+    getProfesional: r => r.profesional || '',
   },
   {
     key:'avp', label:'Acceso Venoso',      color:'indigo',
     table:'encuesta_acceso_venoso',     dateField:'fecha_registro',
     editPath: id => `/encuestas/acceso-venoso/${id}/editar`,
-    getServicio: r => r.ubicacion_cama,
-    getSujeto:   r => r.nombre_paciente || '',
-    getResultado: r => {
+    getServicio:    r => r.ubicacion_cama,
+    getSujeto:      r => r.nombre_paciente || '',
+    getResultado:   r => {
       const c = AVP_KEYS.filter(k => r[k] === true).length
       return `${c}/${AVP_KEYS.length} criterios`
     },
+    getProfesional: r => '',
   },
   {
     key:'cv', label:'Catéter Vesical',     color:'cyan',
     table:'encuesta_cateter_vesical',   dateField:'fecha_registro',
     editPath: id => `/encuestas/cateter-vesical/${id}/editar`,
-    getServicio: r => r.ubicacion_cama,
-    getSujeto:   r => r.nombre_paciente || '',
-    getResultado: r => {
+    getServicio:    r => r.ubicacion_cama,
+    getSujeto:      r => r.nombre_paciente || '',
+    getResultado:   r => {
       const c = CV_KEYS.filter(k => r[k] === true).length
       return `${c}/${CV_KEYS.length} criterios`
     },
+    getProfesional: r => '',
   },
   {
     key:'pn', label:'Prevención NAV',      color:'violet',
     table:'encuesta_prevencion_neumonia',dateField:'fecha_registro',
     editPath: id => `/encuestas/prevencion-neumonia/${id}/editar`,
-    getServicio: r => r.ubicacion_cama,
-    getSujeto:   r => r.nombre_paciente || '',
-    getResultado: r => {
+    getServicio:    r => r.ubicacion_cama,
+    getSujeto:      r => r.nombre_paciente || '',
+    getResultado:   r => {
       const c = PN_KEYS.filter(k => r[k] === true).length
       return `${c}/${PN_KEYS.length} criterios`
     },
+    getProfesional: r => '',
   },
 ]
 
@@ -113,13 +120,14 @@ function normalize(row, cfg) {
     servicio:    cfg.getServicio(row) || '',
     sujeto:      cfg.getSujeto(row),
     resultado:   cfg.getResultado(row),
+    profesional: cfg.getProfesional(row),
     estado:      row.estado || 'pendiente',
     editPath:    cfg.editPath(row.id),
   }
 }
 
 // ── Filtros ───────────────────────────────────────────────────────
-const INIT_FILTERS = { tipo:'', desde:'', hasta:'', estado:'' }
+const INIT_FILTERS = { tipo:'', desde:'', hasta:'', estado:'', servicio:'', profesional:'' }
 
 // ── Componente ────────────────────────────────────────────────────
 export default function Registros() {
@@ -145,12 +153,22 @@ export default function Registros() {
     })
   }, [])
 
+  const serviciosUnicos = useMemo(() =>
+    [...new Set(allRows.map(r => r.servicio).filter(Boolean))].sort()
+  , [allRows])
+
+  const profesionalesUnicos = useMemo(() =>
+    [...new Set(allRows.map(r => r.profesional).filter(Boolean))].sort()
+  , [allRows])
+
   const filtered = useMemo(() => {
     return allRows.filter(r => {
-      if (filters.tipo   && r.tipo   !== filters.tipo)   return false
-      if (filters.desde  && r.fecha  <  filters.desde)   return false
-      if (filters.hasta  && r.fecha  >  filters.hasta)   return false
-      if (filters.estado && r.estado !== filters.estado) return false
+      if (filters.tipo        && r.tipo        !== filters.tipo)        return false
+      if (filters.desde       && r.fecha       <  filters.desde)        return false
+      if (filters.hasta       && r.fecha       >  filters.hasta)        return false
+      if (filters.estado      && r.estado      !== filters.estado)      return false
+      if (filters.servicio    && r.servicio    !== filters.servicio)     return false
+      if (filters.profesional && r.profesional !== filters.profesional) return false
       return true
     })
   }, [allRows, filters])
@@ -181,12 +199,13 @@ export default function Registros() {
           <ExportButtons
             data={filtered}
             columns={[
-              { header: 'Tipo',      key: 'tipoLabel' },
-              { header: 'Fecha',     key: 'fecha'     },
-              { header: 'Servicio',  key: 'servicio'  },
-              { header: 'Sujeto',    key: 'sujeto'    },
-              { header: 'Resultado', key: 'resultado' },
-              { header: 'Estado',    key: 'estado'    },
+              { header: 'Tipo',        key: 'tipoLabel'  },
+              { header: 'Fecha',       key: 'fecha'      },
+              { header: 'Servicio',    key: 'servicio'   },
+              { header: 'Evaluado',    key: 'sujeto'     },
+              { header: 'Profesional', key: 'profesional'},
+              { header: 'Resultado',   key: 'resultado'  },
+              { header: 'Estado',      key: 'estado'     },
             ]}
             filename="registros"
             title="Registros Consolidados"
@@ -227,7 +246,7 @@ export default function Registros() {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <div>
             <label className="text-xs text-slate-500 mb-1 block">Tipo</label>
             <select className="input text-sm" value={filters.tipo} onChange={e => setF('tipo', e.target.value)}>
@@ -255,6 +274,20 @@ export default function Registros() {
               <option value="cerrado">Cerrado</option>
             </select>
           </div>
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">Servicio</label>
+            <select className="input text-sm" value={filters.servicio} onChange={e => setF('servicio', e.target.value)}>
+              <option value="">Todos</option>
+              {serviciosUnicos.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">Profesional / Perfil</label>
+            <select className="input text-sm" value={filters.profesional} onChange={e => setF('profesional', e.target.value)}>
+              <option value="">Todos</option>
+              {profesionalesUnicos.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
         </div>
         {hasFilters && (
           <p className="text-xs text-indigo-600 mt-2">{filtered.length} de {allRows.length} registros mostrados</p>
@@ -277,6 +310,7 @@ export default function Registros() {
                   <th className="text-left px-4 py-3 font-medium text-slate-600 whitespace-nowrap">Fecha</th>
                   <th className="text-left px-4 py-3 font-medium text-slate-600">Servicio / Ubicación</th>
                   <th className="text-left px-4 py-3 font-medium text-slate-600">Evaluado / Objeto</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Profesional / Perfil</th>
                   <th className="text-left px-4 py-3 font-medium text-slate-600 whitespace-nowrap">Resultado</th>
                   <th className="text-center px-4 py-3 font-medium text-slate-600 whitespace-nowrap">Estado</th>
                   <th className="text-center px-4 py-3 font-medium text-slate-600"></th>
@@ -293,6 +327,7 @@ export default function Registros() {
                     <td className="px-4 py-2.5 font-mono text-xs text-slate-500 whitespace-nowrap">{r.fecha}</td>
                     <td className="px-4 py-2.5 text-slate-700 max-w-[180px] truncate">{r.servicio || '—'}</td>
                     <td className="px-4 py-2.5 text-slate-600 max-w-[180px] truncate">{r.sujeto || '—'}</td>
+                    <td className="px-4 py-2.5 text-slate-500 text-xs max-w-[160px] truncate">{r.profesional || '—'}</td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
                       {r.resultado ? (
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold
