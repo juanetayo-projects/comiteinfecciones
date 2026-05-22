@@ -372,13 +372,25 @@ function UsuariosTab({ showToast }) {
 // TAB: LISTAS DESPLEGABLES
 // ════════════════════════════════════════════════════════════════
 
+const ENCUESTA_TIPOS = [
+  { v: 'general',              l: 'General (todos los formularios)' },
+  { v: 'higiene_manos',        l: 'Higiene de Manos' },
+  { v: 'aislamiento',          l: 'Aislamiento' },
+  { v: 'luminometria',         l: 'Luminometría' },
+  { v: 'ronda_cirugia',        l: 'Ronda de Cirugía' },
+  { v: 'acceso_venoso',        l: 'Acceso Venoso Periférico' },
+  { v: 'cateter_vesical',      l: 'Catéter Vesical' },
+  { v: 'prevencion_neumonia',  l: 'Prevención NAV' },
+]
+
 function ListaModal({ item, onClose, onSaved }) {
   const isEdit = Boolean(item?.id)
   const [form, setForm] = useState({
-    categoria: item?.categoria ?? '',
-    valor:     item?.valor     ?? '',
-    orden:     item?.orden     ?? 0,
-    activo:    item?.activo    ?? true,
+    categoria:    item?.categoria    ?? '',
+    valor:        item?.valor        ?? '',
+    orden:        item?.orden        ?? 0,
+    activo:       item?.activo       ?? true,
+    encuesta_tipo: item?.encuesta_tipo ?? 'general',
   })
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState('')
@@ -394,10 +406,11 @@ function ListaModal({ item, onClose, onSaved }) {
     setError('')
     try {
       const payload = {
-        categoria: form.categoria.trim(),
-        valor:     form.valor.trim(),
-        orden:     Number(form.orden) || 0,
-        activo:    form.activo,
+        categoria:     form.categoria.trim(),
+        valor:         form.valor.trim(),
+        orden:         Number(form.orden) || 0,
+        activo:        form.activo,
+        encuesta_tipo: form.encuesta_tipo || 'general',
       }
       if (isEdit) {
         const { error: err } = await supabase.from('listas_desplegables').update(payload).eq('id', item.id)
@@ -443,9 +456,17 @@ function ListaModal({ item, onClose, onSaved }) {
               value={form.valor} onChange={e => setF('valor', e.target.value)} />
           </div>
           <div>
+            <label className="label">Formulario / Encuesta</label>
+            <select className="input" value={form.encuesta_tipo} onChange={e => setF('encuesta_tipo', e.target.value)}>
+              {ENCUESTA_TIPOS.map(t => <option key={t.v} value={t.v}>{t.l}</option>)}
+            </select>
+            <p className="text-xs text-slate-400 mt-1">Indica en qué formulario aparecerá este ítem</p>
+          </div>
+          <div>
             <label className="label">Orden</label>
             <input type="number" className="input" placeholder="0"
               value={form.orden} onChange={e => setF('orden', e.target.value)} />
+            <p className="text-xs text-slate-400 mt-1">Número para ordenar en la lista (0 = primero)</p>
           </div>
           <label className="flex items-center gap-2.5 cursor-pointer">
             <input type="checkbox" className="w-4 h-4 rounded accent-indigo-600"
