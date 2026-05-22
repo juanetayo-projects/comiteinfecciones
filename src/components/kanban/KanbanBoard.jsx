@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { supabase } from '../../lib/supabase'
 import { formatDate } from '../../lib/utils'
@@ -20,6 +20,11 @@ const TABLE_MAP = {
 
 export default function KanbanBoard({ initialItems }) {
   const [items, setItems] = useState(initialItems)
+
+  // Sincronizar cuando cambia el filtro externo
+  useEffect(() => {
+    setItems(initialItems)
+  }, [initialItems])
 
   const onDragEnd = useCallback(async (result) => {
     if (!result.destination) return

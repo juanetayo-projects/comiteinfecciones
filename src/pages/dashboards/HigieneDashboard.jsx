@@ -253,54 +253,56 @@ export default function HigieneDashboard() {
             </div>
           </div>
 
-          {/* Tablas independientes por servicio */}
-          {tablasPorServicio.map(({ servicio, totalRegistros, perfiles }) => (
-            <div key={servicio} className="card p-5">
-              <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-white tracking-wide">{servicio}</h3>
-                  <span className="text-xs text-white bg-indigo-500 px-2 py-0.5 rounded-full">
-                    {totalRegistros} registros
-                  </span>
+          {/* Tablas independientes por servicio — 2 columnas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {tablasPorServicio.map(({ servicio, totalRegistros, perfiles }) => (
+              <div key={servicio} className="card p-5">
+                <div className="px-3 py-2 bg-slate-700 border-l-4 border-indigo-400 rounded-r-md mb-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-white tracking-wide">{servicio}</h3>
+                    <span className="text-xs text-white bg-indigo-500 px-2 py-0.5 rounded-full">
+                      {totalRegistros} registros
+                    </span>
+                  </div>
                 </div>
-              </div>
-              {perfiles.length === 0 ? (
-                <p className="text-sm text-slate-400 py-2 text-center">Sin datos</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-200">
-                        <th className="text-left pb-2 pr-4 font-medium text-slate-600">Perfil Colaborador</th>
-                        <th className="text-center pb-2 px-2 font-medium text-slate-600">Registros</th>
-                        <th className="text-center pb-2 px-2 font-medium text-emerald-600">CUMPLE</th>
-                        <th className="text-center pb-2 px-2 font-medium text-red-600">NO CUMPLE</th>
-                        <th className="text-center pb-2 px-2 font-medium text-blue-600">Prom. Suma</th>
-                        <th className="text-center pb-2 font-medium text-slate-600">% Cumpl.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {perfiles.map((p, i) => (
-                        <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                          <td className="py-2 pr-4 text-slate-700 font-medium">{p.perfil}</td>
-                          <td className="py-2 px-2 text-center text-slate-500">{p.total}</td>
-                          <td className="py-2 px-2 text-center font-semibold text-emerald-600">{p.cumple}</td>
-                          <td className="py-2 px-2 text-center font-semibold text-red-500">{p.noCumple}</td>
-                          <td className="py-2 px-2 text-center text-blue-600 font-semibold">{p.avgSuma}</td>
-                          <td className="py-2 text-center">
-                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold
-                              ${p.pct >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                              {p.pct}%
-                            </span>
-                          </td>
+                {perfiles.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-2 text-center">Sin datos</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-slate-800 text-white">
+                          <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">Perfil Colaborador</th>
+                          <th className="text-center px-2 py-2 font-semibold">Registros</th>
+                          <th className="text-center px-2 py-2 font-semibold text-emerald-300">CUMPLE</th>
+                          <th className="text-center px-2 py-2 font-semibold text-red-300">NO CUMPLE</th>
+                          <th className="text-center px-2 py-2 font-semibold text-blue-300">Prom. Suma</th>
+                          <th className="text-center px-2 py-2 font-semibold rounded-tr-md">% Cumpl.</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          ))}
+                      </thead>
+                      <tbody>
+                        {perfiles.map((p, i) => (
+                          <tr key={i} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-blue-50 transition-colors`}>
+                            <td className="px-2.5 py-1.5 text-slate-700 font-medium">{p.perfil}</td>
+                            <td className="px-2 py-1.5 text-center text-slate-500">{p.total}</td>
+                            <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{p.cumple}</td>
+                            <td className="px-2 py-1.5 text-center font-semibold text-red-500">{p.noCumple}</td>
+                            <td className="px-2 py-1.5 text-center text-blue-600 font-semibold">{p.avgSuma}</td>
+                            <td className="px-2 py-1.5 text-center">
+                              <span className={`inline-block px-1.5 py-0.5 rounded-full font-semibold
+                                ${p.pct >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                {p.pct}%
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </>
       )}
     </div>
