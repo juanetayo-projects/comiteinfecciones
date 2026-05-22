@@ -7,8 +7,9 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save, BarChart3 } from 'lucide-react'
+import { useLista } from '../../hooks/useLista'
 
-const UBICACIONES = ['PEDIATRIA', 'SALA DE YESO']
+const UBICACIONES_DEFAULT = ['PEDIATRIA', 'SALA DE YESO']
 
 const CRITERIOS = [
   { name: 'criterio_1_fijacion',           label: 'Fijación adecuada del catéter' },
@@ -68,7 +69,8 @@ export default function CateterVesicalForm() {
     },
   })
 
-  const fechaReg  = watch('fecha_registro')
+  const ubicaciones = useLista('ubicacion', UBICACIONES_DEFAULT)
+  const fechaReg    = watch('fecha_registro')
   const semanaMes = calcSemanaMes(fechaReg)
 
   useEffect(() => {
@@ -141,7 +143,7 @@ export default function CateterVesicalForm() {
             <div>
               <label className="label">Ubicación / Cama *</label>
               <div className="flex gap-6 mt-2">
-                {UBICACIONES.map(u => (
+                {ubicaciones.map(u => (
                   <label key={u} className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" value={u} className="w-4 h-4 accent-indigo-600"
                       {...register('ubicacion_cama')} />

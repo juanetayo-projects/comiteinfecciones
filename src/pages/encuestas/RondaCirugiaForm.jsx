@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save } from 'lucide-react'
+import { useLista } from '../../hooks/useLista'
 
 // Listas extraídas del archivo Excel rondacirugia.xlsx — hoja "listas"
 const QUIROFANOS = ['1', '2', '3', '4', '5']
@@ -154,6 +155,9 @@ export default function RondaCirugiaForm() {
     defaultValues: { fecha_registro: new Date().toISOString().slice(0, 10), estado: 'pendiente' },
   })
 
+  const serviciosCx    = useLista('servicio',     SERVICIOS_CX)
+  const especialidades = useLista('especialidad', ESPECIALIDADES)
+
   useEffect(() => {
     if (isEdit) {
       supabase.from('encuesta_ronda_cirugia').select('*').eq('id', id).single()
@@ -212,7 +216,7 @@ export default function RondaCirugiaForm() {
               <label className="label">Servicio *</label>
               <select className="input" {...register('servicio')}>
                 <option value="">Seleccionar...</option>
-                {SERVICIOS_CX.map(s => <option key={s} value={s}>{s}</option>)}
+                {serviciosCx.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               {errors.servicio && <p className="text-xs text-red-600 mt-1">{errors.servicio.message}</p>}
             </div>
@@ -220,7 +224,7 @@ export default function RondaCirugiaForm() {
               <label className="label">Especialidad</label>
               <select className="input" {...register('especialidad')}>
                 <option value="">Seleccionar...</option>
-                {ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}
+                {especialidades.map(e => <option key={e} value={e}>{e}</option>)}
               </select>
             </div>
             <div>

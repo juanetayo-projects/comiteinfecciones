@@ -5,6 +5,7 @@ import { formatDate, porcentaje } from '../lib/utils'
 import {
   ShieldAlert, Hand, Microscope, Stethoscope, Activity,
   TrendingUp, TrendingDown, Clock, CheckCircle2, AlertCircle,
+  Syringe, Droplets, Wind,
 } from 'lucide-react'
 
 // ─── Configuración de encuestas ─────────────────────────────────────────────
@@ -14,6 +15,9 @@ const ENCUESTAS_CFG = {
   luminometria: { label: 'Luminometría',     color: 'amber',   icon: Microscope,   border: 'border-l-amber-400'  },
   ronda:        { label: 'Ronda Cirugía',    color: 'purple',  icon: Stethoscope,  border: 'border-l-purple-400' },
   dispositivos: { label: 'Dispositivos',     color: 'emerald', icon: Activity,     border: 'border-l-emerald-400'},
+  avp:          { label: 'Acceso Venoso',    color: 'indigo',  icon: Syringe,      border: 'border-l-indigo-400' },
+  cv:           { label: 'Catéter Vesical',  color: 'cyan',    icon: Droplets,     border: 'border-l-cyan-400'   },
+  pn:           { label: 'Prevención NAV',   color: 'violet',  icon: Wind,         border: 'border-l-violet-400' },
 }
 
 const FILTROS = [
@@ -97,6 +101,9 @@ const TIPO_ICON = {
   higiene:      { Icon: Hand,        bg: 'bg-blue-50',    ic: 'text-blue-500'    },
   luminometria: { Icon: Microscope,  bg: 'bg-amber-50',   ic: 'text-amber-500'   },
   ronda:        { Icon: Stethoscope, bg: 'bg-purple-50',  ic: 'text-purple-500'  },
+  avp:          { Icon: Syringe,     bg: 'bg-indigo-50',  ic: 'text-indigo-500'  },
+  cv:           { Icon: Droplets,    bg: 'bg-cyan-50',    ic: 'text-cyan-500'    },
+  pn:           { Icon: Wind,        bg: 'bg-violet-50',  ic: 'text-violet-500'  },
 }
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
@@ -159,31 +166,43 @@ export default function Dashboard() {
       dispositivos: { total: av.total + cv2.total + pn2.total, pct: 0 },
     })
 
-    // Actividad reciente — carga desde las 4 tablas con campo de cumplimiento
+    // Actividad reciente — carga desde todas las tablas
     const [
       { data: recAis },
       { data: recHig },
       { data: recLum },
       { data: recCx  },
+      { data: recAvp },
+      { data: recCv  },
+      { data: recPn  },
     ] = await Promise.all([
       supabase.from('encuesta_aislamiento').select('id, created_at, servicio, adherencia')
-        .order('created_at', { ascending: false }).limit(5),
+        .order('created_at', { ascending: false }).limit(4),
       supabase.from('encuesta_higiene_manos').select('id, created_at, servicio_evaluado, resultado_cumplimiento')
-        .order('created_at', { ascending: false }).limit(5),
+        .order('created_at', { ascending: false }).limit(4),
       supabase.from('encuesta_luminometria').select('id, created_at, servicio_evaluado, rango')
-        .order('created_at', { ascending: false }).limit(5),
+        .order('created_at', { ascending: false }).limit(4),
       supabase.from('encuesta_ronda_cirugia').select('id, created_at, servicio, cumplimiento_profilaxis')
-        .order('created_at', { ascending: false }).limit(5),
+        .order('created_at', { ascending: false }).limit(4),
+      supabase.from('encuesta_acceso_venoso').select('id, created_at, ubicacion_cama, nombre_paciente')
+        .order('created_at', { ascending: false }).limit(4),
+      supabase.from('encuesta_cateter_vesical').select('id, created_at, ubicacion_cama, nombre_paciente')
+        .order('created_at', { ascending: false }).limit(4),
+      supabase.from('encuesta_prevencion_neumonia').select('id, created_at, ubicacion_cama, nombre_paciente')
+        .order('created_at', { ascending: false }).limit(4),
     ])
 
     const merged = [
-      ...(recAis ?? []).map(r => ({ id: r.id, tipo: 'aislamiento',  texto: r.servicio,              estado: r.adherencia,               fecha: r.created_at })),
-      ...(recHig ?? []).map(r => ({ id: r.id, tipo: 'higiene',      texto: r.servicio_evaluado,     estado: r.resultado_cumplimiento,   fecha: r.created_at })),
-      ...(recLum ?? []).map(r => ({ id: r.id, tipo: 'luminometria', texto: r.servicio_evaluado,     estado: r.rango,                    fecha: r.created_at })),
-      ...(recCx  ?? []).map(r => ({ id: r.id, tipo: 'ronda',        texto: r.servicio,              estado: r.cumplimiento_profilaxis,  fecha: r.created_at })),
+      ...(recAis ?? []).map(r => ({ id: r.id, tipo: 'aislamiento',  texto: r.servicio,          estado: r.adherencia,              fecha: r.created_at })),
+      ...(recHig ?? []).map(r => ({ id: r.id, tipo: 'higiene',      texto: r.servicio_evaluado, estado: r.resultado_cumplimiento,  fecha: r.created_at })),
+      ...(recLum ?? []).map(r => ({ id: r.id, tipo: 'luminometria', texto: r.servicio_evaluado, estado: r.rango,                   fecha: r.created_at })),
+      ...(recCx  ?? []).map(r => ({ id: r.id, tipo: 'ronda',        texto: r.servicio,          estado: r.cumplimiento_profilaxis, fecha: r.created_at })),
+      ...(recAvp ?? []).map(r => ({ id: r.id, tipo: 'avp', texto: r.ubicacion_cama || r.nombre_paciente || 'AVP', estado: null, fecha: r.created_at })),
+      ...(recCv  ?? []).map(r => ({ id: r.id, tipo: 'cv',  texto: r.ubicacion_cama || r.nombre_paciente || 'CV',  estado: null, fecha: r.created_at })),
+      ...(recPn  ?? []).map(r => ({ id: r.id, tipo: 'pn',  texto: r.ubicacion_cama || r.nombre_paciente || 'NAV', estado: null, fecha: r.created_at })),
     ]
       .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
-      .slice(0, 12)
+      .slice(0, 14)
 
     setRecientes(merged)
     setLoading(false)
@@ -192,6 +211,7 @@ export default function Dashboard() {
   // Actividad filtrada según encuesta seleccionada
   const recientesFiltrados = useMemo(() => {
     if (!filtro) return recientes
+    if (filtro === 'dispositivos') return recientes.filter(r => ['avp','cv','pn'].includes(r.tipo))
     return recientes.filter(r => r.tipo === filtro)
   }, [recientes, filtro])
 

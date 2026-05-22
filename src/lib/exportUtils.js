@@ -11,7 +11,7 @@ function colLabel(c) { return c.header ?? c.label ?? '' }
 async function loadLogoDataUrl() {
   try {
     const base = import.meta.env.BASE_URL ?? '/'
-    const res  = await fetch(`${base}logo_cacsb2.png`)
+    const res  = await fetch(`${base}logo_cacsb_blanc.png`)
     if (!res.ok) return null
     const blob = await res.blob()
     return new Promise(resolve => {
@@ -50,7 +50,15 @@ export function exportToExcel(data, columns, filename) {
 }
 
 // ── PDF ────────────────────────────────────────────────────────
-export async function exportToPDF(data, columns, filename, title, subtitle = '') {
+/**
+ * @param {Array}  data
+ * @param {Array}  columns    - [{ header, key }]
+ * @param {string} filename
+ * @param {string} title
+ * @param {string} [subtitle]
+ * @param {Array}  [kpis]     - [{ label, value, sub }] optional KPI cards row
+ */
+export async function exportToPDF(data, columns, filename, title, subtitle = '', kpis = null) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
 
   // ─ Banda de encabezado ─
@@ -93,6 +101,45 @@ export async function exportToPDF(data, columns, filename, title, subtitle = '')
   doc.setTextColor(100, 116, 139)
   doc.text(`Generado: ${new Date().toLocaleString('es-CO')}`, 225, 40)
 
+  // ─ Tarjetas KPI (opcionales) ─
+  let tableStartY = subtitle ? 53 : 47
+  if (kpis && kpis.length > 0) {
+    const kpiY  = tableStartY + 2
+    const total = kpis.length
+    const pageW = 297
+    const margin = 14
+    const gap    = 2
+    const boxW   = (pageW - margin * 2 - gap * (total - 1)) / total
+
+    kpis.forEach((kpi, i) => {
+      const x    = margin + i * (boxW + gap)
+      const good = kpi.value >= 80
+      // fondo de la tarjeta
+      doc.setFillColor(...(good ? [236, 253, 245] : [254, 242, 242]))
+      doc.roundedRect(x, kpiY, boxW, 22, 2, 2, 'F')
+      // borde sutil
+      doc.setDrawColor(...(good ? [167, 243, 208] : [254, 202, 202]))
+      doc.roundedRect(x, kpiY, boxW, 22, 2, 2, 'S')
+      // valor %
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(13)
+      doc.setTextColor(...(good ? [5, 150, 105] : [220, 38, 38]))
+      doc.text(`${kpi.value}%`, x + boxW / 2, kpiY + 9, { align: 'center' })
+      // label
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(6.5)
+      doc.setTextColor(71, 85, 105)
+      doc.text(kpi.label, x + boxW / 2, kpiY + 14.5, { align: 'center' })
+      // sub (n° registros)
+      if (kpi.sub) {
+        doc.setFontSize(6)
+        doc.setTextColor(148, 163, 184)
+        doc.text(kpi.sub, x + boxW / 2, kpiY + 19, { align: 'center' })
+      }
+    })
+    tableStartY = kpiY + 26
+  }
+
   // ─ Tabla ─
   const tableColumns = columns.map(c => ({ header: colLabel(c), dataKey: c.key }))
   const tableRows = data.map(row => {
@@ -109,7 +156,7 @@ export async function exportToPDF(data, columns, filename, title, subtitle = '')
   autoTable(doc, {
     columns: tableColumns,
     body:    tableRows,
-    startY:  subtitle ? 53 : 47,
+    startY:  tableStartY,
     styles:        { fontSize: 8, cellPadding: 3 },
     headStyles:    { fillColor: BLUE, textColor: 255, fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [241, 245, 249] },

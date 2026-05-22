@@ -446,6 +446,15 @@ export default function Reportes() {
               { header: '% Cumplimiento',     key: 'pct'       },
               { header: 'N° Registros',       key: 'registros' },
             ]}
+            kpis={[
+              { label: 'Aislamiento',   value: pctAis, sub: `${D.ais.length} reg.` },
+              { label: 'Hig. Manos',    value: pctHig, sub: `${D.hig.length} reg.` },
+              { label: 'Luminometría',  value: pctLum, sub: `${D.lum.length} reg.` },
+              { label: 'Ronda Cirugía', value: pctRon, sub: `${D.ron.length} reg.` },
+              { label: 'Acceso Venoso', value: pctAvp, sub: `${D.avp.length} reg.` },
+              { label: 'Catéter Vesic.',value: pctCv,  sub: `${D.cv.length}  reg.` },
+              { label: 'Prev. NAV',     value: pctPn,  sub: `${D.pn.length}  reg.` },
+            ]}
             filename={`reporte-indicadores-${periodoLabel.replace(' ', '-')}`}
             title="Reporte de Indicadores"
             subtitle={periodoLabel}

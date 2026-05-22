@@ -7,8 +7,9 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save, BarChart3 } from 'lucide-react'
+import { useLista } from '../../hooks/useLista'
 
-const UBICACIONES = ['PEDIATRIA', 'SALA DE YESO']
+const UBICACIONES_DEFAULT = ['PEDIATRIA', 'SALA DE YESO']
 
 const CRITERIOS = [
   { name: 'criterio_1_rotulo',        label: 'Rotulación correcta del acceso venoso' },
@@ -34,7 +35,7 @@ const schema = z.object({
   criterio_3_mantenimiento:    z.boolean().default(false),
   criterio_4_pertinencia:      z.boolean().default(false),
   criterio_5_educacion:        z.boolean().default(false),
-  lista_chequeo_cvc:           z.enum(['SI','NO','']).optional(),
+  lista_chequeo_cvc:           z.boolean().default(false),
   observacion_no_cumplimiento: z.string().optional(),
   estado:                      z.string().default('pendiente'),
 })
@@ -64,8 +65,9 @@ export default function AccesoVenosoForm() {
     },
   })
 
-  const fechaReg  = watch('fecha_registro')
-  const semanaMes = calcSemanaMes(fechaReg)
+  const ubicaciones = useLista('ubicacion', UBICACIONES_DEFAULT)
+  const fechaReg    = watch('fecha_registro')
+  const semanaMes   = calcSemanaMes(fechaReg)
 
   useEffect(() => {
     if (isEdit) {
@@ -135,8 +137,8 @@ export default function AccesoVenosoForm() {
             </div>
             <div>
               <label className="label">Ubicación / Cama *</label>
-              <div className="flex gap-6 mt-2">
-                {UBICACIONES.map(u => (
+              <div className="flex flex-wrap gap-4 mt-2">
+                {ubicaciones.map(u => (
                   <label key={u} className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" value={u} className="w-4 h-4 accent-indigo-600"
                       {...register('ubicacion_cama')} />
@@ -173,13 +175,12 @@ export default function AccesoVenosoForm() {
               </label>
             ))}
           </div>
-          <div className="mt-4 max-w-xs">
-            <label className="label">Lista de Chequeo CVC</label>
-            <select className="input" {...register('lista_chequeo_cvc')}>
-              <option value="">Seleccionar...</option>
-              <option value="SI">Sí</option>
-              <option value="NO">No</option>
-            </select>
+          <div className="mt-3">
+            <label className="flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200 transition-colors">
+              <input type="checkbox" className="w-4 h-4 rounded accent-indigo-600"
+                {...register('lista_chequeo_cvc')} />
+              <span className="text-sm text-slate-700">Lista de Chequeo CVC completada</span>
+            </label>
           </div>
         </div>
 

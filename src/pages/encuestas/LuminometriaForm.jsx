@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save } from 'lucide-react'
+import { useLista } from '../../hooks/useLista'
 
 // Servicios y objetos dependientes según archivo Excel listas
 const SERVICIOS_OBJETOS = {
@@ -84,10 +85,14 @@ export default function LuminometriaForm() {
     defaultValues: { fecha_registro: new Date().toISOString().slice(0, 10), estado: 'pendiente' },
   })
 
-  const servicio = watch('servicio_evaluado')
-  const rlu      = watch('resultado')
-  const rango    = calcRango(rlu)
-  const objetos  = servicio ? (SERVICIOS_OBJETOS[servicio] ?? []) : []
+  const serviciosDB = useLista('servicio', SERVICIOS_LUM)
+  const objetosDB   = useLista('objeto',   [])
+  const servicio    = watch('servicio_evaluado')
+  const rlu         = watch('resultado')
+  const rango       = calcRango(rlu)
+  // Use hardcoded service→object map if available; fall back to all DB objects
+  const hardObj     = SERVICIOS_OBJETOS[servicio] ?? []
+  const objetos     = servicio ? (hardObj.length > 0 ? hardObj : objetosDB) : []
 
   // Reset objeto when servicio changes
   useEffect(() => {
@@ -145,7 +150,7 @@ export default function LuminometriaForm() {
               <label className="label">Servicio *</label>
               <select className="input" {...register('servicio_evaluado')}>
                 <option value="">Seleccionar...</option>
-                {SERVICIOS_LUM.map(s => <option key={s} value={s}>{s}</option>)}
+                {serviciosDB.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               {errors.servicio_evaluado && <p className="text-xs text-red-600 mt-1">{errors.servicio_evaluado.message}</p>}
             </div>

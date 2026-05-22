@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save } from 'lucide-react'
+import { useLista } from '../../hooks/useLista'
 
 const SERVICIOS_AISLAMIENTO = ['HOSPITALIZACIÓN 2', 'HOSPITALIZACIÓN', 'URGENCIAS', 'UCI']
 const PROFESIONALES = [
@@ -69,6 +70,9 @@ export default function AislamientoForm() {
     defaultValues: { fecha_registro: new Date().toISOString().slice(0, 10), estado: 'pendiente' },
   })
 
+  const servicios       = useLista('servicio',         SERVICIOS_AISLAMIENTO)
+  const tiposAislamiento = useLista('tipo_aislamiento', TIPOS_AISLAMIENTO)
+
   useEffect(() => {
     if (isEdit) {
       supabase.from('encuesta_aislamiento').select('*').eq('id', id).single()
@@ -122,7 +126,7 @@ export default function AislamientoForm() {
               <label className="label">Servicio *</label>
               <select className="input" {...register('servicio')}>
                 <option value="">Seleccionar...</option>
-                {SERVICIOS_AISLAMIENTO.map(s => <option key={s} value={s}>{s}</option>)}
+                {servicios.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               {errors.servicio && <p className="text-xs text-red-600 mt-1">{errors.servicio.message}</p>}
             </div>
@@ -138,7 +142,7 @@ export default function AislamientoForm() {
               <label className="label">Tipo de Aislamiento *</label>
               <select className="input" {...register('tipo_aislamiento')}>
                 <option value="">Seleccionar...</option>
-                {TIPOS_AISLAMIENTO.map(t => <option key={t} value={t}>{t}</option>)}
+                {tiposAislamiento.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
               {errors.tipo_aislamiento && <p className="text-xs text-red-600 mt-1">{errors.tipo_aislamiento.message}</p>}
             </div>

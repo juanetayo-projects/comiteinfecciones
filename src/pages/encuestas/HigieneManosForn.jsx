@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save, BarChart3 } from 'lucide-react'
+import { useLista } from '../../hooks/useLista'
 
 const OPCIONES_MOMENTO = [
   { value: 'CUMPLE',      label: 'Cumple' },
@@ -95,6 +96,7 @@ export default function HigieneManosForn() {
     },
   })
 
+  const servicios = useLista('servicio', SERVICIOS_HM)
   const values    = watch()
   const sumatoria = calcSumatoria(values)
   // Columna L: CUMPLE solo si sumatoria === 5
@@ -163,7 +165,7 @@ export default function HigieneManosForn() {
               <label className="label">Servicio *</label>
               <select className="input" {...register('servicio_evaluado')}>
                 <option value="">Seleccionar...</option>
-                {SERVICIOS_HM.map(s => <option key={s} value={s}>{s}</option>)}
+                {servicios.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               {errors.servicio_evaluado && <p className="text-xs text-red-600 mt-1">{errors.servicio_evaluado.message}</p>}
             </div>

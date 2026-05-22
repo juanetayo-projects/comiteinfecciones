@@ -1,7 +1,7 @@
 import { FileSpreadsheet, FileText } from 'lucide-react'
 import { exportToExcel, exportToPDF } from '../../lib/exportUtils'
 
-export default function ExportButtons({ data, columns, filename, title, subtitle }) {
+export default function ExportButtons({ data, columns, filename, title, subtitle, kpis }) {
   return (
     <div className="flex items-center gap-2">
       <button
@@ -12,7 +12,7 @@ export default function ExportButtons({ data, columns, filename, title, subtitle
         Excel
       </button>
       <button
-        onClick={async () => { await exportToPDF(data, columns, filename, title, subtitle) }}
+        onClick={async () => { await exportToPDF(data, columns, filename, title, subtitle, kpis) }}
         className="btn-secondary text-xs gap-1.5"
       >
         <FileText className="w-3.5 h-3.5 text-red-600" />
