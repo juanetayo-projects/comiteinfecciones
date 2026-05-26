@@ -131,7 +131,10 @@ function ProfileModal({ profile, onClose, onSaved }) {
           )}
           {isEdit ? (
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-              <p className="text-xs font-medium text-slate-700 mb-2">Cambio de Contraseña</p>
+              <p className="text-xs font-medium text-slate-700 mb-1">Cambio de Contraseña</p>
+              {profile?.email && (
+                <p className="text-xs text-slate-400 mb-2 font-mono">{profile.email}</p>
+              )}
               {resetSent ? (
                 <div className="flex items-center gap-2 text-emerald-600">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -142,7 +145,8 @@ function ProfileModal({ profile, onClose, onSaved }) {
                   <p className="text-xs text-slate-500 mb-3">
                     Se enviará un enlace al correo del usuario para que establezca su nueva contraseña de forma segura.
                   </p>
-                  <button type="button" onClick={handleResetPassword} disabled={resetting}
+                  <button type="button" onClick={handleResetPassword}
+                    disabled={resetting || !profile?.email}
                     className="w-full py-2 rounded-lg text-xs font-semibold border-2 border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                     {resetting
                       ? <><span className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /> Enviando...</>
@@ -213,7 +217,7 @@ function UsuariosTab({ showToast }) {
   async function loadProfiles() {
     setLoading(true)
     const { data } = await supabase.from('user_profiles')
-      .select('id, nombre, rol, activo, created_at').order('nombre')
+      .select('id, nombre, email, rol, activo, created_at').order('nombre')
     setProfiles(data ?? [])
     setLoading(false)
   }
