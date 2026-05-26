@@ -42,10 +42,26 @@ function ProfileModal({ profile, onClose, onSaved }) {
     activo:   profile?.activo ?? true,
     password: '',
   })
-  const [saving, setSaving] = useState(false)
-  const [error,  setError]  = useState('')
+  const [saving,     setSaving]     = useState(false)
+  const [error,      setError]      = useState('')
+  const [resetting,  setResetting]  = useState(false)
+  const [resetSent,  setResetSent]  = useState(false)
 
   function setF(k, v) { setForm(p => ({ ...p, [k]: v })) }
+
+  async function handleResetPassword() {
+    setResetting(true)
+    setError('')
+    // redirectTo = base URL sin hash — main.jsx captura el token y redirige a #/reset-password
+    const redirectTo = window.location.href.split('#')[0]
+    const { error: err } = await supabase.auth.resetPasswordForEmail(
+      profile.email,
+      { redirectTo }
+    )
+    if (err) setError(err.message)
+    else     setResetSent(true)
+    setResetting(false)
+  }
 
   async function handleSave() {
     setSaving(true)
@@ -113,16 +129,40 @@ function ProfileModal({ profile, onClose, onSaved }) {
               </div>
             </div>
           )}
-          <div>
-            <label className="label">{isEdit ? 'Nueva Contraseña (dejar vacío para no cambiar)' : 'Contraseña *'}</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-              <input type="password" className="input pl-9"
-                placeholder={isEdit ? '••••••••' : 'Mínimo 6 caracteres'}
-                value={form.password} onChange={e => setF('password', e.target.value)} />
+          {isEdit ? (
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <p className="text-xs font-medium text-slate-700 mb-2">Cambio de Contraseña</p>
+              {resetSent ? (
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <p className="text-xs">Link de restablecimiento enviado a <strong>{profile.email}</strong></p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-slate-500 mb-3">
+                    Se enviará un enlace al correo del usuario para que establezca su nueva contraseña de forma segura.
+                  </p>
+                  <button type="button" onClick={handleResetPassword} disabled={resetting}
+                    className="w-full py-2 rounded-lg text-xs font-semibold border-2 border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                    {resetting
+                      ? <><span className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /> Enviando...</>
+                      : <><Send className="w-3 h-3" /> Enviar link de restablecimiento</>
+                    }
+                  </button>
+                </>
+              )}
             </div>
-            {isEdit && <p className="text-xs text-slate-400 mt-1">El cambio de contraseña requiere permisos de administrador Supabase</p>}
-          </div>
+          ) : (
+            <div>
+              <label className="label">Contraseña *</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                <input type="password" className="input pl-9"
+                  placeholder="Mínimo 6 caracteres"
+                  value={form.password} onChange={e => setF('password', e.target.value)} />
+              </div>
+            </div>
+          )}
           <div>
             <label className="label">Rol *</label>
             <div className="flex gap-3 mt-1">
@@ -333,7 +373,7 @@ function UsuariosTab({ showToast }) {
           <AlertCircle className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
           <div className="text-xs text-blue-700 space-y-1">
             <p className="font-semibold">Gestión de credenciales</p>
-            <p>Los nuevos usuarios reciben un correo de confirmación de Supabase Auth. El cambio de contraseña requiere la clave de servicio, que por seguridad no se expone en el cliente. Use el panel de Supabase o "Olvidé mi contraseña" en el login para resetear contraseñas.</p>
+            <p>Los nuevos usuarios reciben un correo de confirmación al registrarse. Para cambiar la contraseña de un usuario existente, abra su perfil con el botón editar y use el botón <strong>"Enviar link de restablecimiento"</strong> — el usuario recibirá un enlace seguro en su correo para establecer una nueva contraseña.</p>
             <p><strong>Roles:</strong> Administrador — acceso total · Coordinador — sin eliminación · Auxiliar — solo lectura y creación.</p>
           </div>
         </div>
