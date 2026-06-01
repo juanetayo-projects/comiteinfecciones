@@ -26,7 +26,10 @@
            hover:bg-red-700 transition-colors;
   }
   .card {
-    @apply bg-white rounded-xl border border-slate-200 shadow-sm;
+    @apply bg-white rounded-xl border border-slate-200 shadow-md;
+  }
+  .metric-card {
+    @apply bg-white rounded-xl border border-slate-200 shadow-lg;
   }
   .input {
     @apply w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white

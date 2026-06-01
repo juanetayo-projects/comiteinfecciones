@@ -14,6 +14,7 @@ const OPCIONES_MOMENTO = [
   { value: 'NO CUMPLE',   label: 'No Cumple' },
   { value: 'NO EVALUADO', label: 'No Evaluado' },
   { value: 'NO REALIZA',  label: 'No Realiza' },
+  { value: 'NO APLICA',   label: 'No Aplica' },
 ]
 
 // Ordenados alfabéticamente
@@ -37,11 +38,12 @@ const MOMENTOS = [
   { name: 'momento_5', label: 'Momento 5 — Después del entorno del paciente' },
 ]
 
-// Servicios ordenados alfabéticamente
+// Servicios institucionales — fallback si DB está vacía
 const SERVICIOS_HM = [
-  'CIRUGIA', 'CONSULTA EXTERNA', 'HEMODINAMIA',
-  'HOSPITALIZACIÓN', 'HOSPITALIZACIÓN 2', 'IMAGENOLOGIA',
-  'LABORATORIO', 'NEONATOS', 'PEDIATRIA', 'UCI', 'URGENCIAS',
+  'ATENCIÓN AMBULATORIA', 'BRILLA ASEO', 'CIRUGÍA', 'HEMODINAMIA',
+  'HOSPITALIZACIÓN 2', 'HOSPITALIZACIÓN 7', 'HOSPITALIZACIÓN 8', 'HOSPITALIZACIÓN PARCIAL',
+  'IMAGENES', 'LABORATORIO', 'REHABILITACIÓN',
+  'UCI', 'UCIN', 'URGENCIAS ADULTO', 'URGENCIAS PEDIATRICAS',
 ]
 
 const schema = z.object({

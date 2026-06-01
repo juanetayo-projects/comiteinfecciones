@@ -12,7 +12,7 @@ import { useLista } from '../../hooks/useLista'
 // Listas extraídas del archivo Excel rondacirugia.xlsx — hoja "listas"
 const QUIROFANOS = ['1', '2', '3', '4', '5']
 
-const SERVICIOS_CX = ['CIRUGIA', 'HEMODINAMIA']
+const SERVICIOS_CX = ['CIRUGÍA', 'HEMODINAMIA']
 
 const ESPECIALIDADES = [
   'ANESTESIOLOGO',

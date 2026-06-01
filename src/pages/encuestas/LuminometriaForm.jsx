@@ -9,9 +9,9 @@ import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save } from 'lucide-react'
 import { useLista } from '../../hooks/useLista'
 
-// Servicios y objetos dependientes según archivo Excel listas
+// Servicios y objetos dependientes (claves = nombres exactos del listado institucional)
 const SERVICIOS_OBJETOS = {
-  'CIRUGIA': [
+  'CIRUGÍA': [
     'Arco en C',
     'Bomba de infusion',
     'Camilla',
@@ -19,7 +19,22 @@ const SERVICIOS_OBJETOS = {
     'Mesa de Mayo',
     'Ventilador (perilla)',
   ],
-  'HOSPITALIZACION': [
+  'HOSPITALIZACIÓN 2': [
+    'Bomba de infusión',
+    'Cama (panel de control)',
+    'Colchón',
+  ],
+  'HOSPITALIZACIÓN 7': [
+    'Bomba de infusión',
+    'Cama (panel de control)',
+    'Colchón',
+  ],
+  'HOSPITALIZACIÓN 8': [
+    'Bomba de infusión',
+    'Cama (panel de control)',
+    'Colchón',
+  ],
+  'HOSPITALIZACIÓN PARCIAL': [
     'Bomba de infusión',
     'Cama (panel de control)',
     'Colchón',
@@ -31,7 +46,19 @@ const SERVICIOS_OBJETOS = {
     'Mindray signos vitales',
     'Ventilador',
   ],
-  'URGENCIAS': [
+  'UCIN': [
+    'Bomba de infusión',
+    'Cama (panel de control)',
+    'Colchón',
+    'Mindray signos vitales',
+    'Ventilador',
+  ],
+  'URGENCIAS ADULTO': [
+    'Bomba de infusión',
+    'Colchoneta',
+    'Ventilador',
+  ],
+  'URGENCIAS PEDIATRICAS': [
     'Bomba de infusión',
     'Colchoneta',
     'Ventilador',
