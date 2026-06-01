@@ -9,7 +9,12 @@ import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save, BarChart3 } from 'lucide-react'
 import { useLista } from '../../hooks/useLista'
 
-const UBICACIONES_DEFAULT = ['PEDIATRIA', 'SALA DE YESO']
+const SERVICIOS_DEFAULT = [
+  'ATENCIÓN AMBULATORIA', 'BRILLA ASEO', 'CIRUGÍA', 'HEMODINAMIA',
+  'HOSPITALIZACIÓN 2', 'HOSPITALIZACIÓN 7', 'HOSPITALIZACIÓN 8', 'HOSPITALIZACIÓN PARCIAL',
+  'IMAGENES', 'LABORATORIO', 'REHABILITACIÓN',
+  'UCI', 'UCIN', 'URGENCIAS ADULTO', 'URGENCIAS PEDIATRICAS',
+]
 
 const CRITERIOS = [
   { name: 'criterio_1_rotulo',        label: 'Rotulación correcta del acceso venoso' },
@@ -65,7 +70,7 @@ export default function AccesoVenosoForm() {
     },
   })
 
-  const ubicaciones = useLista('ubicacion', UBICACIONES_DEFAULT)
+  const servicios = useLista('servicio', SERVICIOS_DEFAULT)
   const fechaReg    = watch('fecha_registro')
   const semanaMes   = calcSemanaMes(fechaReg)
 
@@ -136,16 +141,11 @@ export default function AccesoVenosoForm() {
               </div>
             </div>
             <div>
-              <label className="label">Ubicación / Cama *</label>
-              <div className="flex flex-wrap gap-4 mt-2">
-                {ubicaciones.map(u => (
-                  <label key={u} className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" value={u} className="w-4 h-4 accent-indigo-600"
-                      {...register('ubicacion_cama')} />
-                    <span className="text-sm font-medium text-slate-700">{u}</span>
-                  </label>
-                ))}
-              </div>
+              <label className="label">Servicio *</label>
+              <select className="input" {...register('ubicacion_cama')}>
+                <option value="">Seleccionar...</option>
+                {servicios.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
               {errors.ubicacion_cama && <p className="text-xs text-red-600 mt-1">{errors.ubicacion_cama.message}</p>}
             </div>
             <div>

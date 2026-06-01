@@ -9,9 +9,13 @@ import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save } from 'lucide-react'
 import { useLista } from '../../hooks/useLista'
 
-// Listas extraídas del archivo Excel rondacirugia.xlsx — hoja "listas"
-const QUIROFANOS = ['1', '2', '3', '4', '5']
+// Quirófanos disponibles por servicio
+const QUIROFANOS_POR_SERVICIO = {
+  'CIRUGÍA':     ['Quirófano 1', 'Quirófano 2', 'Quirófano 3', 'Quirófano 4', 'Quirófano 5'],
+  'HEMODINAMIA': ['Quirófano 1'],
+}
 
+// Lista fija — solo estos servicios aplican para ronda de cirugía
 const SERVICIOS_CX = ['CIRUGÍA', 'HEMODINAMIA']
 
 const ESPECIALIDADES = [
@@ -71,7 +75,7 @@ const PROCEDIMIENTOS = [
   'TUMOR MALIGNO DE LA PROSTATA',
 ]
 
-// Opciones de cumplimiento según Excel: CUMPLE / NO CUMPLE / NO APLICA / SIN DATO
+// Opciones de cumplimiento: CUMPLE / NO CUMPLE / NO APLICA / SIN DATO
 const OPC = [
   { value: 'CUMPLE',    label: 'Cumple' },
   { value: 'NO CUMPLE', label: 'No Cumple' },
@@ -102,8 +106,8 @@ function SC({ label, name, register, error }) {
 
 const schema = z.object({
   fecha_registro:                  z.string().min(1, 'Requerido'),
-  quirofano:                       z.string().min(1, 'Requerido'),
   servicio:                        z.string().min(1, 'Requerido'),
+  quirofano:                       z.string().min(1, 'Requerido'),
   especialidad:                    z.string().optional(),
   procedimiento:                   z.string().optional(),
   profesional:                     z.string().min(1, 'Requerido'),
@@ -150,13 +154,20 @@ export default function RondaCirugiaForm() {
   const [adjuntos,  setAdjuntos]  = useState([])
   const [saveError, setSaveError] = useState('')
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { fecha_registro: new Date().toISOString().slice(0, 10), estado: 'pendiente' },
   })
 
-  const serviciosCx    = useLista('servicio',     SERVICIOS_CX)
   const especialidades = useLista('especialidad', ESPECIALIDADES)
+
+  const servicioSel          = watch('servicio')
+  const quirofanosDisponibles = QUIROFANOS_POR_SERVICIO[servicioSel] ?? []
+
+  // Reinicia quirofano cuando cambia el servicio (solo al crear nuevo registro)
+  useEffect(() => {
+    if (!isEdit) setValue('quirofano', '')
+  }, [servicioSel])
 
   useEffect(() => {
     if (isEdit) {
@@ -204,22 +215,35 @@ export default function RondaCirugiaForm() {
               <input type="date" className="input" {...register('fecha_registro')} />
               {errors.fecha_registro && <p className="text-xs text-red-600 mt-1">{errors.fecha_registro.message}</p>}
             </div>
-            <div>
-              <label className="label">Quirófano *</label>
-              <select className="input" {...register('quirofano')}>
-                <option value="">Seleccionar...</option>
-                {QUIROFANOS.map(q => <option key={q} value={q}>Quirófano {q}</option>)}
-              </select>
-              {errors.quirofano && <p className="text-xs text-red-600 mt-1">{errors.quirofano.message}</p>}
-            </div>
+
+            {/* Servicio PRIMERO — de él depende Quirófano */}
             <div>
               <label className="label">Servicio *</label>
               <select className="input" {...register('servicio')}>
                 <option value="">Seleccionar...</option>
-                {serviciosCx.map(s => <option key={s} value={s}>{s}</option>)}
+                {SERVICIOS_CX.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               {errors.servicio && <p className="text-xs text-red-600 mt-1">{errors.servicio.message}</p>}
             </div>
+
+            {/* Quirófano — depende del Servicio seleccionado */}
+            <div>
+              <label className="label">Quirófano *</label>
+              {servicioSel ? (
+                <select className="input" {...register('quirofano')}>
+                  <option value="">Seleccionar...</option>
+                  {quirofanosDisponibles.map(q => (
+                    <option key={q} value={q}>{q}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="input bg-slate-50 text-slate-400 cursor-not-allowed select-none">
+                  Selecciona primero un servicio
+                </div>
+              )}
+              {errors.quirofano && <p className="text-xs text-red-600 mt-1">{errors.quirofano.message}</p>}
+            </div>
+
             <div>
               <label className="label">Especialidad</label>
               <select className="input" {...register('especialidad')}>
@@ -267,15 +291,11 @@ export default function RondaCirugiaForm() {
           </div>
         </div>
 
-        {/* Profilaxis antibiótica */}
+        {/* Profilaxis antibiótica — sin campo Medicamento Profiláctico */}
         <div className="card p-5">
           <SH>Profilaxis Antibiótica</SH>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SC label="Antibiótico colocado antes de incisión"    name="coloca_antibiotico_antes"         register={register} error={errors.coloca_antibiotico_antes} />
-            <div>
-              <label className="label">Medicamento Profiláctico</label>
-              <input className="input" placeholder="Nombre del antibiótico" {...register('medicamento_profilactico')} />
-            </div>
             <div>
               <label className="label">Hora Administración</label>
               <input type="time" className="input" {...register('hora_administracion')} />
