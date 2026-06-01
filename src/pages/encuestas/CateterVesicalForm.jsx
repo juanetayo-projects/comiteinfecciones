@@ -35,8 +35,7 @@ const schema = z.object({
   fecha_registro:              z.string().min(1, 'Requerido'),
   ubicacion_cama:              z.string().min(1, 'Requerido'),
   num_casos:                   z.coerce.number().min(0).default(1),
-  documento_identificacion:    z.string().optional(),
-  nombre_paciente:             z.string().optional(),
+  observaciones:               z.string().optional(),
   criterio_1_fijacion:         z.boolean().default(false),
   criterio_2_posicion_bolsa:   z.boolean().default(false),
   criterio_3_rotulacion:       z.boolean().default(false),
@@ -157,13 +156,10 @@ export default function CateterVesicalForm() {
               <label className="label">N° de Casos</label>
               <input type="number" min="0" className="input" {...register('num_casos')} />
             </div>
-            <div>
-              <label className="label">Doc. Ident. Paciente</label>
-              <input className="input" placeholder="Número de documento" {...register('documento_identificacion')} />
-            </div>
-            <div>
-              <label className="label">Nombre del Paciente</label>
-              <input className="input" placeholder="Nombre completo del paciente" {...register('nombre_paciente')} />
+            <div className="sm:col-span-2">
+              <label className="label">Observaciones</label>
+              <textarea rows={3} className="input resize-none"
+                placeholder="Observaciones generales del registro..." {...register('observaciones')} />
             </div>
           </div>
         </div>
