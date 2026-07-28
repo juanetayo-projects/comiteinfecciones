@@ -70,22 +70,30 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{ backgroundImage: 'linear-gradient(135deg, #0d2d6b 0%, #16468e 45%, #081c45 100%)' }}
+    >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-accent-500/20 blur-3xl" />
+        <div className="absolute -bottom-28 -right-20 w-96 h-96 rounded-full bg-brand-500/25 blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-sm relative">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 mb-4 shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-accent-gradient mb-4 shadow-neu-dark">
             <KeyRound className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-xl font-bold text-white">Nueva Contraseña</h1>
-          <p className="text-slate-400 text-sm mt-1">Elige una contraseña segura</p>
+          <h1 className="text-xl font-extrabold text-white tracking-tight">Nueva Contraseña</h1>
+          <p className="text-accent-200 text-sm mt-1">Elige una contraseña segura</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-2xl p-6">
+        <div className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 p-6">
 
           {/* Enlace expirado */}
           {!sessionReady && error && (
             <div className="flex flex-col items-center gap-3 py-4 text-center">
-              <p className="text-sm font-semibold text-red-600">Enlace inválido o expirado</p>
+              <p className="text-sm font-bold text-rose-600">Enlace inválido o expirado</p>
               <p className="text-sm text-slate-500">{error}</p>
               <button
                 onClick={() => navigate('/login')}
@@ -99,7 +107,7 @@ export default function ResetPassword() {
           {/* Cargando sesión */}
           {!sessionReady && !error && (
             <div className="flex flex-col items-center gap-3 py-6">
-              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
               <p className="text-sm text-slate-500">Verificando enlace...</p>
             </div>
           )}
@@ -108,7 +116,7 @@ export default function ResetPassword() {
           {sessionReady && success && (
             <div className="flex flex-col items-center gap-3 py-4">
               <CheckCircle2 className="w-12 h-12 text-emerald-500" />
-              <p className="text-base font-semibold text-slate-800">¡Contraseña actualizada!</p>
+              <p className="text-base font-bold text-brand-900">¡Contraseña actualizada!</p>
               <p className="text-sm text-slate-500">Redirigiendo al dashboard...</p>
             </div>
           )}
@@ -117,7 +125,7 @@ export default function ResetPassword() {
           {sessionReady && !success && (
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+                <div className="rounded-xl px-3 py-2 text-sm text-rose-700 bg-rose-50 shadow-neu-in-xs">
                   {error}
                 </div>
               )}
@@ -134,7 +142,7 @@ export default function ResetPassword() {
                     required
                   />
                   <button type="button" onClick={() => setShowPwd(s => !s)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-600 transition-colors">
                     {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>

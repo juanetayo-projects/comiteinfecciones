@@ -2,19 +2,90 @@ import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
   PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts'
 import { ArrowLeft, ShieldAlert, Filter, X } from 'lucide-react'
 
-const PIE_COLORS = ['#10b981', '#f87171']
+const PIE_COLORS = ['#059669', '#e11d48']
+const BAR_CUMPLE    = '#059669'
+const BAR_NO_CUMPLE = '#e11d48'
+
+// Agrupa por campo y devuelve datos listos para BarChart, con % por segmento
+function buildBarData(rows, key, fallback) {
+  return Object.values(
+    rows.reduce((acc, r) => {
+      const k = r[key] || fallback
+      if (!acc[k]) acc[k] = { name: k, CUMPLE: 0, 'NO CUMPLE': 0 }
+      r.adherencia === 'CUMPLE' ? acc[k].CUMPLE++ : acc[k]['NO CUMPLE']++
+      return acc
+    }, {})
+  ).map(d => {
+    const total = d.CUMPLE + d['NO CUMPLE']
+    return {
+      ...d,
+      total,
+      pctCumple:   total > 0 ? Math.round((d.CUMPLE / total) * 100) : 0,
+      pctNoCumple: total > 0 ? Math.round((d['NO CUMPLE'] / total) * 100) : 0,
+    }
+  }).sort((a, b) => b.total - a.total)
+}
+
+// Etiqueta de % dentro de cada segmento de la barra apilada
+function SegmentLabel({ x, y, width, height, value }) {
+  if (!value || height < 16) return null      // sin espacio suficiente → no dibujar
+  return (
+    <text
+      x={x + width / 2}
+      y={y + height / 2}
+      fill="#ffffff"
+      fontSize={11}
+      fontWeight={700}
+      textAnchor="middle"
+      dominantBaseline="central"
+    >
+      {value}%
+    </text>
+  )
+}
+
+// Etiqueta de adherencia total encima de la barra apilada
+function TotalPctLabel({ x, y, width, value }) {
+  if (value == null) return null
+  return (
+    <text
+      x={x + width / 2}
+      y={y - 6}
+      fill={value >= 80 ? '#047857' : '#be123c'}
+      fontSize={11}
+      fontWeight={800}
+      textAnchor="middle"
+    >
+      {value}%
+    </text>
+  )
+}
+
+// Tooltip con conteos y porcentajes
+function BarTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload
+  return (
+    <div className="rounded-xl bg-white/95 shadow-neu px-3 py-2 text-xs border border-white">
+      <p className="font-bold text-brand-900 mb-1">{label}</p>
+      <p className="text-emerald-700 font-semibold">CUMPLE: {d.CUMPLE} ({d.pctCumple}%)</p>
+      <p className="text-rose-700 font-semibold">NO CUMPLE: {d['NO CUMPLE']} ({d.pctNoCumple}%)</p>
+      <p className="text-slate-500 mt-1">Total: {d.total} · Adherencia {d.pctCumple}%</p>
+    </div>
+  )
+}
 
 function KpiCard({ label, value, sub, color = 'slate' }) {
   const cls = {
-    emerald: 'bg-emerald-50 text-emerald-700',
-    red:     'bg-red-50 text-red-700',
-    indigo:  'bg-indigo-50 text-indigo-700',
-    slate:   'bg-slate-50 text-slate-700',
+    emerald: 'kpi-tile kpi-emerald',
+    red:     'kpi-tile kpi-red',
+    indigo:  'kpi-tile kpi-indigo',
+    slate:   'kpi-tile kpi-slate',
   }[color]
   return (
     <div className={`card p-4 ${cls}`}>
@@ -47,7 +118,7 @@ function SummaryTable({ rows, nameLabel }) {
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="bg-[#1a4fa0] text-white">
+          <tr className="table-head-brand">
             <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">{nameLabel}</th>
             <th className="text-center px-2 py-2 font-semibold text-emerald-300">CUMPLE</th>
             <th className="text-center px-2 py-2 font-semibold text-red-300">NO CUMPLE</th>
@@ -57,7 +128,7 @@ function SummaryTable({ rows, nameLabel }) {
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-red-50 transition-colors`}>
+            <tr key={i} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} hover:bg-red-50 transition-colors`}>
               <td className="px-2.5 py-1.5 text-slate-700 font-medium">{r.nombre}</td>
               <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{r.cumple}</td>
               <td className="px-2 py-1.5 text-center font-semibold text-red-600">{r.noCumple}</td>
@@ -110,7 +181,7 @@ export default function AislamentoDashboard() {
 
   if (loading) return (
     <div className="p-8 flex justify-center">
-      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -124,23 +195,8 @@ export default function AislamentoDashboard() {
     { name: 'NO CUMPLE', value: noCumple },
   ].filter(d => d.value > 0)
 
-  const barServicio = Object.values(
-    filtered.reduce((acc, r) => {
-      const s = r.servicio || 'Sin servicio'
-      if (!acc[s]) acc[s] = { name: s, CUMPLE: 0, 'NO CUMPLE': 0 }
-      r.adherencia === 'CUMPLE' ? acc[s].CUMPLE++ : acc[s]['NO CUMPLE']++
-      return acc
-    }, {})
-  )
-
-  const barTipo = Object.values(
-    filtered.reduce((acc, r) => {
-      const t = r.tipo_aislamiento || 'Sin tipo'
-      if (!acc[t]) acc[t] = { name: t, CUMPLE: 0, 'NO CUMPLE': 0 }
-      r.adherencia === 'CUMPLE' ? acc[t].CUMPLE++ : acc[t]['NO CUMPLE']++
-      return acc
-    }, {})
-  )
+  const barServicio = buildBarData(filtered, 'servicio',         'Sin servicio')
+  const barTipo     = buildBarData(filtered, 'tipo_aislamiento', 'Sin tipo')
 
   const tableServicio    = buildSummary(filtered, 'servicio')
   const tableProfesional = buildSummary(filtered, 'profesional')
@@ -209,7 +265,7 @@ export default function AislamentoDashboard() {
           </div>
         </div>
         {hasFilters && (
-          <p className="text-xs text-indigo-600 mt-2">{total} de {data.length} registros mostrados</p>
+          <p className="text-xs text-brand-600 mt-2">{total} de {data.length} registros mostrados</p>
         )}
       </div>
 
@@ -229,44 +285,61 @@ export default function AislamentoDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="card p-5">
               <h3 className="section-title mb-2">Adherencia Global</h3>
-              <ResponsiveContainer width="100%" height={170}>
+              <ResponsiveContainer width="100%" height={230}>
                 <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" outerRadius={90}
-                    dataKey="value" label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`}
+                  <Pie data={pieData} cx="50%" cy="50%" outerRadius={85}
+                    dataKey="value" isAnimationActive={false}
+                    label={({ name, value, percent }) => `${name} ${value} (${Math.round(percent * 100)}%)`}
                     labelLine={false}>
-                    {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
+                    {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} stroke="#ffffff" strokeWidth={2} />)}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip formatter={(v) => [`${v} (${total > 0 ? Math.round((v / total) * 100) : 0}%)`, 'Registros']} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
 
             <div className="card p-5">
-              <h3 className="section-title mb-2">Adherencia por Servicio</h3>
-              <ResponsiveContainer width="100%" height={170}>
-                <BarChart data={barServicio} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <div className="flex items-baseline justify-between mb-1">
+                <h3 className="section-title">Adherencia por Servicio</h3>
+                <span className="text-[10px] text-slate-500">% dentro de cada barra · % de adherencia arriba</span>
+              </div>
+              <ResponsiveContainer width="100%" height={230}>
+                <BarChart data={barServicio} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
+                  <Tooltip content={<BarTooltip />} cursor={{ fill: 'rgba(31,86,196,0.06)' }} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="CUMPLE"    fill="#10b981" stackId="a" />
-                  <Bar dataKey="NO CUMPLE" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false}>
+                    <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                  </Bar>
+                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" isAnimationActive={false} radius={[4,4,0,0]}>
+                    <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                    <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             <div className="card p-5 lg:col-span-2">
-              <h3 className="section-title mb-2">Adherencia por Tipo de Aislamiento</h3>
-              <ResponsiveContainer width="100%" height={155}>
-                <BarChart data={barTipo} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <div className="flex items-baseline justify-between mb-1">
+                <h3 className="section-title">Adherencia por Tipo de Aislamiento</h3>
+                <span className="text-[10px] text-slate-500">% dentro de cada barra · % de adherencia arriba</span>
+              </div>
+              <ResponsiveContainer width="100%" height={230}>
+                <BarChart data={barTipo} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
+                  <Tooltip content={<BarTooltip />} cursor={{ fill: 'rgba(31,86,196,0.06)' }} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="CUMPLE"    fill="#10b981" stackId="a" />
-                  <Bar dataKey="NO CUMPLE" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false}>
+                    <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                  </Bar>
+                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" isAnimationActive={false} radius={[4,4,0,0]}>
+                    <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                    <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -11,7 +11,7 @@ import {
 // ── Shared constants ──────────────────────────────────────────
 const ROLES = ['administrador', 'coordinador', 'auxiliar']
 const ROLE_BADGE = {
-  administrador: 'bg-indigo-100 text-indigo-700',
+  administrador: 'bg-brand-100 text-brand-700',
   coordinador:   'bg-blue-100   text-blue-700',
   auxiliar:      'bg-slate-100  text-slate-600',
 }
@@ -23,7 +23,7 @@ const ROLE_LABEL = {
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
+    <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -97,7 +97,7 @@ function ProfileModal({ profile, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 w-full max-w-md">
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center">
@@ -130,7 +130,7 @@ function ProfileModal({ profile, onClose, onSaved }) {
             </div>
           )}
           {isEdit ? (
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="p-3 bg-slate-50 rounded-lg border border-white/70">
               <p className="text-xs font-medium text-slate-700 mb-1">Cambio de Contraseña</p>
               {profile?.email && (
                 <p className="text-xs text-slate-400 mb-2 font-mono">{profile.email}</p>
@@ -147,9 +147,9 @@ function ProfileModal({ profile, onClose, onSaved }) {
                   </p>
                   <button type="button" onClick={handleResetPassword}
                     disabled={resetting || !profile?.email}
-                    className="w-full py-2 rounded-lg text-xs font-semibold border-2 border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                    className="w-full py-2 rounded-lg text-xs font-semibold border-2 border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                     {resetting
-                      ? <><span className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /> Enviando...</>
+                      ? <><span className="w-3 h-3 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" /> Enviando...</>
                       : <><Send className="w-3 h-3" /> Enviar link de restablecimiento</>
                     }
                   </button>
@@ -174,7 +174,7 @@ function ProfileModal({ profile, onClose, onSaved }) {
                 <button key={r} type="button" onClick={() => setF('rol', r)}
                   className={`flex-1 py-2 rounded-lg text-xs font-semibold border-2 transition-colors ${
                     form.rol === r
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      ? 'border-brand-500 bg-brand-50 text-brand-700'
                       : 'border-slate-200 text-slate-600 hover:border-slate-300'
                   }`}>
                   {ROLE_LABEL[r]}
@@ -183,7 +183,7 @@ function ProfileModal({ profile, onClose, onSaved }) {
             </div>
           </div>
           <label className="flex items-center gap-2.5 cursor-pointer">
-            <input type="checkbox" className="w-4 h-4 rounded accent-indigo-600"
+            <input type="checkbox" className="w-4 h-4 rounded accent-brand-600"
               checked={form.activo} onChange={e => setF('activo', e.target.checked)} />
             <span className="text-sm text-slate-700">Usuario activo</span>
           </label>
@@ -286,7 +286,7 @@ function UsuariosTab({ showToast }) {
         </div>
         {loading ? (
           <div className="flex justify-center p-8">
-            <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : activos.length === 0 ? (
           <p className="p-8 text-center text-slate-400 text-sm">No hay usuarios activos</p>
@@ -294,7 +294,7 @@ function UsuariosTab({ showToast }) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-[#1a4fa0] text-white">
+                <tr className="table-head-brand">
                   <th className="text-left px-4 py-3 font-semibold text-xs">Nombre</th>
                   <th className="text-left px-4 py-3 font-semibold text-xs">ID / UUID</th>
                   <th className="text-center px-4 py-3 font-semibold text-xs">Rol</th>
@@ -303,7 +303,7 @@ function UsuariosTab({ showToast }) {
               </thead>
               <tbody>
                 {activos.map((p, i) => (
-                  <tr key={p.id} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-teal-50 transition-colors`}>
+                  <tr key={p.id} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} hover:bg-teal-50 transition-colors`}>
                     <td className="px-4 py-3 font-medium text-slate-700">{p.nombre || '—'}</td>
                     <td className="px-4 py-3 text-slate-400 font-mono text-xs truncate max-w-[180px]">{p.id}</td>
                     <td className="px-4 py-3 text-center">
@@ -314,7 +314,7 @@ function UsuariosTab({ showToast }) {
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => setModal(p)}
-                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition-colors" title="Editar">
+                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-brand-600 transition-colors" title="Editar">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button onClick={() => setConfirm(p.id)}
@@ -350,7 +350,7 @@ function UsuariosTab({ showToast }) {
               </thead>
               <tbody>
                 {inactivos.map((p, i) => (
-                  <tr key={p.id} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} opacity-60`}>
+                  <tr key={p.id} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} opacity-60`}>
                     <td className="px-4 py-2.5 text-slate-500 line-through">{p.nombre || '—'}</td>
                     <td className="px-4 py-2.5 text-center">
                       <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-500">
@@ -359,7 +359,7 @@ function UsuariosTab({ showToast }) {
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       <button onClick={() => handleActivar(p.id)}
-                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
+                        className="text-xs text-brand-600 hover:text-brand-800 font-medium transition-colors">
                         Reactivar
                       </button>
                     </td>
@@ -395,7 +395,7 @@ function UsuariosTab({ showToast }) {
       {/* Confirm deactivate */}
       {confirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center">
+          <div className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 p-6 w-full max-w-sm text-center">
             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-5 h-5 text-red-600" />
             </div>
@@ -475,7 +475,7 @@ function ListaModal({ item, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+      <div className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 w-full max-w-sm">
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
@@ -513,7 +513,7 @@ function ListaModal({ item, onClose, onSaved }) {
             <p className="text-xs text-slate-400 mt-1">Número para ordenar en la lista (0 = primero)</p>
           </div>
           <label className="flex items-center gap-2.5 cursor-pointer">
-            <input type="checkbox" className="w-4 h-4 rounded accent-indigo-600"
+            <input type="checkbox" className="w-4 h-4 rounded accent-brand-600"
               checked={form.activo} onChange={e => setF('activo', e.target.checked)} />
             <span className="text-sm text-slate-700">Ítem activo</span>
           </label>
@@ -616,7 +616,7 @@ function ListasTab({ showToast }) {
         </div>
         {loading ? (
           <div className="flex justify-center p-8">
-            <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <p className="p-8 text-center text-slate-400 text-sm">Sin resultados</p>
@@ -624,7 +624,7 @@ function ListasTab({ showToast }) {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-[#1a4fa0] text-white">
+                <tr className="table-head-brand">
                   <th className="text-left px-4 py-3 font-semibold">Categoría</th>
                   <th className="text-left px-4 py-3 font-semibold">Valor</th>
                   <th className="text-center px-3 py-3 font-semibold">Orden</th>
@@ -634,7 +634,7 @@ function ListasTab({ showToast }) {
               </thead>
               <tbody>
                 {filtered.map((item, i) => (
-                  <tr key={item.id} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-violet-50 transition-colors`}>
+                  <tr key={item.id} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} hover:bg-violet-50 transition-colors`}>
                     <td className="px-4 py-2.5 font-mono text-slate-500">{item.categoria}</td>
                     <td className="px-4 py-2.5 font-medium text-slate-700">{item.valor}</td>
                     <td className="px-3 py-2.5 text-center text-slate-400">{item.orden ?? 0}</td>
@@ -647,7 +647,7 @@ function ListasTab({ showToast }) {
                     <td className="px-3 py-2.5 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => setModal(item)}
-                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition-colors" title="Editar">
+                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-brand-600 transition-colors" title="Editar">
                           <Pencil className="w-3 h-3" />
                         </button>
                         <button onClick={() => handleDelete(item.id)}
@@ -718,7 +718,7 @@ function ArchivosTab() {
         </div>
         {loading ? (
           <div className="flex justify-center p-8">
-            <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <p className="p-8 text-center text-slate-400 text-sm">No hay archivos registrados</p>
@@ -726,7 +726,7 @@ function ArchivosTab() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-[#1a4fa0] text-white">
+                <tr className="table-head-brand">
                   <th className="text-left px-4 py-3 font-semibold">Nombre</th>
                   <th className="text-left px-3 py-3 font-semibold">Tipo Encuesta</th>
                   <th className="text-left px-3 py-3 font-semibold">Subido por</th>
@@ -736,7 +736,7 @@ function ArchivosTab() {
               </thead>
               <tbody>
                 {filtered.map((a, i) => (
-                  <tr key={a.id} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-blue-50 transition-colors`}>
+                  <tr key={a.id} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} hover:bg-blue-50 transition-colors`}>
                     <td className="px-4 py-2.5 font-medium text-slate-700 max-w-[200px] truncate">
                       <div className="flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -751,7 +751,7 @@ function ArchivosTab() {
                     <td className="px-3 py-2.5 text-center">
                       {a.url ? (
                         <a href={a.url} target="_blank" rel="noreferrer"
-                          className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
+                          className="text-brand-600 hover:text-brand-800 font-medium transition-colors">
                           Ver
                         </a>
                       ) : '—'}
@@ -815,7 +815,7 @@ function EmailLogsTab() {
         </div>
         {loading ? (
           <div className="flex justify-center p-8">
-            <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <p className="p-8 text-center text-slate-400 text-sm">
@@ -825,7 +825,7 @@ function EmailLogsTab() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-[#1a4fa0] text-white">
+                <tr className="table-head-brand">
                   <th className="text-left px-4 py-3 font-semibold">Destinatario</th>
                   <th className="text-left px-3 py-3 font-semibold">Asunto</th>
                   <th className="text-center px-3 py-3 font-semibold">Estado</th>
@@ -835,7 +835,7 @@ function EmailLogsTab() {
               </thead>
               <tbody>
                 {filtered.map((l, i) => (
-                  <tr key={l.id} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-orange-50 transition-colors`}>
+                  <tr key={l.id} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} hover:bg-orange-50 transition-colors`}>
                     <td className="px-4 py-2.5 font-medium text-slate-700 truncate max-w-[160px]">{l.destinatario || '—'}</td>
                     <td className="px-3 py-2.5 text-slate-600 truncate max-w-[220px]">{l.asunto || '—'}</td>
                     <td className="px-3 py-2.5 text-center">
@@ -905,7 +905,7 @@ export default function Configuracion() {
     <div className="p-6 lg:p-8 animate-fade-in space-y-6">
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1a4fa0] text-white px-4 py-2.5 rounded-xl shadow-lg text-sm animate-fade-in">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 table-head-brand px-4 py-2.5 rounded-xl shadow-lg text-sm animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           {toast}
         </div>

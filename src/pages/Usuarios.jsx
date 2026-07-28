@@ -9,7 +9,7 @@ import {
 const ROLES = ['administrador', 'coordinador', 'auxiliar']
 
 const ROLE_BADGE = {
-  administrador: 'bg-indigo-100 text-indigo-700',
+  administrador: 'bg-brand-100 text-brand-700',
   coordinador:   'bg-blue-100   text-blue-700',
   auxiliar:      'bg-slate-100  text-slate-600',
 }
@@ -22,7 +22,7 @@ const ROLE_LABEL = {
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
+    <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -91,7 +91,7 @@ function ProfileModal({ profile, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 w-full max-w-md">
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center">
@@ -145,7 +145,7 @@ function ProfileModal({ profile, onClose, onSaved }) {
                   onClick={() => setF('rol', r)}
                   className={`flex-1 py-2 rounded-lg text-xs font-semibold border-2 transition-colors ${
                     form.rol === r
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      ? 'border-brand-500 bg-brand-50 text-brand-700'
                       : 'border-slate-200 text-slate-600 hover:border-slate-300'
                   }`}>
                   {ROLE_LABEL[r]}
@@ -155,7 +155,7 @@ function ProfileModal({ profile, onClose, onSaved }) {
           </div>
 
           <label className="flex items-center gap-2.5 cursor-pointer">
-            <input type="checkbox" className="w-4 h-4 rounded accent-indigo-600"
+            <input type="checkbox" className="w-4 h-4 rounded accent-brand-600"
               checked={form.activo} onChange={e => setF('activo', e.target.checked)} />
             <span className="text-sm text-slate-700">Usuario activo</span>
           </label>
@@ -256,7 +256,7 @@ export default function Usuarios() {
     <div className="p-6 lg:p-8 animate-fade-in space-y-6">
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1a4fa0] text-white px-4 py-2.5 rounded-xl shadow-lg text-sm animate-fade-in">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 table-head-brand px-4 py-2.5 rounded-xl shadow-lg text-sm animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           {toast}
         </div>
@@ -303,7 +303,7 @@ export default function Usuarios() {
 
         {loading ? (
           <div className="flex justify-center p-8">
-            <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : activos.length === 0 ? (
           <div className="p-8 text-center text-slate-400 text-sm">No hay usuarios activos</div>
@@ -311,7 +311,7 @@ export default function Usuarios() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-[#1a4fa0] text-white">
+                <tr className="table-head-brand">
                   <th className="text-left px-4 py-3 font-semibold text-xs rounded-tl-none">Nombre</th>
                   <th className="text-left px-4 py-3 font-semibold text-xs">ID / UUID</th>
                   <th className="text-center px-4 py-3 font-semibold text-xs">Rol</th>
@@ -320,7 +320,7 @@ export default function Usuarios() {
               </thead>
               <tbody>
                 {activos.map((p, i) => (
-                  <tr key={p.id} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-teal-50 transition-colors`}>
+                  <tr key={p.id} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} hover:bg-teal-50 transition-colors`}>
                     <td className="px-4 py-3 font-medium text-slate-700">{p.nombre || '—'}</td>
                     <td className="px-4 py-3 text-slate-400 font-mono text-xs truncate max-w-[180px]">{p.id}</td>
                     <td className="px-4 py-3 text-center">
@@ -331,7 +331,7 @@ export default function Usuarios() {
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => setModal(p)}
-                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-brand-600 transition-colors"
                           title="Editar">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
@@ -369,7 +369,7 @@ export default function Usuarios() {
               </thead>
               <tbody>
                 {inactivos.map((p, i) => (
-                  <tr key={p.id} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} opacity-60`}>
+                  <tr key={p.id} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} opacity-60`}>
                     <td className="px-4 py-2.5 text-slate-500 line-through">{p.nombre || '—'}</td>
                     <td className="px-4 py-2.5 text-center">
                       <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-500">
@@ -378,7 +378,7 @@ export default function Usuarios() {
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       <button onClick={() => handleActivar(p.id)}
-                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
+                        className="text-xs text-brand-600 hover:text-brand-800 font-medium transition-colors">
                         Reactivar
                       </button>
                     </td>
@@ -414,7 +414,7 @@ export default function Usuarios() {
       {/* Confirmación desactivar */}
       {confirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center">
+          <div className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 p-6 w-full max-w-sm text-center">
             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-5 h-5 text-red-600" />
             </div>

@@ -11,11 +11,11 @@ const PIE_COLORS = ['#10b981', '#f87171', '#94a3b8', '#fbbf24']
 
 function KpiCard({ label, value, sub, color = 'slate' }) {
   const cls = {
-    emerald: 'bg-emerald-50 text-emerald-700',
-    red:     'bg-red-50 text-red-700',
-    indigo:  'bg-indigo-50 text-indigo-700',
-    purple:  'bg-purple-50 text-purple-700',
-    slate:   'bg-slate-50 text-slate-700',
+    emerald: 'kpi-tile kpi-emerald',
+    red:     'kpi-tile kpi-red',
+    indigo:  'kpi-tile kpi-indigo',
+    purple:  'kpi-tile kpi-purple',
+    slate:   'kpi-tile kpi-slate',
   }[color]
   return (
     <div className={`card p-4 ${cls}`}>
@@ -28,7 +28,7 @@ function KpiCard({ label, value, sub, color = 'slate' }) {
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
+    <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -62,7 +62,7 @@ function SummaryTableRonda({ rows, title }) {
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr className="bg-[#1a4fa0] text-white">
+            <tr className="table-head-brand">
               <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">Nombre</th>
               <th className="text-center px-2 py-2 font-semibold text-emerald-300">CUMPLE</th>
               <th className="text-center px-2 py-2 font-semibold text-red-300">NO CUMPLE</th>
@@ -73,7 +73,7 @@ function SummaryTableRonda({ rows, title }) {
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-purple-50 transition-colors`}>
+              <tr key={i} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} hover:bg-purple-50 transition-colors`}>
                 <td className="px-2.5 py-1.5 text-slate-700 font-medium">{r.nombre}</td>
                 <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{r.cumple}</td>
                 <td className="px-2 py-1.5 text-center font-semibold text-red-500">{r.noCumple}</td>
@@ -140,7 +140,7 @@ export default function RondaDashboard() {
 
   if (loading) return (
     <div className="p-8 flex justify-center">
-      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -246,7 +246,7 @@ export default function RondaDashboard() {
           </div>
         </div>
         {hasFilters && (
-          <p className="text-xs text-indigo-600 mt-2">{total} de {data.length} registros mostrados</p>
+          <p className="text-xs text-brand-600 mt-2">{total} de {data.length} registros mostrados</p>
         )}
       </div>
 

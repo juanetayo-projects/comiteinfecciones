@@ -14,7 +14,7 @@ function porcentaje(c, t) { return t > 0 ? Math.round((c / t) * 100) : 0 }
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
+    <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -22,12 +22,12 @@ function SH({ children }) {
 
 function KpiCard({ label, value, sub, color = 'indigo', icon: Icon }) {
   const cls = {
-    indigo:  'bg-indigo-50  text-indigo-700',
-    emerald: 'bg-emerald-50 text-emerald-700',
-    red:     'bg-red-50     text-red-700',
-    amber:   'bg-amber-50   text-amber-700',
-    slate:   'bg-slate-50   text-slate-700',
-  }[color] ?? 'bg-slate-50 text-slate-700'
+    indigo:  'kpi-tile kpi-indigo',
+    emerald: 'kpi-tile kpi-emerald',
+    red:     'kpi-tile kpi-red',
+    amber:   'kpi-tile kpi-amber',
+    slate:   'kpi-tile kpi-slate',
+  }[color] ?? 'kpi-tile kpi-slate'
   return (
     <div className={`card p-4 flex items-center gap-3 ${cls}`}>
       {Icon && <Icon className="w-6 h-6 opacity-60 shrink-0" />}
@@ -103,7 +103,7 @@ export default function AccesoVenasoDashboard() {
 
   if (loading) return (
     <div className="p-8 flex justify-center">
-      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -128,8 +128,8 @@ export default function AccesoVenasoDashboard() {
           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </Link>
-        <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center">
-          <Syringe className="w-5 h-5 text-indigo-600" />
+        <div className="w-9 h-9 rounded-xl bg-brand-100 flex items-center justify-center">
+          <Syringe className="w-5 h-5 text-brand-600" />
         </div>
         <div>
           <h1 className="page-title">Dashboard — Acceso Venoso Periférico</h1>
@@ -169,7 +169,7 @@ export default function AccesoVenasoDashboard() {
             </select>
           </div>
         </div>
-        {hasFilters && <p className="text-xs text-indigo-600 mt-2">{rows.length} de {raw.length} registros</p>}
+        {hasFilters && <p className="text-xs text-brand-600 mt-2">{rows.length} de {raw.length} registros</p>}
       </div>
 
       {/* KPIs */}
@@ -218,7 +218,7 @@ export default function AccesoVenasoDashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="bg-[#1a4fa0] text-white">
+                    <tr className="table-head-brand">
                       <th className="text-left px-3 py-2 font-semibold rounded-tl-lg">Ubicación / Cama</th>
                       <th className="text-center px-3 py-2 font-semibold">Registros</th>
                       <th className="text-center px-3 py-2 font-semibold text-emerald-300">Criterios ✓</th>
@@ -227,7 +227,7 @@ export default function AccesoVenasoDashboard() {
                   </thead>
                   <tbody>
                     {summaryUb.map((r, i) => (
-                      <tr key={i} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-indigo-50 transition-colors`}>
+                      <tr key={i} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} hover:bg-brand-50 transition-colors`}>
                         <td className="px-3 py-2 font-medium text-slate-700">{r.ub}</td>
                         <td className="px-3 py-2 text-center text-slate-500">{r.regs}</td>
                         <td className="px-3 py-2 text-center font-semibold text-emerald-600">{r.cumple} / {r.total}</td>

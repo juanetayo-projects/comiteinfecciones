@@ -90,7 +90,7 @@ const TIPO_BADGE = {
   emerald:'bg-emerald-100 text-emerald-700',
   amber:  'bg-amber-100  text-amber-700',
   purple: 'bg-purple-100 text-purple-700',
-  indigo: 'bg-indigo-100 text-indigo-700',
+  indigo: 'bg-brand-100 text-brand-700',
   cyan:   'bg-cyan-100   text-cyan-700',
   violet: 'bg-violet-100 text-violet-700',
 }
@@ -179,7 +179,7 @@ export default function Registros() {
 
   if (loading) return (
     <div className="p-8 flex justify-center">
-      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -223,7 +223,7 @@ export default function Registros() {
               onClick={() => setF('tipo', filters.tipo === cfg.key ? '' : cfg.key)}
               className={`card p-3 text-center transition-all cursor-pointer border-2
                 ${filters.tipo === cfg.key
-                  ? 'border-indigo-400 bg-indigo-50'
+                  ? 'border-brand-400 bg-brand-50'
                   : 'border-transparent hover:border-slate-200'}`}>
               <p className="text-xl font-bold text-slate-800">{count}</p>
               <p className={`text-xs font-medium mt-0.5 px-1.5 py-0.5 rounded-full ${TIPO_BADGE[cfg.color]}`}>
@@ -290,7 +290,7 @@ export default function Registros() {
           </div>
         </div>
         {hasFilters && (
-          <p className="text-xs text-indigo-600 mt-2">{filtered.length} de {allRows.length} registros mostrados</p>
+          <p className="text-xs text-brand-600 mt-2">{filtered.length} de {allRows.length} registros mostrados</p>
         )}
       </div>
 
@@ -318,7 +318,7 @@ export default function Registros() {
               </thead>
               <tbody>
                 {filtered.map((r, i) => (
-                  <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                  <tr key={i} className="border-b border-white/70 hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-2.5">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${TIPO_BADGE[r.color]}`}>
                         {r.tipoLabel}
@@ -344,7 +344,7 @@ export default function Registros() {
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       <Link to={r.editPath}
-                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-colors inline-flex"
+                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-brand-600 transition-colors inline-flex"
                         title="Editar registro">
                         <Pencil className="w-3.5 h-3.5" />
                       </Link>

@@ -23,7 +23,7 @@ App SaaS hospitalaria para el comité de infecciones. Registra y analiza encuest
 | Routing | react-router-dom v6 — **HashRouter** (GitHub Pages) |
 | Formularios | react-hook-form + Zod |
 | Base de datos | Supabase (PostgreSQL) — RLS deshabilitado intencionalmente |
-| Estilos | Tailwind CSS 3 |
+| Estilos | Tailwind CSS 3 — **sistema neumórfico**, ver `docs/BRANDING_Y_CORREOS.md` |
 | Gráficas | Recharts |
 | PDF export | jsPDF + jspdf-autotable |
 | Excel export | xlsx |
@@ -177,6 +177,14 @@ URGENCIAS PEDIATRICAS
 
 ## 8. Flujo de Reset de Contraseña
 
+Dos vías de entrada:
+
+- **Usuario final:** botón "¿Olvidaste tu contraseña?" en `Login.jsx` → modo `recover`
+  → `resetPasswordForEmail(email)` de `AuthContext`.
+- **Administrador:** `Configuracion → Usuarios → Editar usuario`.
+
+Desde ahí el flujo es el mismo:
+
 1. Admin abre `Configuracion → Usuarios → Editar usuario`
 2. Hace clic en "Enviar link de restablecimiento"
 3. App llama `supabase.auth.resetPasswordForEmail(email, { redirectTo: baseURL })`
@@ -187,6 +195,11 @@ URGENCIAS PEDIATRICAS
 8. `ResetPassword.jsx` lee el hash, llama `setSession()` y `updatePassword()`
 
 **Requisito Supabase:** URL `https://juanetayo-projects.github.io/comiteinfecciones/` debe estar en Authentication → URL Configuration → Redirect URLs.
+
+**Remitente del correo:** con el SMTP por defecto llega como "Supabase Auth". Para que
+llegue como "Comité de Infecciones — Clínica Santa Bárbara" hay que activar SMTP propio
+(Resend) en el dashboard de Supabase — ver `docs/BRANDING_Y_CORREOS.md` §4. **No es
+configurable desde el código.**
 
 ---
 
@@ -208,6 +221,9 @@ Función: `exportToPDF(data, columns, filename, title, subtitle, kpis?)`
 4. **HashRouter:** Todas las rutas usan `#/path` — obligatorio para GitHub Pages.
 5. **Columnas GENERATED:** Nunca incluir en payload de insert/update.
 6. **Deploy:** `git push origin main` → GitHub Actions deploya automáticamente.
+7. **Diseño neumórfico:** usar `.card`, `.input`, `.btn-*`, `.kpi-tile` y los tokens
+   `brand-*` / `accent-*` / `shadow-neu-*`. Nunca `bg-white` + `shadow-md` sueltos, ni
+   la paleta `indigo` antigua. El fondo de página no puede ser blanco puro.
 
 ---
 

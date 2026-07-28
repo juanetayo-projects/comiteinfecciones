@@ -22,10 +22,10 @@ function NavItem({ to, icon: Icon, label, iconColor = 'text-white/70', end = fal
       to={to}
       end={end}
       className={({ isActive }) => cn(
-        'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors',
+        'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all duration-200',
         isActive
-          ? 'bg-white/20 text-white font-semibold'
-          : 'text-white/80 hover:bg-white/10 hover:text-white'
+          ? 'bg-white/15 text-white font-semibold shadow-neu-dark-in'
+          : 'text-white/80 hover:bg-white/10 hover:text-white hover:shadow-neu-dark'
       )}
     >
       <Icon className={cn('w-4 h-4 flex-shrink-0', iconColor)} />
@@ -47,10 +47,10 @@ export default function Sidebar({ open, onClose }) {
       <aside className={cn(
         'fixed top-0 left-0 h-full w-64 z-30',
         'flex flex-col transition-transform duration-200',
-        'lg:translate-x-0',
+        'lg:translate-x-0 shadow-[10px_0_30px_-12px_rgba(13,45,107,0.55)]',
         open ? 'translate-x-0' : '-translate-x-full'
       )}
-        style={{ backgroundColor: '#1a4fa0' }}
+        style={{ backgroundImage: 'linear-gradient(180deg, #1f56c4 0%, #1a4fa0 45%, #0d2d6b 100%)' }}
       >
         {/* Logo */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
@@ -81,7 +81,7 @@ export default function Sidebar({ open, onClose }) {
           <div>
             <button
               onClick={() => setEncuestasOpen(o => !o)}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm text-white/80 hover:bg-white/10 hover:text-white hover:shadow-neu-dark transition-all duration-200"
             >
               <div className="flex items-center gap-2.5">
                 <ClipboardList className="w-4 h-4 text-white/70" />
@@ -93,7 +93,7 @@ export default function Sidebar({ open, onClose }) {
             </button>
 
             {encuestasOpen && (
-              <div className="ml-4 mt-0.5 space-y-0.5 border-l border-white/20 pl-2">
+              <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-accent-400/50 pl-2">
                 {ENCUESTAS.map(e => (
                   <NavItem key={e.to} to={e.to} icon={e.icon} label={e.label} iconColor={e.color} />
                 ))}

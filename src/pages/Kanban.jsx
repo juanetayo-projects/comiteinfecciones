@@ -6,7 +6,7 @@ import { Kanban as KanbanIcon, Filter, X } from 'lucide-react'
 const toEstado = (s) => ['pendiente','en_proceso','validado','cerrado'].includes(s ?? '') ? s : 'pendiente'
 
 const TIPO_FILTERS = [
-  { value: '',             label: 'Todos',            cls: 'bg-indigo-600 text-white',  hov: 'hover:bg-indigo-50 hover:text-indigo-700'  },
+  { value: '',             label: 'Todos',            cls: 'bg-brand-600 text-white',  hov: 'hover:bg-brand-50 hover:text-brand-700'  },
   { value: 'aislamiento',  label: 'Aislamiento',      cls: 'bg-red-600 text-white',     hov: 'hover:bg-red-50 hover:text-red-700'        },
   { value: 'higiene',      label: 'Higiene de Manos', cls: 'bg-blue-600 text-white',    hov: 'hover:bg-blue-50 hover:text-blue-700'      },
   { value: 'luminometria', label: 'Luminometría',     cls: 'bg-amber-500 text-white',   hov: 'hover:bg-amber-50 hover:text-amber-700'    },
@@ -59,8 +59,8 @@ export default function KanbanPage() {
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center">
-          <KanbanIcon className="w-5 h-5 text-indigo-600" />
+        <div className="w-9 h-9 rounded-xl bg-brand-100 flex items-center justify-center">
+          <KanbanIcon className="w-5 h-5 text-brand-600" />
         </div>
         <div>
           <h1 className="page-title">Tablero Kanban</h1>
@@ -98,7 +98,7 @@ export default function KanbanPage() {
 
       {loading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <KanbanBoard initialItems={filtered} />

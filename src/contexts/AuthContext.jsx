@@ -52,6 +52,14 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
   }
 
+  // Envía el correo de recuperación. redirectTo = base URL sin hash:
+  // main.jsx intercepta el token y redirige a #/reset-password.
+  async function resetPasswordForEmail(email) {
+    const redirectTo = window.location.href.split('#')[0]
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+    return { error }
+  }
+
   async function updatePassword(newPassword) {
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     if (!error) setNeedsPasswordReset(false)
@@ -61,7 +69,10 @@ export function AuthProvider({ children }) {
   // Shorthand: 'administrador' | 'coordinador' | 'auxiliar'
   const rol = profile?.rol ?? 'auxiliar'
 
-  const value = { user, profile, rol, loading, needsPasswordReset, signIn, signOut, updatePassword }
+  const value = {
+    user, profile, rol, loading, needsPasswordReset,
+    signIn, signOut, updatePassword, resetPasswordForEmail,
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

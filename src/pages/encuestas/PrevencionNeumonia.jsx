@@ -95,7 +95,7 @@ export default function PrevencionNeumonia() {
         </div>
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <DataTable

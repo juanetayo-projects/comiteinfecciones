@@ -14,7 +14,7 @@ function porcentaje(c, t) { return t > 0 ? Math.round((c / t) * 100) : 0 }
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
+    <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -22,12 +22,12 @@ function SH({ children }) {
 
 function KpiCard({ label, value, sub, color = 'cyan', icon: Icon }) {
   const cls = {
-    cyan:    'bg-cyan-50    text-cyan-700',
-    emerald: 'bg-emerald-50 text-emerald-700',
-    red:     'bg-red-50     text-red-700',
-    amber:   'bg-amber-50   text-amber-700',
-    slate:   'bg-slate-50   text-slate-700',
-  }[color] ?? 'bg-slate-50 text-slate-700'
+    cyan:    'kpi-tile kpi-cyan',
+    emerald: 'kpi-tile kpi-emerald',
+    red:     'kpi-tile kpi-red',
+    amber:   'kpi-tile kpi-amber',
+    slate:   'kpi-tile kpi-slate',
+  }[color] ?? 'kpi-tile kpi-slate'
   return (
     <div className={`card p-4 flex items-center gap-3 ${cls}`}>
       {Icon && <Icon className="w-6 h-6 opacity-60 shrink-0" />}
@@ -236,7 +236,7 @@ export default function CateterVesicalDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-[#1a4fa0] text-white">
+                  <tr className="table-head-brand">
                     <th className="text-left px-3 py-2.5 font-semibold rounded-tl-lg text-xs">Ubicación / Cama</th>
                     <th className="text-center px-3 py-2.5 font-semibold text-xs">Registros</th>
                     <th className="text-center px-3 py-2.5 font-semibold text-xs text-cyan-300">Criterios Cumplidos</th>
@@ -245,7 +245,7 @@ export default function CateterVesicalDashboard() {
                 </thead>
                 <tbody>
                   {summaryUb.map((r, i) => (
-                    <tr key={i} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-cyan-50 transition-colors`}>
+                    <tr key={i} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} hover:bg-cyan-50 transition-colors`}>
                       <td className="px-3 py-2.5 font-medium text-slate-700">{r.ub}</td>
                       <td className="px-3 py-2.5 text-center text-slate-500">{r.regs}</td>
                       <td className="px-3 py-2.5 text-center font-semibold text-cyan-600">{r.cumple} / {r.total}</td>

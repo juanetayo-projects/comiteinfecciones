@@ -133,7 +133,7 @@ function buildSummaryHigiene(rows) {
 // ── UI: encabezado de sección ────────────────────────────────────
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
+    <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -146,7 +146,7 @@ function KpiPct({ label, value, sub, color }) {
     emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
     amber:   'bg-amber-50  text-amber-700  border-amber-100',
     purple:  'bg-purple-50 text-purple-700 border-purple-100',
-    indigo:  'bg-indigo-50 text-indigo-700 border-indigo-100',
+    indigo:  'bg-brand-50 text-brand-700 border-brand-100',
     cyan:    'bg-cyan-50   text-cyan-700   border-cyan-100',
     violet:  'bg-violet-50 text-violet-700 border-violet-100',
   }[color] ?? 'bg-slate-50 text-slate-700 border-slate-100'
@@ -163,7 +163,7 @@ function KpiPct({ label, value, sub, color }) {
 function SectionBtn({ title, count, badge, open, onToggle }) {
   return (
     <button onClick={onToggle}
-      className="w-full flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors text-left">
+      className="w-full flex items-center gap-3 px-4 py-3 bg-neu-surface rounded-xl shadow-neu-xs hover:shadow-neu-sm transition-colors text-left">
       <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${badge}`}>{title.slice(0,2)}</span>
       <span className="font-semibold text-slate-800 flex-1 text-sm">{title}</span>
       <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{count} registros</span>
@@ -193,7 +193,7 @@ function SummaryTable({ rows, cols }) {
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+            <tr key={i} className="border-b border-white/70 hover:bg-slate-50 transition-colors">
               {cols.map(c => (
                 <td key={c.key} className={`py-2 ${c.center ? 'text-center px-2' : 'pr-4'}`}>
                   {c.render ? c.render(r[c.key], r)
@@ -314,7 +314,7 @@ export default function Reportes() {
 
   if (!D) return (
     <div className="p-8 flex justify-center">
-      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -364,9 +364,9 @@ export default function Reportes() {
         <div className="space-y-4">
           {higServ.map(({ servicio, totalRegistros, perfiles }) => (
             <div key={servicio} className="card p-5">
-              <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4 flex items-center justify-between">
+              <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-white tracking-wide">{servicio}</h3>
-                <span className="text-xs text-white bg-indigo-500 px-2 py-0.5 rounded-full">{totalRegistros} registros</span>
+                <span className="text-xs text-white bg-brand-500 px-2 py-0.5 rounded-full">{totalRegistros} registros</span>
               </div>
               <SummaryTable rows={perfiles} cols={COLS_HIG} />
             </div>
@@ -397,7 +397,7 @@ export default function Reportes() {
     },
     {
       key:'avp', title:'Acceso Venoso Periférico (AVP)', count:D.avp.length,
-      badge:'bg-indigo-100 text-indigo-700',
+      badge:'bg-brand-100 text-brand-700',
       content: avpLoc.length ? (
         <div className="card p-5"><SH>Por Ubicación / Cama</SH><SummaryTable rows={avpLoc} cols={COLS_DISP} /></div>
       ) : null,

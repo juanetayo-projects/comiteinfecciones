@@ -15,18 +15,18 @@ const ENCUESTAS_CFG = {
   luminometria: { label: 'Luminometría',     color: 'amber',   icon: Microscope,   border: 'border-l-amber-400'  },
   ronda:        { label: 'Ronda Cirugía',    color: 'purple',  icon: Stethoscope,  border: 'border-l-purple-400' },
   dispositivos: { label: 'Dispositivos',     color: 'emerald', icon: Activity,     border: 'border-l-emerald-400'},
-  avp:          { label: 'Acceso Venoso',    color: 'indigo',  icon: Syringe,      border: 'border-l-indigo-400' },
+  avp:          { label: 'Acceso Venoso',    color: 'indigo',  icon: Syringe,      border: 'border-l-brand-400' },
   cv:           { label: 'Catéter Vesical',  color: 'cyan',    icon: Droplets,     border: 'border-l-cyan-400'   },
   pn:           { label: 'Prevención NAV',   color: 'violet',  icon: Wind,         border: 'border-l-violet-400' },
 }
 
 const FILTROS = [
-  { value: '',             label: 'Todas',            activeCls: 'bg-indigo-600 text-white',  hoverCls: 'hover:bg-indigo-50 hover:text-indigo-700'  },
-  { value: 'aislamiento',  label: 'Aislamiento',      activeCls: 'bg-red-600 text-white',     hoverCls: 'hover:bg-red-50 hover:text-red-700'        },
-  { value: 'higiene',      label: 'Higiene de Manos', activeCls: 'bg-blue-600 text-white',    hoverCls: 'hover:bg-blue-50 hover:text-blue-700'      },
-  { value: 'luminometria', label: 'Luminometría',     activeCls: 'bg-amber-500 text-white',   hoverCls: 'hover:bg-amber-50 hover:text-amber-700'    },
-  { value: 'ronda',        label: 'Ronda Cirugía',    activeCls: 'bg-purple-600 text-white',  hoverCls: 'hover:bg-purple-50 hover:text-purple-700'  },
-  { value: 'dispositivos', label: 'Dispositivos',     activeCls: 'bg-emerald-600 text-white', hoverCls: 'hover:bg-emerald-50 hover:text-emerald-700'},
+  { value: '',             label: 'Todas',            activeCls: 'bg-brand-gradient text-white shadow-brand-glow',                              hoverCls: 'hover:text-brand-700'   },
+  { value: 'aislamiento',  label: 'Aislamiento',      activeCls: 'bg-gradient-to-br from-rose-500 to-rose-700 text-white shadow-neu-sm',        hoverCls: 'hover:text-rose-700'    },
+  { value: 'higiene',      label: 'Higiene de Manos', activeCls: 'bg-gradient-to-br from-sky-500 to-blue-700 text-white shadow-neu-sm',         hoverCls: 'hover:text-blue-700'    },
+  { value: 'luminometria', label: 'Luminometría',     activeCls: 'bg-gradient-to-br from-amber-400 to-orange-600 text-white shadow-neu-sm',     hoverCls: 'hover:text-amber-700'   },
+  { value: 'ronda',        label: 'Ronda Cirugía',    activeCls: 'bg-gradient-to-br from-violet-500 to-purple-700 text-white shadow-neu-sm',    hoverCls: 'hover:text-purple-700'  },
+  { value: 'dispositivos', label: 'Dispositivos',     activeCls: 'bg-gradient-to-br from-teal-400 to-emerald-700 text-white shadow-neu-sm',     hoverCls: 'hover:text-emerald-700' },
 ]
 
 const KPI_SUBTITLES = {
@@ -41,24 +41,24 @@ const KPI_SUBTITLES = {
 // ─── Componentes ─────────────────────────────────────────────────────────────
 function KpiCard({ label, value, sub, color = 'indigo', icon: Icon }) {
   const colors = {
-    indigo:  { bg: 'bg-indigo-50',  text: 'text-indigo-700',  icon: 'bg-indigo-100'  },
-    emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', icon: 'bg-emerald-100' },
-    amber:   { bg: 'bg-amber-50',   text: 'text-amber-700',   icon: 'bg-amber-100'   },
-    red:     { bg: 'bg-red-50',     text: 'text-red-700',     icon: 'bg-red-100'     },
-    slate:   { bg: 'bg-slate-50',   text: 'text-slate-700',   icon: 'bg-slate-100'   },
+    indigo:  { tile: 'kpi-brand',   text: 'text-brand-800',   icon: 'from-brand-500 to-brand-800'      },
+    emerald: { tile: 'kpi-emerald', text: 'text-emerald-800', icon: 'from-teal-400 to-emerald-700'     },
+    amber:   { tile: 'kpi-amber',   text: 'text-amber-800',   icon: 'from-amber-400 to-orange-600'     },
+    red:     { tile: 'kpi-red',     text: 'text-rose-800',    icon: 'from-rose-400 to-rose-700'        },
+    slate:   { tile: 'kpi-slate',   text: 'text-slate-700',   icon: 'from-slate-400 to-slate-600'      },
   }
   const c = colors[color] ?? colors.indigo
   return (
-    <div className={`card p-4 flex items-center gap-4 ${c.bg}`}>
+    <div className={`kpi-tile p-4 flex items-center gap-4 ${c.tile}`}>
       {Icon && (
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${c.icon}`}>
-          <Icon className={`w-5 h-5 ${c.text}`} />
+        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-neu-xs bg-gradient-to-br ${c.icon}`}>
+          <Icon className="w-5 h-5 text-white" />
         </div>
       )}
       <div>
-        <p className={`text-2xl font-bold ${c.text}`}>{value}</p>
-        <p className="text-xs text-slate-600 font-medium">{label}</p>
-        {sub && <p className="text-[10px] text-slate-400">{sub}</p>}
+        <p className={`text-2xl font-extrabold ${c.text}`}>{value}</p>
+        <p className="text-xs text-slate-600 font-semibold">{label}</p>
+        {sub && <p className="text-[10px] text-slate-500">{sub}</p>}
       </div>
     </div>
   )
@@ -66,31 +66,34 @@ function KpiCard({ label, value, sub, color = 'indigo', icon: Icon }) {
 
 function EncuestaCard({ to, icon: Icon, label, total, pct, color, selected }) {
   const isGood = pct >= 80
-  const borders = {
-    red:     'border-l-red-400',
-    blue:    'border-l-blue-400',
-    amber:   'border-l-amber-400',
-    purple:  'border-l-purple-400',
-    emerald: 'border-l-emerald-400',
+  const accents = {
+    red:     { bar: 'border-l-rose-500',    icon: 'from-rose-400 to-rose-700'    },
+    blue:    { bar: 'border-l-sky-500',     icon: 'from-sky-400 to-blue-700'     },
+    amber:   { bar: 'border-l-amber-500',   icon: 'from-amber-400 to-orange-600' },
+    purple:  { bar: 'border-l-violet-500',  icon: 'from-violet-400 to-purple-700'},
+    emerald: { bar: 'border-l-emerald-500', icon: 'from-teal-400 to-emerald-700' },
   }
+  const a = accents[color] ?? accents.blue
   return (
     <Link to={to}
-      className={`card border-l-4 ${borders[color]} p-4 hover:shadow-md transition-all block
-        ${selected ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}>
+      className={`card card-hover border-l-4 ${a.bar} p-4 block
+        ${selected ? 'ring-2 ring-brand-400 ring-offset-2 ring-offset-neu-base' : ''}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-slate-500" />
-          <span className="text-sm font-medium text-slate-700">{label}</span>
+          <div className={`w-7 h-7 rounded-xl flex items-center justify-center shadow-neu-xs bg-gradient-to-br ${a.icon}`}>
+            <Icon className="w-3.5 h-3.5 text-white" />
+          </div>
+          <span className="text-sm font-semibold text-brand-900">{label}</span>
         </div>
-        <span className={`text-lg font-bold ${isGood ? 'text-emerald-600' : 'text-red-600'}`}>{pct}%</span>
+        <span className={`text-lg font-extrabold ${isGood ? 'text-emerald-600' : 'text-rose-600'}`}>{pct}%</span>
       </div>
-      <div className="w-full bg-slate-100 rounded-full h-1.5">
+      <div className="w-full rounded-full h-2 bg-neu-base shadow-neu-in-xs">
         <div
-          className={`h-1.5 rounded-full ${isGood ? 'bg-emerald-500' : 'bg-red-500'}`}
+          className={`h-2 rounded-full bg-gradient-to-r ${isGood ? 'from-teal-400 to-emerald-600' : 'from-rose-400 to-rose-600'}`}
           style={{ width: `${Math.min(pct, 100)}%` }}
         />
       </div>
-      <p className="text-xs text-slate-400 mt-2">{total} evaluaciones</p>
+      <p className="text-xs text-slate-500 mt-2">{total} evaluaciones</p>
     </Link>
   )
 }
@@ -101,7 +104,7 @@ const TIPO_ICON = {
   higiene:      { Icon: Hand,        bg: 'bg-blue-50',    ic: 'text-blue-500'    },
   luminometria: { Icon: Microscope,  bg: 'bg-amber-50',   ic: 'text-amber-500'   },
   ronda:        { Icon: Stethoscope, bg: 'bg-purple-50',  ic: 'text-purple-500'  },
-  avp:          { Icon: Syringe,     bg: 'bg-indigo-50',  ic: 'text-indigo-500'  },
+  avp:          { Icon: Syringe,     bg: 'bg-brand-50',  ic: 'text-brand-500'  },
   cv:           { Icon: Droplets,    bg: 'bg-cyan-50',    ic: 'text-cyan-500'    },
   pn:           { Icon: Wind,        bg: 'bg-violet-50',  ic: 'text-violet-500'  },
 }
@@ -217,7 +220,7 @@ export default function Dashboard() {
 
   if (loading) return (
     <div className="p-6 flex items-center justify-center h-64">
-      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -250,10 +253,10 @@ export default function Dashboard() {
         {FILTROS.map(f => (
           <button key={f.value}
             onClick={() => setFiltro(f.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors shadow-sm ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
               filtro === f.value
                 ? f.activeCls
-                : `bg-slate-100 text-slate-600 ${f.hoverCls}`
+                : `neu-pill text-slate-600 ${f.hoverCls}`
             }`}>
             {f.label}
           </button>
@@ -332,7 +335,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="section-title">Actividad Reciente</h2>
           {filtro && (
-            <span className="text-xs text-indigo-600 font-medium">
+            <span className="text-xs text-brand-600 font-semibold">
               Filtrado: {ENCUESTAS_CFG[filtro]?.label}
             </span>
           )}
@@ -349,9 +352,9 @@ export default function Dashboard() {
               const noEstado = !r.estado
               return (
                 <div key={`${r.tipo}-${r.id}-${i}`}
-                  className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+                  className="flex items-center justify-between py-2 border-b border-white/70 last:border-0">
                   <div className="flex items-center gap-3">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${cfg?.bg ?? 'bg-slate-50'}`}>
+                    <div className={`w-8 h-8 rounded-xl shadow-neu-xs flex items-center justify-center ${cfg?.bg ?? 'bg-slate-50'}`}>
                       <Icon className={`w-3.5 h-3.5 ${cfg?.ic ?? 'text-slate-400'}`} />
                     </div>
                     <div>

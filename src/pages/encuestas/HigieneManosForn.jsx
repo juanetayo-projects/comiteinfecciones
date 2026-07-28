@@ -73,7 +73,7 @@ function calcSumatoria(values) {
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
+    <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -208,7 +208,7 @@ export default function HigieneManosForn() {
           </div>
 
           {/* Columnas K y L calculadas */}
-          <div className="mt-4 flex items-center gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="mt-4 flex items-center gap-4 p-3 bg-slate-50 rounded-lg border border-white/70">
             <div className="text-center">
               <p className="text-xs text-slate-500 mb-0.5">Sumatoria (K)</p>
               <p className="text-2xl font-bold text-slate-800">{sumatoria}<span className="text-sm font-normal text-slate-400">/5</span></p>
@@ -240,7 +240,7 @@ export default function HigieneManosForn() {
               </select>
             </div>
             <div className="flex items-center gap-2.5 mt-5">
-              <input type="checkbox" className="w-4 h-4 rounded accent-indigo-600"
+              <input type="checkbox" className="w-4 h-4 rounded accent-brand-600"
                 {...register('unas_cortas_esmalte')} />
               <label className="text-sm text-slate-700 cursor-pointer">
                 Uñas cortas y esmalte integro
@@ -249,7 +249,7 @@ export default function HigieneManosForn() {
           </div>
           <div className="mt-4">
             <label className="flex items-center gap-2.5 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 rounded accent-indigo-600"
+              <input type="checkbox" className="w-4 h-4 rounded accent-brand-600"
                 {...register('retroalimenta_trabajador')} />
               <span className="text-sm text-slate-700">Se retroalimentó al trabajador sobre los hallazgos</span>
             </label>

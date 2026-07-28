@@ -92,7 +92,7 @@ const schema = z.object({
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
+    <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -218,7 +218,7 @@ export default function LuminometriaForm() {
                   <p className="text-xs font-normal mt-0.5 opacity-80">{RANGO_DESC[rango]}</p>
                 </div>
               ) : (
-                <div className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-400">
+                <div className="px-3 py-2 rounded-lg border border-white/70 bg-slate-50 text-sm text-slate-400">
                   Ingresa el resultado RLU para ver la clasificación
                 </div>
               )}

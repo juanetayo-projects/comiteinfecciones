@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,51 +6,115 @@
 
 @layer base {
   * { box-sizing: border-box; }
+  html { background-color: theme('colors.neu.base'); }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply text-slate-800 antialiased;
+    background-color: theme('colors.neu.base');
+    background-image: theme('backgroundImage.neu-page');
+    background-attachment: fixed;
     font-family: 'Inter', system-ui, sans-serif;
   }
 }
 
 @layer components {
+
+  /* ─────────────── Botones ─────────────── */
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg
-           hover:bg-indigo-700 active:bg-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl
+           bg-brand-gradient shadow-neu-sm
+           hover:shadow-brand-glow hover:brightness-110
+           active:shadow-neu-in active:brightness-95 active:translate-y-px
+           transition-all duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-neu-sm;
   }
   .btn-secondary {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-white text-slate-700 text-sm font-medium rounded-lg
-           border border-slate-200 hover:bg-slate-50 transition-colors;
+    @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-brand-800 rounded-xl
+           bg-neu-surface shadow-neu-sm
+           hover:shadow-neu hover:text-brand-600
+           active:shadow-neu-in active:translate-y-px
+           transition-all duration-200;
   }
   .btn-danger {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg
-           hover:bg-red-700 transition-colors;
+    @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl
+           shadow-neu-sm hover:brightness-110
+           active:shadow-neu-in active:translate-y-px transition-all duration-200;
+    background-image: linear-gradient(135deg, #f43f5e 0%, #e11d48 55%, #be123c 100%);
   }
+  .btn-accent {
+    @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl
+           bg-accent-gradient shadow-neu-sm
+           hover:shadow-accent-glow hover:brightness-110
+           active:shadow-neu-in active:translate-y-px transition-all duration-200;
+  }
+
+  /* ─────────────── Superficies ─────────────── */
   .card {
-    @apply bg-white rounded-xl border border-slate-200 shadow-md;
+    @apply rounded-2xl border border-white/70 bg-neu-surface shadow-neu
+           transition-shadow duration-200;
+  }
+  .card-hover {
+    @apply hover:shadow-neu-hover;
   }
   .metric-card {
-    @apply bg-white rounded-xl border border-slate-200 shadow-lg;
+    @apply rounded-2xl border border-white/70 bg-neu-surface shadow-neu-lg;
   }
+  .neu-raised {
+    @apply rounded-2xl bg-neu-surface shadow-neu;
+  }
+  .neu-inset {
+    @apply rounded-2xl bg-neu-base shadow-neu-in;
+  }
+  .neu-pill {
+    @apply rounded-full bg-neu-surface shadow-neu-xs hover:shadow-neu-sm
+           active:shadow-neu-in-xs transition-all duration-200;
+  }
+
+  /* ─────────────── Formularios ─────────────── */
   .input {
-    @apply w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white
-           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-           placeholder:text-slate-400;
+    @apply w-full px-3.5 py-2 text-sm rounded-xl border-0 text-slate-800
+           bg-neu-base shadow-neu-in
+           focus:outline-none focus:shadow-neu-in-lg focus:ring-2 focus:ring-brand-400/60
+           placeholder:text-slate-400 transition-all duration-200;
   }
   .label {
-    @apply block text-sm font-medium text-slate-700 mb-1;
+    @apply block text-sm font-semibold text-brand-900 mb-1;
   }
   .badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold shadow-neu-xs;
   }
+
+  /* ─────────────── Tipografía ─────────────── */
   .page-title {
-    @apply text-xl font-bold text-slate-900;
+    @apply text-xl font-extrabold text-brand-900 tracking-tight;
   }
   .page-subtitle {
     @apply text-sm text-slate-500;
   }
   .section-title {
-    @apply text-base font-semibold text-slate-800;
+    @apply text-base font-bold text-brand-800;
   }
+
+  /* ─────────────── Tarjetas KPI (neumorfismo con color) ─────────────── */
+  .kpi-tile {
+    @apply rounded-2xl shadow-neu border border-white/70 transition-shadow duration-200;
+  }
+  .kpi-brand   { @apply text-brand-800;   background-image: linear-gradient(145deg,#f0f5ff,#dce8ff); }
+  .kpi-indigo  { @apply text-indigo-800;  background-image: linear-gradient(145deg,#f0f2ff,#dfe3ff); }
+  .kpi-emerald { @apply text-emerald-800; background-image: linear-gradient(145deg,#effdf6,#d5f6e5); }
+  .kpi-red     { @apply text-rose-800;    background-image: linear-gradient(145deg,#fff0f2,#ffdbe1); }
+  .kpi-amber   { @apply text-amber-800;   background-image: linear-gradient(145deg,#fff8e8,#ffeec4); }
+  .kpi-cyan    { @apply text-cyan-800;    background-image: linear-gradient(145deg,#ecfdff,#cbf3fa); }
+  .kpi-violet  { @apply text-violet-800;  background-image: linear-gradient(145deg,#f6f2ff,#e6dcff); }
+  .kpi-purple  { @apply text-purple-800;  background-image: linear-gradient(145deg,#f8f1ff,#eddcff); }
+  .kpi-blue    { @apply text-blue-800;    background-image: linear-gradient(145deg,#eff6ff,#d7e8ff); }
+  .kpi-slate   { @apply text-slate-700;   background-image: linear-gradient(145deg,#f4f7fc,#e2e9f4); }
+
+  /* ─────────────── Tablas ─────────────── */
+  .table-head-brand {
+    @apply text-white;
+    background-image: theme('backgroundImage.brand-gradient');
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.3s ease-in-out;
   }
@@ -62,7 +126,11 @@
 }
 
 /* Scrollbar personalizado */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { @apply bg-slate-100; }
-::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full; }
-::-webkit-scrollbar-thumb:hover { @apply bg-slate-400; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #e3eaf5; }
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: linear-gradient(160deg, #b9c8e0, #93a9cd);
+  border: 2px solid #e3eaf5;
+}
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(160deg, #8aa4cc, #5f7fb4); }

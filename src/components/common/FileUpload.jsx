@@ -59,11 +59,11 @@ export default function FileUpload({ value = [], onChange, folder = 'general', d
       <div
         className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors
           ${disabled ? 'border-slate-200 bg-slate-50 cursor-not-allowed'
-          : 'border-slate-300 hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer'}`}
+          : 'border-slate-300 hover:border-brand-400 hover:bg-brand-50 cursor-pointer'}`}
         onClick={() => !disabled && !uploading && inputRef.current?.click()}
       >
         {uploading
-          ? <div className="flex items-center justify-center gap-2 text-indigo-600">
+          ? <div className="flex items-center justify-center gap-2 text-brand-600">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span className="text-sm">Subiendo archivos...</span>
             </div>
@@ -90,11 +90,11 @@ export default function FileUpload({ value = [], onChange, folder = 'general', d
         <ul className="space-y-1.5">
           {value.map((url, i) => (
             <li key={i}
-              className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
+              className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-white/70">
               <div className="flex items-center gap-2 min-w-0">
-                <FileText className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                <FileText className="w-3.5 h-3.5 text-brand-500 shrink-0" />
                 <a href={url} target="_blank" rel="noreferrer"
-                  className="text-xs text-indigo-600 hover:underline truncate"
+                  className="text-xs text-brand-600 hover:underline truncate"
                   onClick={e => e.stopPropagation()}>
                   {fileName(url)}
                 </a>

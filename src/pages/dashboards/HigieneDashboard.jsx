@@ -11,11 +11,11 @@ const PIE_COLORS = ['#10b981', '#f87171']
 
 function KpiCard({ label, value, sub, color = 'slate' }) {
   const cls = {
-    emerald: 'bg-emerald-50 text-emerald-700',
-    red:     'bg-red-50 text-red-700',
-    indigo:  'bg-indigo-50 text-indigo-700',
-    blue:    'bg-blue-50 text-blue-700',
-    slate:   'bg-slate-50 text-slate-700',
+    emerald: 'kpi-tile kpi-emerald',
+    red:     'kpi-tile kpi-red',
+    indigo:  'kpi-tile kpi-indigo',
+    blue:    'kpi-tile kpi-blue',
+    slate:   'kpi-tile kpi-slate',
   }[color]
   return (
     <div className={`card p-4 ${cls}`}>
@@ -80,7 +80,7 @@ export default function HigieneDashboard() {
 
   if (loading) return (
     <div className="p-8 flex justify-center">
-      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -176,7 +176,7 @@ export default function HigieneDashboard() {
           </div>
         </div>
         {hasFilters && (
-          <p className="text-xs text-indigo-600 mt-2">{total} de {data.length} registros mostrados</p>
+          <p className="text-xs text-brand-600 mt-2">{total} de {data.length} registros mostrados</p>
         )}
       </div>
 
@@ -257,10 +257,10 @@ export default function HigieneDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {tablasPorServicio.map(({ servicio, totalRegistros, perfiles }) => (
               <div key={servicio} className="card p-5">
-                <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
+                <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-white tracking-wide">{servicio}</h3>
-                    <span className="text-xs text-white bg-indigo-500 px-2 py-0.5 rounded-full">
+                    <span className="text-xs text-white bg-brand-500 px-2 py-0.5 rounded-full">
                       {totalRegistros} registros
                     </span>
                   </div>
@@ -271,7 +271,7 @@ export default function HigieneDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="bg-[#1a4fa0] text-white">
+                        <tr className="table-head-brand">
                           <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">Perfil Colaborador</th>
                           <th className="text-center px-2 py-2 font-semibold">Registros</th>
                           <th className="text-center px-2 py-2 font-semibold text-emerald-300">CUMPLE</th>
@@ -282,7 +282,7 @@ export default function HigieneDashboard() {
                       </thead>
                       <tbody>
                         {perfiles.map((p, i) => (
-                          <tr key={i} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50' : ''} hover:bg-blue-50 transition-colors`}>
+                          <tr key={i} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} hover:bg-blue-50 transition-colors`}>
                             <td className="px-2.5 py-1.5 text-slate-700 font-medium">{p.perfil}</td>
                             <td className="px-2 py-1.5 text-center text-slate-500">{p.total}</td>
                             <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{p.cumple}</td>

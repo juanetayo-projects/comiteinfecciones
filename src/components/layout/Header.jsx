@@ -15,8 +15,8 @@ export default function Header({ onMenuClick }) {
 
   return (
     <header
-      className="h-14 flex items-center justify-between px-4 flex-shrink-0 border-b border-white/10"
-      style={{ backgroundColor: '#1a4fa0' }}
+      className="h-14 flex items-center justify-between px-4 flex-shrink-0 border-b border-white/10 shadow-[0_10px_24px_-14px_rgba(13,45,107,0.75)] relative z-10"
+      style={{ backgroundImage: 'linear-gradient(120deg, #1a4fa0 0%, #1f56c4 50%, #0d2d6b 100%)' }}
     >
       {/* Botón menú móvil */}
       <button
@@ -32,7 +32,7 @@ export default function Header({ onMenuClick }) {
       <div className="flex items-center gap-3">
         {/* Avatar + nombre */}
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs font-semibold text-white border border-white/30">
+          <div className="w-8 h-8 rounded-full bg-accent-gradient flex items-center justify-center text-xs font-bold text-white shadow-neu-dark ring-2 ring-white/25">
             {initials || <User className="w-3.5 h-3.5 text-white" />}
           </div>
           <div className="hidden sm:block">
@@ -49,7 +49,7 @@ export default function Header({ onMenuClick }) {
         {/* Salir */}
         <button
           onClick={signOut}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-white/85 hover:text-white hover:bg-white/10 hover:shadow-neu-dark rounded-xl transition-all duration-200"
           title="Cerrar sesión"
         >
           <LogOut className="w-3.5 h-3.5" />

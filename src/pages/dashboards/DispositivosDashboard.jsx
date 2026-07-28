@@ -11,12 +11,12 @@ const PIE_COLORS  = ['#6366f1', '#06b6d4', '#8b5cf6']
 
 function KpiCard({ label, value, sub, color = 'slate', icon: Icon }) {
   const cls = {
-    indigo:  'bg-indigo-50  text-indigo-700',
-    cyan:    'bg-cyan-50    text-cyan-700',
-    violet:  'bg-violet-50  text-violet-700',
-    emerald: 'bg-emerald-50 text-emerald-700',
-    red:     'bg-red-50     text-red-700',
-    slate:   'bg-slate-50   text-slate-700',
+    indigo:  'kpi-tile kpi-indigo',
+    cyan:    'kpi-tile kpi-cyan',
+    violet:  'kpi-tile kpi-violet',
+    emerald: 'kpi-tile kpi-emerald',
+    red:     'kpi-tile kpi-red',
+    slate:   'kpi-tile kpi-slate',
   }[color]
   return (
     <div className={`card p-4 flex items-center gap-3 ${cls}`}>
@@ -32,7 +32,7 @@ function KpiCard({ label, value, sub, color = 'slate', icon: Icon }) {
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
+    <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -66,7 +66,7 @@ function buildSummaryDisp(rows, criterioKeys) {
 function SummaryTableDisp({ rows, title, accentColor }) {
   if (!rows.length) return null
   const badge = {
-    indigo: 'bg-indigo-100 text-indigo-700',
+    indigo: 'bg-brand-100 text-brand-700',
     cyan:   'bg-cyan-100 text-cyan-700',
     violet: 'bg-violet-100 text-violet-700',
   }[accentColor] ?? 'bg-slate-100 text-slate-700'
@@ -85,7 +85,7 @@ function SummaryTableDisp({ rows, title, accentColor }) {
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+              <tr key={i} className="border-b border-white/70 hover:bg-slate-50 transition-colors">
                 <td className="py-2 pr-4 text-slate-700 font-medium">{r.nombre}</td>
                 <td className="py-2 px-2 text-center text-slate-500">{r.registros}</td>
                 <td className="py-2 px-2 text-center font-semibold text-emerald-600">{r.cumpleCrit} / {r.totalCrit}</td>
@@ -162,7 +162,7 @@ export default function DispositivosDashboard() {
 
   if (loading) return (
     <div className="p-8 flex justify-center">
-      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -206,8 +206,8 @@ export default function DispositivosDashboard() {
           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </Link>
-        <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center">
-          <Activity className="w-5 h-5 text-indigo-600" />
+        <div className="w-9 h-9 rounded-xl bg-brand-100 flex items-center justify-center">
+          <Activity className="w-5 h-5 text-brand-600" />
         </div>
         <div>
           <h1 className="page-title">Dashboard — Seguimiento de Dispositivos</h1>
@@ -247,7 +247,7 @@ export default function DispositivosDashboard() {
           </div>
         </div>
         {hasFilters && (
-          <p className="text-xs text-indigo-600 mt-2">
+          <p className="text-xs text-brand-600 mt-2">
             {avp.length + cv.length + pn.length} de {totalRaw} registros mostrados
           </p>
         )}

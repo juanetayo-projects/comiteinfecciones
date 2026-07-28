@@ -43,7 +43,7 @@ const schema = z.object({
 
 function SH({ children }) {
   return (
-    <div className="px-3 py-2 bg-[#1a4fa0] border-l-4 border-white/40 rounded-r-md mb-4">
+    <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
       <h3 className="text-sm font-semibold text-white tracking-wide">{children}</h3>
     </div>
   )
@@ -131,7 +131,7 @@ export default function PrevencionNeumoniaForm() {
               <label className="label">Semana del Mes (automático)</label>
               <div className="input bg-slate-50 flex items-center gap-2">
                 {semanaMes
-                  ? <><span className="text-2xl font-bold text-indigo-700">{semanaMes}</span><span className="text-xs text-slate-400">/ 5</span></>
+                  ? <><span className="text-2xl font-bold text-brand-700">{semanaMes}</span><span className="text-xs text-slate-400">/ 5</span></>
                   : <span className="text-slate-400 text-sm">Se calculará al seleccionar la fecha</span>
                 }
               </div>
@@ -163,7 +163,7 @@ export default function PrevencionNeumoniaForm() {
             {CRITERIOS.map(c => (
               <label key={c.name}
                 className="flex items-center gap-2.5 p-3 rounded-lg hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200 transition-colors">
-                <input type="checkbox" className="w-4 h-4 rounded accent-indigo-600" {...register(c.name)} />
+                <input type="checkbox" className="w-4 h-4 rounded accent-brand-600" {...register(c.name)} />
                 <span className="text-sm text-slate-700">{c.label}</span>
               </label>
             ))}
