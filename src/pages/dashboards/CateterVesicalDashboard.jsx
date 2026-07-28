@@ -1,11 +1,17 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
   LineChart, Line, ResponsiveContainer,
 } from 'recharts'
 import { ArrowLeft, Droplets, Filter, X, BarChart3, TrendingUp, TrendingDown } from 'lucide-react'
+import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import { filtrosResumen } from '../../lib/utils'
+import {
+  buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT,
+} from '../../lib/chartLabels'
 
 const CV_KEYS   = ['criterio_1_fijacion','criterio_2_posicion_bolsa','criterio_3_rotulacion','criterio_4_indicacion','criterio_5_flujo_continuo','criterio_6_lista_chequeo_sonda']
 const CV_LABELS = ['Fijación','Posic. Bolsa','Rotulación','Indicación','Flujo','Lista Chequeo']
@@ -41,11 +47,14 @@ function KpiCard({ label, value, sub, color = 'cyan', icon: Icon }) {
 }
 
 const INIT_FILTERS = { desde: '', hasta: '', ubicacion: '' }
+// Etiquetas legibles de los filtros — se imprimen en el encabezado del PDF
+const FILTER_LABELS = { desde:'Desde', hasta:'Hasta', ubicacion:'Ubicación/Cama' }
 
 export default function CateterVesicalDashboard() {
   const [raw,     setRaw]     = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
+  const pdfRef = useRef(null)
 
   useEffect(() => {
     supabase.from('encuesta_cateter_vesical').select('*')
@@ -115,15 +124,15 @@ export default function CateterVesicalDashboard() {
   const pctCompleto = porcentaje(rows.filter(r => CV_KEYS.every(k => r[k] === true)).length, rows.length)
 
   // Datos de criterios para gráfica
-  const criteriosData = CV_KEYS.map((k, i) => {
+  const criteriosData = withCriterioPct(CV_KEYS.map((k, i) => {
     const c = rows.filter(r => r[k] === true).length
     return { name: CV_LABELS[i], cumple: c, noCumple: rows.length - c }
-  })
+  }))
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in space-y-6">
+    <div ref={pdfRef} className="p-6 lg:p-8 animate-fade-in space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Link to="/encuestas/cateter-vesical"
           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft className="w-4 h-4" />
@@ -135,13 +144,22 @@ export default function CateterVesicalDashboard() {
           <h1 className="page-title">Dashboard — Catéter Vesical</h1>
           <p className="page-subtitle">Adherencia a criterios de calidad de sondas vesicales · {raw.length} registros totales</p>
         </div>
+        <div className="ml-auto" data-pdf-hide>
+          <DashboardPdfButton
+            targetRef={pdfRef}
+            filename="dashboard_cateter_vesical"
+            title="Dashboard — Catéter Vesical"
+            subtitle={`Adherencia a criterios de calidad de sondas vesicales · ${raw.length} registros totales`}
+            filtros={filtrosResumen(filters, FILTER_LABELS)}
+          />
+        </div>
         <Link to="/encuestas/cateter-vesical/nuevo" className="ml-auto btn-primary text-xs gap-1.5">
           <BarChart3 className="w-3.5 h-3.5" /> Nuevo Registro
         </Link>
       </div>
 
       {/* Filtros */}
-      <div className="card p-4">
+      <div className="card p-4" data-pdf-hide>
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-slate-500" />
           <span className="text-sm font-medium text-slate-700">Filtros</span>
@@ -194,16 +212,22 @@ export default function CateterVesicalDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="card p-5">
               <h3 className="section-title mb-1">Criterios de Adherencia</h3>
+              <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
               <p className="text-xs text-slate-400 mb-3">Registros con cumplimiento por criterio — {rows.length} evaluaciones</p>
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={criteriosData} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <BarChart data={criteriosData} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="cumple"   name="Cumple"    fill="#06b6d4" stackId="a" />
-                  <Bar dataKey="noCumple" name="No Cumple" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                  <Bar dataKey="cumple" name="Cumple" fill="#06b6d4" stackId="a" isAnimationActive={false}>
+                    <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                  </Bar>
+                  <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                    <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -213,8 +237,8 @@ export default function CateterVesicalDashboard() {
                 <h3 className="section-title mb-1">Tendencia Semanal</h3>
                 <p className="text-xs text-slate-400 mb-3">% adherencia por semana del mes</p>
                 <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={semanaData} margin={{ left: -10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <LineChart data={semanaData} margin={{ top: 22, left: -10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                     <XAxis dataKey="semana" tick={{ fontSize: 11 }} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
                     <Tooltip formatter={v => `${v}%`} />

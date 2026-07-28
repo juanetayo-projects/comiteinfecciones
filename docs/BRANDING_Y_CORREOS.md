@@ -173,7 +173,113 @@ correo llega como *Comité de Infecciones — Clínica Santa Bárbara* y no como
 
 ---
 
-## 5. Porcentajes en las gráficas de Aislamiento
+## 4-bis. Normalización a MAYÚSCULAS de catálogos y registros
+
+Los gráficos partían una misma categoría en dos porque los datos importados
+usaban Title Case ("Urgencias Adultos") y los catálogos mayúsculas
+("URGENCIAS ADULTO").
+
+**Migración aplicada (2026-07-28)** — `normalizar_mayusculas_listas_y_registros`:
+
+| Antes | Ahora | Registros |
+|-------|-------|-----------|
+| `Hospitalización Piso 2/7/8` | `HOSPITALIZACIÓN 2/7/8` | 20 |
+| `UCI Adultos` | `UCI` | 6 |
+| `Urgencias Adultos` | `URGENCIAS ADULTO` | 15 |
+| `Cirugía` | `CIRUGÍA` | 5 |
+| `Aislamiento por Contacto` | `CONTACTO` | 8 |
+| `Aislamiento Respiratorio / Aerosoles` | `VIA AEREA` | 2 |
+| `Aislamiento de Protección / Inverso` | `PROTECTOR` | 1 |
+| `Bomba de infusion` | `BOMBA DE INFUSIÓN` | 2 |
+
+Además: `upper()` sobre las 148 filas de `listas_desplegables` y sobre los
+campos de catálogo de todas las tablas de encuesta; se borraron los 6 duplicados
+Title-Case de `tipo_aislamiento`.
+
+**Respaldo:** tablas `backup_20260728_listas_desplegables`,
+`backup_20260728_aislamiento`, `backup_20260728_luminometria`.
+
+### Para que no vuelva a ocurrir
+
+1. `Configuracion.jsx` guarda `valor.trim().toUpperCase()` en los catálogos.
+2. Los catálogos embebidos en los formularios (`SERVICIOS_OBJETOS` de
+   `LuminometriaForm`, `QUIROFANOS_POR_SERVICIO` de `RondaCirugiaForm`) están en
+   mayúsculas.
+
+### Pendiente de criterio clínico (NO se tocó)
+
+Valores parecidos pero no equivalentes, que requieren decisión del comité:
+
+- Luminometría → objeto: `CAMILLA` vs `CAMILLA DE URGENCIAS`;
+  `VENTILADOR` vs `VENTILADOR MECÁNICO`; `MESA DE MAYO` (no está en el catálogo).
+- Aislamiento → profesional: los registros usan `AUXILIAR`, `MEDICO`,
+  `ENFERMERA (O)`… mientras el catálogo `profesional` usa
+  `AUXILIAR DE ENFERMERÍA`, `MÉDICO GENERAL`… Son vocabularios distintos, no un
+  problema de mayúsculas.
+
+---
+
+## 5. Filtros en las vistas de tabla
+
+`src/components/common/TableFilters.jsx` expone:
+
+- `useTableFilters(data, config)` → `{ values, setF, clear, filtered, options, hasFilters, summary }`
+- `<TableFilters config values setF clear options hasFilters total shown />`
+
+Tipos de campo: `daterange` (dos inputs date) y `select` (opciones únicas del
+dataset, o fijas vía `options`).
+
+`filtered` alimenta **tanto** a `<DataTable>` como a `<ExportButtons>`, de modo
+que lo exportado es exactamente lo que se ve; `summary` va como subtítulo del
+PDF/Excel para dejar constancia de los filtros aplicados.
+
+Filtros por encuesta:
+
+| Encuesta | Filtros |
+|----------|---------|
+| Aislamiento | Fecha, Servicio, Profesional, Tipo Aislamiento, Adherencia, Estado |
+| Higiene de Manos | Fecha, Servicio, Perfil, Resultado, Estado |
+| Luminometría | Fecha, Servicio, Superficie, Clasificación, Estado |
+| Ronda de Cirugía | Fecha, Servicio, Quirófano, Especialidad, Profesional, Profilaxis, Estado |
+| AVP / Catéter Vesical / NAV | Fecha, Ubicación/Cama, Estado |
+
+---
+
+## 6. Exportar dashboards a PDF (vista de pantalla)
+
+`exportDashboardToPDF(element, { filename, title, subtitle, filtros })` en
+`src/lib/exportUtils.js`, con el botón `<DashboardPdfButton targetRef … />`.
+
+- Captura el dashboard con **html2canvas** (`scale: 2`, fondo `#e9eef7`), por lo
+  que el PDF conserva gráficas, colores y neumorfismo tal como en pantalla.
+- Antepone la banda azul institucional con logo, el **título**, el subtítulo y un
+  recuadro con los **filtros aplicados** (o "ninguno").
+- Si el dashboard no cabe en una página, recorta el canvas y pagina, repitiendo
+  una cabecera compacta.
+- Pie de página con numeración en todas las páginas.
+- Los elementos con `data-pdf-hide` (botón de exportar, panel de filtros) se
+  omiten de la captura porque ya están resumidos en el encabezado.
+
+`filtrosResumen(filters, labels)` de `lib/utils.js` convierte el estado de
+filtros del dashboard en el listado legible que se imprime.
+
+---
+
+## 7. Actividad Reciente del dashboard
+
+Cada entrada muestra ahora:
+
+- Tipo de encuesta y servicio/ubicación.
+- Chips con los datos relevantes según la encuesta (tipo de aislamiento,
+  profesional, evaluado, perfil, momentos OMS, objeto y RLU, quirófano,
+  especialidad, paciente, número de accesos/casos).
+- **Quién la diligenció** — `registrado_por` resuelto contra `user_profiles`.
+- Fecha de la encuesta y marca de tiempo del registro.
+- Badge de resultado (Cumple / No Cumple) y badge del estado del flujo.
+
+---
+
+## 8. Porcentajes en las gráficas de Aislamiento
 
 `src/pages/dashboards/AislamentoDashboard.jsx`:
 
@@ -188,3 +294,26 @@ correo llega como *Comité de Infecciones — Clínica Santa Bárbara* y no como
 Las gráficas usan `isAnimationActive={false}` a propósito: Recharts sólo pinta las
 etiquetas al terminar la animación, y en un tablero de análisis el porcentaje debe
 verse de inmediato.
+
+### Aplicado al resto de dashboards
+
+Los helpers viven en `src/lib/chartLabels.jsx` y se reutilizan en los 8 dashboards:
+
+| Helper | Uso |
+|--------|-----|
+| `buildBarData(rows, key, fallback, isCumple)` | agrupa y calcula `pctCumple` / `pctNoCumple` |
+| `withCriterioPct(rows)` | añade los % a series que ya traen `cumple` / `noCumple` |
+| `withPct(rows, key, total)` | añade `pct` y `etiqueta` "N (P%)" a series simples |
+| `SegmentLabel` | % dentro de cada segmento apilado (se omite si mide <16 px) |
+| `TotalPctLabel` | % de adherencia sobre la barra (verde ≥80 %, rojo <80 %) |
+| `TopLabel` | etiqueta de texto sobre barras no apiladas |
+| `BarTooltip` | tooltip con conteo y % por segmento |
+
+Casos particulares:
+
+- **Ronda de Cirugía** apila 3 series (CUMPLE / NO CUMPLE / NO APLICA): se
+  etiqueta el % de cada segmento y arriba el % de cumplimiento.
+- **Luminometría → Promedio RLU por objeto**: el promedio RLU es una magnitud, no
+  un porcentaje; la etiqueta muestra `RLU · % que cumple` (`<100 RLU`).
+- **Higiene → Distribución sumatoria** y **Ronda → Registros por quirófano**:
+  barras de conteo, etiquetadas como `N (P%)` sobre el total.

@@ -451,7 +451,9 @@ function ListaModal({ item, onClose, onSaved }) {
     try {
       const payload = {
         categoria:     form.categoria.trim(),
-        valor:         form.valor.trim(),
+        // Los catálogos van SIEMPRE en mayúsculas: si un mismo servicio se guarda
+        // como "Urgencias Adulto" y "URGENCIAS ADULTO" las gráficas lo parten en dos.
+        valor:         form.valor.trim().toUpperCase(),
         orden:         Number(form.orden) || 0,
         activo:        form.activo,
         encuesta_tipo: form.encuesta_tipo || 'general',

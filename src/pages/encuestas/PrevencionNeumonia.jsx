@@ -7,6 +7,14 @@ import ExportButtons from '../../components/common/ExportButtons'
 import { Plus, Paperclip, Pencil, Trash2, Wind, ArrowLeft, BarChart3 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
+import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
+import { ESTADO_OPTIONS } from '../../lib/utils'
+
+const FILTER_CONFIG = [
+  { key: 'fecha_registro', label: 'Fecha',          type: 'daterange' },
+  { key: 'ubicacion_cama', label: 'Ubicación/Cama',  type: 'select' },
+  { key: 'estado',         label: 'Estado',          type: 'select', options: ESTADO_OPTIONS },
+]
 
 const EXPORT_COLS = [
   { key: 'fecha_registro',         label: 'Fecha',      width: 12 },
@@ -38,6 +46,8 @@ export default function PrevencionNeumonia() {
     await supabase.from('encuesta_prevencion_neumonia').delete().eq('id', id)
     setData(prev => prev.filter(r => r.id !== id))
   }
+
+  const ft = useTableFilters(data, FILTER_CONFIG)
 
   const columns = [
     { key: 'fecha_registro',  header: 'Fecha',   sortable: true,
@@ -84,13 +94,19 @@ export default function PrevencionNeumonia() {
       </div>
 
       <div className="card p-4">
+        <TableFilters
+          config={FILTER_CONFIG} {...ft}
+          total={data.length} shown={ft.filtered.length}
+        />
         <div className="flex justify-end mb-3">
           <ExportButtons
-            data={data.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
+            data={ft.filtered.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
             columns={EXPORT_COLS}
             filename="prevencion_neumonia"
             title="Prevención de Neumonía (NAV)"
-            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            subtitle={ft.summary.length
+              ? `Filtros — ${ft.summary.join(' · ')}`
+              : 'Clínica de Alta Complejidad Santa Bárbara'}
           />
         </div>
         {loading ? (
@@ -99,7 +115,7 @@ export default function PrevencionNeumonia() {
           </div>
         ) : (
           <DataTable
-            data={data} columns={columns}
+            data={ft.filtered} columns={columns}
             searchPlaceholder="Buscar por cama, documento..."
             emptyMessage="No hay registros de prevención de neumonía"
             actions={row => (

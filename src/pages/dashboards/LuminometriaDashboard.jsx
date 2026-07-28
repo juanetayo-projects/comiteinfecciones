@@ -1,11 +1,17 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
   PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts'
 import { ArrowLeft, Microscope, Filter, X } from 'lucide-react'
+import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import { filtrosResumen } from '../../lib/utils'
+import {
+  buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT,
+} from '../../lib/chartLabels'
 
 const PIE_COLORS = ['#10b981', '#f87171']
 
@@ -93,11 +99,14 @@ function SummaryTableRLU({ rows, title }) {
 }
 
 const INIT_FILTERS = { desde: '', hasta: '', servicio: '', objeto: '' }
+// Etiquetas legibles de los filtros — se imprimen en el encabezado del PDF
+const FILTER_LABELS = { desde:'Desde', hasta:'Hasta', servicio:'Servicio', objeto:'Superficie' }
 
 export default function LuminometriaDashboard() {
   const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
+  const pdfRef = useRef(null)
 
   useEffect(() => {
     supabase.from('encuesta_luminometria').select('*').order('fecha_registro', { ascending: false })
@@ -140,13 +149,8 @@ export default function LuminometriaDashboard() {
     { name: 'NO CUMPLE (≥100 RLU)', value: noCumple },
   ].filter(d => d.value > 0)
 
-  const barServicio = Object.values(
-    filtered.reduce((acc, r) => {
-      const s = r.servicio_evaluado || 'Sin servicio'
-      if (!acc[s]) acc[s] = { name: s, CUMPLE: 0, 'NO CUMPLE': 0 }
-      r.rango === 'CUMPLE' ? acc[s].CUMPLE++ : acc[s]['NO CUMPLE']++
-      return acc
-    }, {})
+  const barServicio = buildBarData(
+    filtered, 'servicio_evaluado', 'Sin servicio', r => r.rango === 'CUMPLE'
   )
 
   const barObjeto = Object.values(
@@ -158,15 +162,25 @@ export default function LuminometriaDashboard() {
       acc[o].count++
       return acc
     }, {})
-  ).map(o => ({ ...o, avgRLU: Math.round(o.totalRLU / o.count) }))
+  ).map(o => {
+    const pct = o.count > 0 ? Math.round((o.CUMPLE / o.count) * 100) : 0
+    return {
+      ...o,
+      avgRLU:    Math.round(o.totalRLU / o.count),
+      pctCumple: pct,
+      // El promedio RLU es una magnitud, no un %; se etiqueta el valor y
+      // entre paréntesis el % de mediciones que cumplen (<100 RLU).
+      etiqueta:  `${Math.round(o.totalRLU / o.count)} · ${pct}%`,
+    }
+  })
 
   const summaryByServicio = buildSummaryRLU(filtered, 'servicio_evaluado')
   const summaryByObjeto   = buildSummaryRLU(filtered, 'objeto')
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in space-y-6">
+    <div ref={pdfRef} className="p-6 lg:p-8 animate-fade-in space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Link to="/encuestas/luminometria"
           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft className="w-4 h-4" />
@@ -178,10 +192,19 @@ export default function LuminometriaDashboard() {
           <h1 className="page-title">Dashboard — Luminometría</h1>
           <p className="page-subtitle">Control de limpieza ambiental por ATP (RLU)</p>
         </div>
+        <div className="ml-auto" data-pdf-hide>
+          <DashboardPdfButton
+            targetRef={pdfRef}
+            filename="dashboard_luminometria"
+            title="Dashboard — Luminometría"
+            subtitle="Control de limpieza ambiental por ATP (RLU)"
+            filtros={filtrosResumen(filters, FILTER_LABELS)}
+          />
+        </div>
       </div>
 
       {/* Filtros */}
-      <div className="card p-4">
+      <div className="card p-4" data-pdf-hide>
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-slate-500" />
           <span className="text-sm font-medium text-slate-700">Filtros</span>
@@ -255,31 +278,38 @@ export default function LuminometriaDashboard() {
 
             <div className="card p-5">
               <h3 className="section-title mb-4">Cumplimiento por Servicio</h3>
+              <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={barServicio} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <BarChart data={barServicio} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="CUMPLE"    fill="#10b981" stackId="a" />
-                  <Bar dataKey="NO CUMPLE" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false}>
+                    <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                  </Bar>
+                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                    <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             <div className="card p-5 lg:col-span-2">
-              <h3 className="section-title mb-4">Promedio RLU por Objeto / Superficie</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={barObjeto} margin={{ left: -5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <h3 className="section-title mb-1">Promedio RLU por Objeto / Superficie</h3>
+              <p className="text-[10px] text-slate-500 mb-2">Promedio RLU · % de mediciones que cumplen (&lt;100 RLU)</p>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={barObjeto} margin={{ top: 22, left: -5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
+                  <Tooltip formatter={(v, _n, p) => [`${v} RLU · ${p.payload.pctCumple}% cumple`, 'Promedio']} />
                   <Bar dataKey="avgRLU" name="Promedio RLU"
-                    fill="#f59e0b" radius={[3,3,0,0]}
-                    label={{ position: 'top', fontSize: 10 }}
-                  />
+                    fill="#f59e0b" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <LabelList dataKey="etiqueta" content={TopLabel} position="top" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
               <p className="text-xs text-slate-400 mt-2">Línea de corte: 100 RLU (CUMPLE si &lt; 100)</p>

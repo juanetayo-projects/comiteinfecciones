@@ -1,11 +1,17 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
   LineChart, Line, ResponsiveContainer,
 } from 'recharts'
 import { ArrowLeft, Wind, Filter, X, BarChart3, TrendingUp, TrendingDown } from 'lucide-react'
+import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import { filtrosResumen } from '../../lib/utils'
+import {
+  buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT,
+} from '../../lib/chartLabels'
 
 const PN_KEYS   = ['criterio_1_cabecera','criterio_2_higiene_oral','criterio_3_implementos','criterio_4_lista_chequeo_nav']
 const PN_LABELS = ['Cabecera 30–45°','Hig. Oral Clorhexidina','Implementos Adecuados','Lista Chequeo NAV']
@@ -41,11 +47,14 @@ function KpiCard({ label, value, sub, color = 'violet', icon: Icon }) {
 }
 
 const INIT_FILTERS = { desde: '', hasta: '', ubicacion: '' }
+// Etiquetas legibles de los filtros — se imprimen en el encabezado del PDF
+const FILTER_LABELS = { desde:'Desde', hasta:'Hasta', ubicacion:'Ubicación/Cama' }
 
 export default function PrevencionNeumoniaDashboard() {
   const [raw,     setRaw]     = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
+  const pdfRef = useRef(null)
 
   useEffect(() => {
     supabase.from('encuesta_prevencion_neumonia').select('*')
@@ -117,15 +126,15 @@ export default function PrevencionNeumoniaDashboard() {
   const totalCasos   = rows.reduce((acc, r) => acc + (r.num_casos ?? 0), 0)
 
   // Datos de criterios para gráfica
-  const criteriosData = PN_KEYS.map((k, i) => {
+  const criteriosData = withCriterioPct(PN_KEYS.map((k, i) => {
     const c = rows.filter(r => r[k] === true).length
     return { name: PN_LABELS[i], cumple: c, noCumple: rows.length - c }
-  })
+  }))
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in space-y-6">
+    <div ref={pdfRef} className="p-6 lg:p-8 animate-fade-in space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Link to="/encuestas/prevencion-neumonia"
           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft className="w-4 h-4" />
@@ -137,13 +146,22 @@ export default function PrevencionNeumoniaDashboard() {
           <h1 className="page-title">Dashboard — Prevención de Neumonía (NAV)</h1>
           <p className="page-subtitle">Paquete de medidas preventivas NAV · {raw.length} registros totales</p>
         </div>
+        <div className="ml-auto" data-pdf-hide>
+          <DashboardPdfButton
+            targetRef={pdfRef}
+            filename="dashboard_prevencion_neumonia"
+            title="Dashboard — Prevención de Neumonía (NAV)"
+            subtitle={`Paquete de medidas preventivas NAV · ${raw.length} registros totales`}
+            filtros={filtrosResumen(filters, FILTER_LABELS)}
+          />
+        </div>
         <Link to="/encuestas/prevencion-neumonia/nuevo" className="ml-auto btn-primary text-xs gap-1.5">
           <BarChart3 className="w-3.5 h-3.5" /> Nuevo Registro
         </Link>
       </div>
 
       {/* Filtros */}
-      <div className="card p-4">
+      <div className="card p-4" data-pdf-hide>
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-slate-500" />
           <span className="text-sm font-medium text-slate-700">Filtros</span>
@@ -197,16 +215,22 @@ export default function PrevencionNeumoniaDashboard() {
             {/* Criterios bar chart */}
             <div className="card p-5">
               <h3 className="section-title mb-1">Criterios del Paquete NAV</h3>
+              <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
               <p className="text-xs text-slate-400 mb-3">Registros con cumplimiento por medida — {rows.length} evaluaciones</p>
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={criteriosData} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <BarChart data={criteriosData} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="cumple"   name="Cumple"    fill="#8b5cf6" stackId="a" />
-                  <Bar dataKey="noCumple" name="No Cumple" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                  <Bar dataKey="cumple" name="Cumple" fill="#8b5cf6" stackId="a" isAnimationActive={false}>
+                    <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                  </Bar>
+                  <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                    <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -255,8 +279,8 @@ export default function PrevencionNeumoniaDashboard() {
               <h3 className="section-title mb-1">Tendencia Semanal</h3>
               <p className="text-xs text-slate-400 mb-3">% adherencia al paquete NAV por semana</p>
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={semanaData} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <LineChart data={semanaData} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="semana" tick={{ fontSize: 11 }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
                   <Tooltip formatter={v => `${v}%`} />

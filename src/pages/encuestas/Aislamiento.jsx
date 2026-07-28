@@ -4,9 +4,20 @@ import { supabase } from '../../lib/supabase'
 import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
+import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
+import { ESTADO_OPTIONS } from '../../lib/utils'
 import { Plus, Paperclip, Pencil, Trash2, ShieldAlert, BarChart3 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
+
+const FILTER_CONFIG = [
+  { key: 'fecha_registro',   label: 'Fecha',            type: 'daterange' },
+  { key: 'servicio',         label: 'Servicio',          type: 'select' },
+  { key: 'profesional',      label: 'Profesional',       type: 'select' },
+  { key: 'tipo_aislamiento', label: 'Tipo Aislamiento',  type: 'select' },
+  { key: 'adherencia',       label: 'Adherencia',        type: 'select', options: ['CUMPLE', 'NO CUMPLE'] },
+  { key: 'estado',           label: 'Estado',            type: 'select', options: ESTADO_OPTIONS },
+]
 
 const EXPORT_COLS = [
   { key: 'fecha_registro',   label: 'Fecha',             width: 12 },
@@ -54,7 +65,9 @@ export default function Aislamiento() {
     { key: 'nombre_evaluado',  header: 'Evaluado' },
   ]
 
-  const exportData = data.map(r => ({
+  const ft = useTableFilters(data, FILTER_CONFIG)
+
+  const exportData = ft.filtered.map(r => ({
     ...r,
     estado: estadoLabel(r.estado),
   }))
@@ -84,12 +97,18 @@ export default function Aislamiento() {
 
       {/* Tabla */}
       <div className="card p-4">
+        <TableFilters
+          config={FILTER_CONFIG} {...ft}
+          total={data.length} shown={ft.filtered.length}
+        />
         <div className="flex justify-end mb-3">
           <ExportButtons
             data={exportData} columns={EXPORT_COLS}
             filename="aislamiento_hospitalario"
             title="Encuesta de Aislamiento Hospitalario"
-            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            subtitle={ft.summary.length
+              ? `Filtros — ${ft.summary.join(' · ')}`
+              : 'Clínica de Alta Complejidad Santa Bárbara'}
           />
         </div>
         {loading ? (
@@ -98,7 +117,7 @@ export default function Aislamiento() {
           </div>
         ) : (
           <DataTable
-            data={data}
+            data={ft.filtered}
             columns={columns}
             searchPlaceholder="Buscar por servicio, evaluado..."
             emptyMessage="No hay registros de aislamiento"

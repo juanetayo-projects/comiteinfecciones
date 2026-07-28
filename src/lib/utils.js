@@ -62,20 +62,23 @@ export function cumpleBadge(val) {
   return 'bg-slate-100 text-slate-600'
 }
 
-// ── Servicios del hospital ─────────────────────────────────────
-export const SERVICIOS = [
-  'UCI Adultos','UCI Neonatal','UCI Pediátrica',
-  'Urgencias Adultos','Urgencias Pediátrica',
-  'Cirugía','Ortopedia','Ginecología','Obstetricia',
-  'Medicina Interna','Pediatría','Cardiología',
-  'Oncología','Neurología','Nefrología',
-  'Hematología','Infectología','Neumología',
-  'Gastroenterología','Endocrinología',
-  'Sala de Partos','Neonatos','Hospitalización General',
-]
+// ── Opciones de estado para los filtros de tabla ───────────────
+export const ESTADO_OPTIONS = Object.entries(ESTADO_LABEL)
+  .map(([value, label]) => ({ value, label }))
 
-export const QUIROFANOS = [
-  'Quirófano 1','Quirófano 2','Quirófano 3',
-  'Quirófano 4','Quirófano 5','Quirófano 6',
-  'Sala de Partos',
-]
+// Opciones CUMPLE / NO CUMPLE, reutilizadas por varios filtros
+export const CUMPLE_OPTIONS = ['CUMPLE', 'NO CUMPLE']
+
+/**
+ * Convierte el estado de filtros de un dashboard en un resumen legible para el
+ * encabezado del PDF. `labels` mapea cada clave a su etiqueta visible.
+ *
+ *   filtrosResumen({ desde:'2026-01-01', servicio:'UCI' },
+ *                  { desde:'Desde', hasta:'Hasta', servicio:'Servicio' })
+ *   → ['Desde: 2026-01-01', 'Servicio: UCI']
+ */
+export function filtrosResumen(filters, labels) {
+  return Object.entries(filters)
+    .filter(([, v]) => v !== '' && v != null)
+    .map(([k, v]) => `${labels[k] ?? k}: ${v}`)
+}

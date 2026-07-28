@@ -224,6 +224,17 @@ Función: `exportToPDF(data, columns, filename, title, subtitle, kpis?)`
 7. **Diseño neumórfico:** usar `.card`, `.input`, `.btn-*`, `.kpi-tile` y los tokens
    `brand-*` / `accent-*` / `shadow-neu-*`. Nunca `bg-white` + `shadow-md` sueltos, ni
    la paleta `indigo` antigua. El fondo de página no puede ser blanco puro.
+8. **Catálogos SIEMPRE en MAYÚSCULAS:** `listas_desplegables.valor` y los catálogos
+   embebidos en los formularios. Un mismo valor en dos capitalizaciones parte la
+   categoría en dos en las gráficas. Ver `docs/BRANDING_Y_CORREOS.md` §4-bis.
+9. **Filtros de tabla:** usar `useTableFilters` + `<TableFilters>` y pasar
+   `ft.filtered` tanto a `<DataTable>` como a `<ExportButtons>`, para que lo
+   exportado coincida con lo que se ve.
+10. **Etiquetas de % en gráficas:** usar los helpers de `src/lib/chartLabels.jsx`,
+    no reimplementarlos. Las gráficas con etiquetas van con
+    `isAnimationActive={false}`.
+11. **PDF de dashboards:** `<DashboardPdfButton targetRef={pdfRef} …>` sobre el
+    contenedor de la vista; marcar con `data-pdf-hide` lo que no deba capturarse.
 
 ---
 

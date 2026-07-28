@@ -11,8 +11,8 @@ import { useLista } from '../../hooks/useLista'
 
 // Quirófanos disponibles por servicio
 const QUIROFANOS_POR_SERVICIO = {
-  'CIRUGÍA':     ['Quirófano 1', 'Quirófano 2', 'Quirófano 3', 'Quirófano 4', 'Quirófano 5'],
-  'HEMODINAMIA': ['Quirófano 1'],
+  'CIRUGÍA':     ['QUIRÓFANO 1', 'QUIRÓFANO 2', 'QUIRÓFANO 3', 'QUIRÓFANO 4', 'QUIRÓFANO 5'],
+  'HEMODINAMIA': ['QUIRÓFANO 1'],
 }
 
 // Lista fija — solo estos servicios aplican para ronda de cirugía

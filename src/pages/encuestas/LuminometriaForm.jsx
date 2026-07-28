@@ -9,59 +9,61 @@ import FileUpload from '../../components/common/FileUpload'
 import { ArrowLeft, Save } from 'lucide-react'
 import { useLista } from '../../hooks/useLista'
 
-// Servicios y objetos dependientes (claves = nombres exactos del listado institucional)
+// Servicios y objetos dependientes (claves = nombres exactos del listado institucional).
+// TODO EN MAYÚSCULAS: los catálogos de la app están normalizados a mayúsculas para
+// que las gráficas no partan una misma categoría en dos (ver docs/BRANDING_Y_CORREOS.md).
 const SERVICIOS_OBJETOS = {
   'CIRUGÍA': [
-    'Arco en C',
-    'Bomba de infusion',
-    'Camilla',
-    'Maquina de anestesia (perilla)',
-    'Mesa de Mayo',
-    'Ventilador (perilla)',
+    'ARCO EN C',
+    'BOMBA DE INFUSIÓN',
+    'CAMILLA',
+    'MÁQUINA DE ANESTESIA (PERILLA)',
+    'MESA DE MAYO',
+    'VENTILADOR (PERILLA)',
   ],
   'HOSPITALIZACIÓN 2': [
-    'Bomba de infusión',
-    'Cama (panel de control)',
-    'Colchón',
+    'BOMBA DE INFUSIÓN',
+    'CAMA (PANEL DE CONTROL)',
+    'COLCHÓN',
   ],
   'HOSPITALIZACIÓN 7': [
-    'Bomba de infusión',
-    'Cama (panel de control)',
-    'Colchón',
+    'BOMBA DE INFUSIÓN',
+    'CAMA (PANEL DE CONTROL)',
+    'COLCHÓN',
   ],
   'HOSPITALIZACIÓN 8': [
-    'Bomba de infusión',
-    'Cama (panel de control)',
-    'Colchón',
+    'BOMBA DE INFUSIÓN',
+    'CAMA (PANEL DE CONTROL)',
+    'COLCHÓN',
   ],
   'HOSPITALIZACIÓN PARCIAL': [
-    'Bomba de infusión',
-    'Cama (panel de control)',
-    'Colchón',
+    'BOMBA DE INFUSIÓN',
+    'CAMA (PANEL DE CONTROL)',
+    'COLCHÓN',
   ],
   'UCI': [
-    'Bomba de infusión',
-    'Cama (panel de control)',
-    'Colchón',
-    'Mindray signos vitales',
-    'Ventilador',
+    'BOMBA DE INFUSIÓN',
+    'CAMA (PANEL DE CONTROL)',
+    'COLCHÓN',
+    'MINDRAY SIGNOS VITALES',
+    'VENTILADOR',
   ],
   'UCIN': [
-    'Bomba de infusión',
-    'Cama (panel de control)',
-    'Colchón',
-    'Mindray signos vitales',
-    'Ventilador',
+    'BOMBA DE INFUSIÓN',
+    'CAMA (PANEL DE CONTROL)',
+    'COLCHÓN',
+    'MINDRAY SIGNOS VITALES',
+    'VENTILADOR',
   ],
   'URGENCIAS ADULTO': [
-    'Bomba de infusión',
-    'Colchoneta',
-    'Ventilador',
+    'BOMBA DE INFUSIÓN',
+    'COLCHONETA',
+    'VENTILADOR',
   ],
   'URGENCIAS PEDIATRICAS': [
-    'Bomba de infusión',
-    'Colchoneta',
-    'Ventilador',
+    'BOMBA DE INFUSIÓN',
+    'COLCHONETA',
+    'VENTILADOR',
   ],
 }
 

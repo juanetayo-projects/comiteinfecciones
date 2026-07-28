@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import {
@@ -6,6 +6,8 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts'
 import { ArrowLeft, ShieldAlert, Filter, X } from 'lucide-react'
+import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import { filtrosResumen } from '../../lib/utils'
 
 const PIE_COLORS = ['#059669', '#e11d48']
 const BAR_CUMPLE    = '#059669'
@@ -148,11 +150,14 @@ function SummaryTable({ rows, nameLabel }) {
 }
 
 const INIT_FILTERS = { desde: '', hasta: '', servicio: '', profesional: '', tipo: '' }
+// Etiquetas legibles de los filtros — se imprimen en el encabezado del PDF
+const FILTER_LABELS = { desde:'Desde', hasta:'Hasta', servicio:'Servicio', profesional:'Profesional', tipo:'Tipo Aislamiento' }
 
 export default function AislamentoDashboard() {
   const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
+  const pdfRef = useRef(null)
 
   useEffect(() => {
     supabase.from('encuesta_aislamiento').select('*').order('fecha_registro', { ascending: false })
@@ -203,9 +208,9 @@ export default function AislamentoDashboard() {
   const tableTipo        = buildSummary(filtered, 'tipo_aislamiento')
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in space-y-6">
+    <div ref={pdfRef} className="p-6 lg:p-8 animate-fade-in space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Link to="/encuestas/aislamiento"
           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft className="w-4 h-4" />
@@ -217,10 +222,19 @@ export default function AislamentoDashboard() {
           <h1 className="page-title">Dashboard — Aislamiento Hospitalario</h1>
           <p className="page-subtitle">Análisis de adherencia a protocolos de aislamiento</p>
         </div>
+        <div className="ml-auto" data-pdf-hide>
+          <DashboardPdfButton
+            targetRef={pdfRef}
+            filename="dashboard_aislamiento"
+            title="Dashboard — Aislamiento Hospitalario"
+            subtitle="Análisis de adherencia a protocolos de aislamiento"
+            filtros={filtrosResumen(filters, FILTER_LABELS)}
+          />
+        </div>
       </div>
 
       {/* Filtros */}
-      <div className="card p-4">
+      <div className="card p-4" data-pdf-hide>
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-slate-500" />
           <span className="text-sm font-medium text-slate-700">Filtros</span>

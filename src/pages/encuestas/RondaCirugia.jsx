@@ -7,6 +7,18 @@ import ExportButtons from '../../components/common/ExportButtons'
 import { Plus, Paperclip, Pencil, Trash2, Stethoscope, BarChart3 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
+import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
+import { ESTADO_OPTIONS, CUMPLE_OPTIONS } from '../../lib/utils'
+
+const FILTER_CONFIG = [
+  { key: 'fecha_registro',          label: 'Fecha',        type: 'daterange' },
+  { key: 'servicio',                label: 'Servicio',      type: 'select' },
+  { key: 'quirofano',               label: 'Quirófano',     type: 'select' },
+  { key: 'especialidad',            label: 'Especialidad',  type: 'select' },
+  { key: 'profesional',             label: 'Profesional',   type: 'select' },
+  { key: 'cumplimiento_profilaxis', label: 'Profilaxis',    type: 'select', options: CUMPLE_OPTIONS },
+  { key: 'estado',                  label: 'Estado',        type: 'select', options: ESTADO_OPTIONS },
+]
 
 function cumpleColor(v) {
   if (v === 'CUMPLE')    return 'bg-emerald-100 text-emerald-800'
@@ -56,6 +68,8 @@ export default function RondaCirugia() {
     setData(prev => prev.filter(r => r.id !== id))
   }
 
+  const ft = useTableFilters(data, FILTER_CONFIG)
+
   const columns = [
     { key: 'fecha_registro',          header: 'Fecha',       sortable: true,
       render: v => <span className="text-slate-600">{formatDate(v)}</span> },
@@ -92,13 +106,19 @@ export default function RondaCirugia() {
       </div>
 
       <div className="card p-4">
+        <TableFilters
+          config={FILTER_CONFIG} {...ft}
+          total={data.length} shown={ft.filtered.length}
+        />
         <div className="flex justify-end mb-3">
           <ExportButtons
-            data={data.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
+            data={ft.filtered.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
             columns={EXPORT_COLS}
             filename="ronda_cirugia"
             title="Ronda de Cirugía — Control de Infecciones"
-            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            subtitle={ft.summary.length
+              ? `Filtros — ${ft.summary.join(' · ')}`
+              : 'Clínica de Alta Complejidad Santa Bárbara'}
           />
         </div>
         {loading ? (
@@ -107,7 +127,7 @@ export default function RondaCirugia() {
           </div>
         ) : (
           <DataTable
-            data={data} columns={columns}
+            data={ft.filtered} columns={columns}
             searchPlaceholder="Buscar por quirófano, servicio, profesional..."
             emptyMessage="No hay registros de ronda de cirugía"
             actions={row => (

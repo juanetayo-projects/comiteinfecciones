@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { formatDate, porcentaje } from '../lib/utils'
+import { formatDate, formatDateTime, porcentaje, estadoBadgeColor, estadoLabel } from '../lib/utils'
 import {
   ShieldAlert, Hand, Microscope, Stethoscope, Activity,
   TrendingUp, TrendingDown, Clock, CheckCircle2, AlertCircle,
-  Syringe, Droplets, Wind,
+  Syringe, Droplets, Wind, User, CalendarDays,
 } from 'lucide-react'
 
 // ─── Configuración de encuestas ─────────────────────────────────────────────
@@ -178,32 +178,84 @@ export default function Dashboard() {
       { data: recAvp },
       { data: recCv  },
       { data: recPn  },
+      { data: perfiles },
     ] = await Promise.all([
-      supabase.from('encuesta_aislamiento').select('id, created_at, servicio, adherencia')
-        .order('created_at', { ascending: false }).limit(4),
-      supabase.from('encuesta_higiene_manos').select('id, created_at, servicio_evaluado, resultado_cumplimiento')
-        .order('created_at', { ascending: false }).limit(4),
-      supabase.from('encuesta_luminometria').select('id, created_at, servicio_evaluado, rango')
-        .order('created_at', { ascending: false }).limit(4),
-      supabase.from('encuesta_ronda_cirugia').select('id, created_at, servicio, cumplimiento_profilaxis')
-        .order('created_at', { ascending: false }).limit(4),
-      supabase.from('encuesta_acceso_venoso').select('id, created_at, ubicacion_cama, nombre_paciente')
-        .order('created_at', { ascending: false }).limit(4),
-      supabase.from('encuesta_cateter_vesical').select('id, created_at, ubicacion_cama, nombre_paciente')
-        .order('created_at', { ascending: false }).limit(4),
-      supabase.from('encuesta_prevencion_neumonia').select('id, created_at, ubicacion_cama, nombre_paciente')
-        .order('created_at', { ascending: false }).limit(4),
+      supabase.from('encuesta_aislamiento')
+        .select('id, created_at, fecha_registro, servicio, adherencia, tipo_aislamiento, profesional, nombre_evaluado, estado, registrado_por')
+        .order('created_at', { ascending: false }).limit(6),
+      supabase.from('encuesta_higiene_manos')
+        .select('id, created_at, fecha_evaluacion, servicio_evaluado, resultado_cumplimiento, perfil_colaborador, nombre_evaluado, sumatoria_cumplimiento, estado, registrado_por')
+        .order('created_at', { ascending: false }).limit(6),
+      supabase.from('encuesta_luminometria')
+        .select('id, created_at, fecha_registro, servicio_evaluado, rango, objeto, resultado, estado, registrado_por')
+        .order('created_at', { ascending: false }).limit(6),
+      supabase.from('encuesta_ronda_cirugia')
+        .select('id, created_at, fecha_registro, servicio, cumplimiento_profilaxis, quirofano, especialidad, profesional, estado, registrado_por')
+        .order('created_at', { ascending: false }).limit(6),
+      supabase.from('encuesta_acceso_venoso')
+        .select('id, created_at, fecha_registro, ubicacion_cama, nombre_paciente, num_accesos, estado, registrado_por')
+        .order('created_at', { ascending: false }).limit(6),
+      supabase.from('encuesta_cateter_vesical')
+        .select('id, created_at, fecha_registro, ubicacion_cama, nombre_paciente, num_casos, estado, registrado_por')
+        .order('created_at', { ascending: false }).limit(6),
+      supabase.from('encuesta_prevencion_neumonia')
+        .select('id, created_at, fecha_registro, ubicacion_cama, nombre_paciente, num_casos, estado, registrado_por')
+        .order('created_at', { ascending: false }).limit(6),
+      supabase.from('user_profiles').select('id, nombre, email'),
     ])
 
+    // Mapa id → nombre para resolver "quién diligenció"
+    const quien = Object.fromEntries(
+      (perfiles ?? []).map(p => [p.id, p.nombre || p.email || 'Usuario'])
+    )
+
+    // `detalles` son los datos relevantes de cada encuesta que se muestran como chips
     const merged = [
-      ...(recAis ?? []).map(r => ({ id: r.id, tipo: 'aislamiento',  texto: r.servicio,          estado: r.adherencia,              fecha: r.created_at })),
-      ...(recHig ?? []).map(r => ({ id: r.id, tipo: 'higiene',      texto: r.servicio_evaluado, estado: r.resultado_cumplimiento,  fecha: r.created_at })),
-      ...(recLum ?? []).map(r => ({ id: r.id, tipo: 'luminometria', texto: r.servicio_evaluado, estado: r.rango,                   fecha: r.created_at })),
-      ...(recCx  ?? []).map(r => ({ id: r.id, tipo: 'ronda',        texto: r.servicio,          estado: r.cumplimiento_profilaxis, fecha: r.created_at })),
-      ...(recAvp ?? []).map(r => ({ id: r.id, tipo: 'avp', texto: r.ubicacion_cama || r.nombre_paciente || 'AVP', estado: null, fecha: r.created_at })),
-      ...(recCv  ?? []).map(r => ({ id: r.id, tipo: 'cv',  texto: r.ubicacion_cama || r.nombre_paciente || 'CV',  estado: null, fecha: r.created_at })),
-      ...(recPn  ?? []).map(r => ({ id: r.id, tipo: 'pn',  texto: r.ubicacion_cama || r.nombre_paciente || 'NAV', estado: null, fecha: r.created_at })),
+      ...(recAis ?? []).map(r => ({
+        id: r.id, tipo: 'aislamiento', fecha: r.created_at, fechaEncuesta: r.fecha_registro,
+        texto: r.servicio, estado: r.adherencia, estadoFlujo: r.estado,
+        autor: quien[r.registrado_por],
+        detalles: [r.tipo_aislamiento, r.profesional, r.nombre_evaluado],
+      })),
+      ...(recHig ?? []).map(r => ({
+        id: r.id, tipo: 'higiene', fecha: r.created_at, fechaEncuesta: r.fecha_evaluacion,
+        texto: r.servicio_evaluado, estado: r.resultado_cumplimiento, estadoFlujo: r.estado,
+        autor: quien[r.registrado_por],
+        detalles: [r.perfil_colaborador, r.nombre_evaluado,
+                   r.sumatoria_cumplimiento != null ? `${r.sumatoria_cumplimiento}/5 momentos` : null],
+      })),
+      ...(recLum ?? []).map(r => ({
+        id: r.id, tipo: 'luminometria', fecha: r.created_at, fechaEncuesta: r.fecha_registro,
+        texto: r.servicio_evaluado, estado: r.rango, estadoFlujo: r.estado,
+        autor: quien[r.registrado_por],
+        detalles: [r.objeto, r.resultado != null ? `${r.resultado} RLU` : null],
+      })),
+      ...(recCx ?? []).map(r => ({
+        id: r.id, tipo: 'ronda', fecha: r.created_at, fechaEncuesta: r.fecha_registro,
+        texto: r.servicio, estado: r.cumplimiento_profilaxis, estadoFlujo: r.estado,
+        autor: quien[r.registrado_por],
+        detalles: [r.quirofano, r.especialidad, r.profesional],
+      })),
+      ...(recAvp ?? []).map(r => ({
+        id: r.id, tipo: 'avp', fecha: r.created_at, fechaEncuesta: r.fecha_registro,
+        texto: r.ubicacion_cama || 'AVP', estado: null, estadoFlujo: r.estado,
+        autor: quien[r.registrado_por],
+        detalles: [r.nombre_paciente, r.num_accesos != null ? `${r.num_accesos} acceso(s)` : null],
+      })),
+      ...(recCv ?? []).map(r => ({
+        id: r.id, tipo: 'cv', fecha: r.created_at, fechaEncuesta: r.fecha_registro,
+        texto: r.ubicacion_cama || 'CV', estado: null, estadoFlujo: r.estado,
+        autor: quien[r.registrado_por],
+        detalles: [r.nombre_paciente, r.num_casos != null ? `${r.num_casos} caso(s)` : null],
+      })),
+      ...(recPn ?? []).map(r => ({
+        id: r.id, tipo: 'pn', fecha: r.created_at, fechaEncuesta: r.fecha_registro,
+        texto: r.ubicacion_cama || 'NAV', estado: null, estadoFlujo: r.estado,
+        autor: quien[r.registrado_por],
+        detalles: [r.nombre_paciente, r.num_casos != null ? `${r.num_casos} caso(s)` : null],
+      })),
     ]
+      .map(r => ({ ...r, detalles: r.detalles.filter(Boolean) }))
       .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
       .slice(0, 14)
 
@@ -352,23 +404,54 @@ export default function Dashboard() {
               const noEstado = !r.estado
               return (
                 <div key={`${r.tipo}-${r.id}-${i}`}
-                  className="flex items-center justify-between py-2 border-b border-white/70 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-xl shadow-neu-xs flex items-center justify-center ${cfg?.bg ?? 'bg-slate-50'}`}>
+                  className="flex items-start justify-between gap-3 py-2.5 border-b border-white/70 last:border-0">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className={`w-8 h-8 shrink-0 rounded-xl shadow-neu-xs flex items-center justify-center ${cfg?.bg ?? 'bg-slate-50'}`}>
                       <Icon className={`w-3.5 h-3.5 ${cfg?.ic ?? 'text-slate-400'}`} />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-700">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-brand-900">
                         {ENCUESTAS_CFG[r.tipo]?.label} — {r.texto ?? 'Sin servicio'}
                       </p>
-                      <p className="text-xs text-slate-400">{formatDate(r.fecha)}</p>
+
+                      {/* Datos relevantes de la encuesta */}
+                      {r.detalles?.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1 mt-1">
+                          {r.detalles.map((d, j) => (
+                            <span key={j}
+                              className="text-[10px] font-medium text-slate-600 bg-white/70 shadow-neu-xs rounded-full px-2 py-0.5">
+                              {d}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-slate-500">
+                        <span className="inline-flex items-center gap-1">
+                          <User className="w-3 h-3 text-brand-500" />
+                          {r.autor ?? 'Sin registrar'}
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <CalendarDays className="w-3 h-3 text-slate-400" />
+                          {formatDate(r.fechaEncuesta ?? r.fecha)}
+                        </span>
+                        <span className="text-slate-400">Registrado {formatDateTime(r.fecha)}</span>
+                      </div>
                     </div>
                   </div>
-                  {noEstado ? null : (
-                    <span className={`badge ${isCumple ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                      {isCumple ? 'Cumple' : 'No Cumple'}
-                    </span>
-                  )}
+
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    {noEstado ? null : (
+                      <span className={`badge ${isCumple ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                        {isCumple ? 'Cumple' : 'No Cumple'}
+                      </span>
+                    )}
+                    {r.estadoFlujo && (
+                      <span className={`badge ${estadoBadgeColor(r.estadoFlujo)}`}>
+                        {estadoLabel(r.estadoFlujo)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )
             })}

@@ -1,11 +1,17 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
   PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts'
 import { ArrowLeft, Stethoscope, Filter, X } from 'lucide-react'
+import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import { filtrosResumen } from '../../lib/utils'
+import {
+  buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT,
+} from '../../lib/chartLabels'
 
 const PIE_COLORS = ['#10b981', '#f87171', '#94a3b8', '#fbbf24']
 
@@ -106,11 +112,14 @@ const CRITERIOS_KEY = [
 ]
 
 const INIT_FILTERS = { desde: '', hasta: '', servicio: '', quirofano: '', especialidad: '', profesional: '' }
+// Etiquetas legibles de los filtros — se imprimen en el encabezado del PDF
+const FILTER_LABELS = { desde:'Desde', hasta:'Hasta', servicio:'Servicio', quirofano:'Quirófano', especialidad:'Especialidad', profesional:'Profesional' }
 
 export default function RondaDashboard() {
   const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
+  const pdfRef = useRef(null)
 
   useEffect(() => {
     supabase.from('encuesta_ronda_cirugia').select('*').order('fecha_registro', { ascending: false })
@@ -154,15 +163,28 @@ export default function RondaDashboard() {
     if (!byQ[q]) byQ[q] = { name: q, registros: 0 }
     byQ[q].registros++
   })
-  const barQ = Object.values(byQ).sort((a, b) => a.name.localeCompare(b.name))
+  const barQ = withPct(
+    Object.values(byQ).sort((a, b) => a.name.localeCompare(b.name)),
+    'registros', total
+  )
 
+  // Pila de 3 series: se etiqueta el % de cada segmento sobre el total del criterio
   const criteriosData = CRITERIOS_KEY.map(c => {
     const withData = filtered.filter(r => r[c.key])
+    const cumple   = withData.filter(r => r[c.key] === 'CUMPLE').length
+    const noCumple = withData.filter(r => r[c.key] === 'NO CUMPLE').length
+    const noAplica = withData.filter(r => r[c.key] === 'NO APLICA').length
+    const t = cumple + noCumple + noAplica
+    const p = n => t > 0 ? Math.round((n / t) * 100) : 0
     return {
       name:        c.label,
-      CUMPLE:      withData.filter(r => r[c.key] === 'CUMPLE').length,
-      'NO CUMPLE': withData.filter(r => r[c.key] === 'NO CUMPLE').length,
-      'NO APLICA': withData.filter(r => r[c.key] === 'NO APLICA').length,
+      CUMPLE:      cumple,
+      'NO CUMPLE': noCumple,
+      'NO APLICA': noAplica,
+      total:       t,
+      pctCumple:   p(cumple),
+      pctNoCumple: p(noCumple),
+      pctNoAplica: p(noAplica),
     }
   })
 
@@ -177,9 +199,9 @@ export default function RondaDashboard() {
   const summaryByProfesional  = buildSummaryProfilaxis(filtered, 'profesional')
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in space-y-6">
+    <div ref={pdfRef} className="p-6 lg:p-8 animate-fade-in space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Link to="/encuestas/ronda-cirugia"
           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft className="w-4 h-4" />
@@ -191,10 +213,19 @@ export default function RondaDashboard() {
           <h1 className="page-title">Dashboard — Ronda de Cirugía</h1>
           <p className="page-subtitle">Control de profilaxis antibiótica y criterios quirúrgicos</p>
         </div>
+        <div className="ml-auto" data-pdf-hide>
+          <DashboardPdfButton
+            targetRef={pdfRef}
+            filename="dashboard_ronda_cirugia"
+            title="Dashboard — Ronda de Cirugía"
+            subtitle="Control de profilaxis antibiótica y criterios quirúrgicos"
+            filtros={filtrosResumen(filters, FILTER_LABELS)}
+          />
+        </div>
       </div>
 
       {/* Filtros */}
-      <div className="card p-4">
+      <div className="card p-4" data-pdf-hide>
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-slate-500" />
           <span className="text-sm font-medium text-slate-700">Filtros</span>
@@ -282,28 +313,38 @@ export default function RondaDashboard() {
             <div className="card p-5">
               <h3 className="section-title mb-4">Registros por Quirófano</h3>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={barQ} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <BarChart data={barQ} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="registros" fill="#a855f7" radius={[3,3,0,0]} />
+                  <Bar dataKey="registros" fill="#a855f7" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <LabelList dataKey="etiqueta" content={TopLabel} position="top" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             <div className="card p-5 lg:col-span-2">
               <h3 className="section-title mb-4">Cumplimiento por Criterio</h3>
+              <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={criteriosData} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <BarChart data={criteriosData} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="CUMPLE"    fill="#10b981" stackId="a" />
-                  <Bar dataKey="NO CUMPLE" fill="#f87171" stackId="a" />
-                  <Bar dataKey="NO APLICA" fill="#94a3b8" stackId="a" radius={[3,3,0,0]} />
+                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false}>
+                    <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                  </Bar>
+                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" isAnimationActive={false}>
+                    <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                  </Bar>
+                  <Bar dataKey="NO APLICA" fill="#94a3b8" stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <LabelList dataKey="pctNoAplica" content={SegmentLabel} />
+                    <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>

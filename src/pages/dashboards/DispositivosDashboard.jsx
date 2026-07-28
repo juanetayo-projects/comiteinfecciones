@@ -1,11 +1,17 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
   PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts'
 import { ArrowLeft, Activity, Syringe, Droplets, Wind, Filter, X } from 'lucide-react'
+import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import { filtrosResumen } from '../../lib/utils'
+import {
+  buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT,
+} from '../../lib/chartLabels'
 
 const PIE_COLORS  = ['#6366f1', '#06b6d4', '#8b5cf6']
 
@@ -113,6 +119,8 @@ const CV_LABELS  = ['Fijación','Posic. Bolsa','Rotulación','Indicación','Fluj
 const PN_LABELS  = ['Cabecera 30°','Hig. Oral','Implementos','Lista NAV']
 
 const INIT_FILTERS = { desde: '', hasta: '', ubicacion: '' }
+// Etiquetas legibles de los filtros — se imprimen en el encabezado del PDF
+const FILTER_LABELS = { desde:'Desde', hasta:'Hasta', ubicacion:'Ubicación/Cama' }
 
 export default function DispositivosDashboard() {
   const [avpRaw, setAvpRaw] = useState([])
@@ -120,6 +128,7 @@ export default function DispositivosDashboard() {
   const [pnRaw,  setPnRaw]  = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
+  const pdfRef = useRef(null)
 
   useEffect(() => {
     Promise.all([
@@ -178,18 +187,18 @@ export default function DispositivosDashboard() {
 
   const pieTotal = comparacion.filter(d => d.total > 0)
 
-  const criteriosAvp = AVP_KEYS.map((k, i) => {
+  const criteriosAvp = withCriterioPct(AVP_KEYS.map((k, i) => {
     const count = avp.filter(r => r[k] === true).length
     return { name: AVP_LABELS[i], cumple: count, noCumple: avp.length - count }
-  })
-  const criteriosCv = CV_KEYS.map((k, i) => {
+  }))
+  const criteriosCv = withCriterioPct(CV_KEYS.map((k, i) => {
     const count = cv.filter(r => r[k] === true).length
     return { name: CV_LABELS[i], cumple: count, noCumple: cv.length - count }
-  })
-  const criteriosPn = PN_KEYS.map((k, i) => {
+  }))
+  const criteriosPn = withCriterioPct(PN_KEYS.map((k, i) => {
     const count = pn.filter(r => r[k] === true).length
     return { name: PN_LABELS[i], cumple: count, noCumple: pn.length - count }
-  })
+  }))
 
   const summaryAvp = buildSummaryDisp(avp, AVP_KEYS)
   const summaryCv  = buildSummaryDisp(cv,  CV_KEYS)
@@ -199,9 +208,9 @@ export default function DispositivosDashboard() {
   const totalRaw = avpRaw.length + cvRaw.length + pnRaw.length
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in space-y-6">
+    <div ref={pdfRef} className="p-6 lg:p-8 animate-fade-in space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Link to="/encuestas/seguimiento-dispositivos"
           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft className="w-4 h-4" />
@@ -213,10 +222,19 @@ export default function DispositivosDashboard() {
           <h1 className="page-title">Dashboard — Seguimiento de Dispositivos</h1>
           <p className="page-subtitle">AVP · Catéter Vesical · Prevención NAV</p>
         </div>
+        <div className="ml-auto" data-pdf-hide>
+          <DashboardPdfButton
+            targetRef={pdfRef}
+            filename="dashboard_dispositivos"
+            title="Dashboard — Seguimiento de Dispositivos"
+            subtitle="AVP · Catéter Vesical · Prevención NAV"
+            filtros={filtrosResumen(filters, FILTER_LABELS)}
+          />
+        </div>
       </div>
 
       {/* Filtros */}
-      <div className="card p-4">
+      <div className="card p-4" data-pdf-hide>
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-slate-500" />
           <span className="text-sm font-medium text-slate-700">Filtros</span>
@@ -269,8 +287,8 @@ export default function DispositivosDashboard() {
             <div className="card p-5">
               <h3 className="section-title mb-4">Adherencia por Dispositivo (%)</h3>
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={comparacion} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <BarChart data={comparacion} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis domain={[0,100]} tick={{ fontSize: 11 }} unit="%" />
                   <Tooltip formatter={v => `${v}%`} />
@@ -301,16 +319,22 @@ export default function DispositivosDashboard() {
             {avp.length > 0 && (
               <div className="card p-5">
                 <h3 className="section-title mb-1">Criterios — Acceso Venoso Periférico</h3>
+                <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
                 <p className="text-xs text-slate-400 mb-3">{avp.length} registros</p>
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={criteriosAvp} margin={{ left: -10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <BarChart data={criteriosAvp} margin={{ top: 22, left: -10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="cumple"   name="Cumple"    fill="#10b981" stackId="a" />
-                    <Bar dataKey="noCumple" name="No Cumple" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                    <Bar dataKey="cumple" name="Cumple" fill="#10b981" stackId="a" isAnimationActive={false}>
+                      <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                    </Bar>
+                    <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                      <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                      <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -319,16 +343,22 @@ export default function DispositivosDashboard() {
             {cv.length > 0 && (
               <div className="card p-5">
                 <h3 className="section-title mb-1">Criterios — Catéter Vesical</h3>
+                <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
                 <p className="text-xs text-slate-400 mb-3">{cv.length} registros</p>
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={criteriosCv} margin={{ left: -10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <BarChart data={criteriosCv} margin={{ top: 22, left: -10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="cumple"   name="Cumple"    fill="#06b6d4" stackId="a" />
-                    <Bar dataKey="noCumple" name="No Cumple" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                    <Bar dataKey="cumple" name="Cumple" fill="#06b6d4" stackId="a" isAnimationActive={false}>
+                      <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                    </Bar>
+                    <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                      <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                      <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -337,16 +367,22 @@ export default function DispositivosDashboard() {
             {pn.length > 0 && (
               <div className="card p-5 lg:col-span-2">
                 <h3 className="section-title mb-1">Criterios — Prevención Neumonía (NAV)</h3>
+                <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
                 <p className="text-xs text-slate-400 mb-3">{pn.length} registros</p>
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={criteriosPn} margin={{ left: -10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <BarChart data={criteriosPn} margin={{ top: 22, left: -10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="cumple"   name="Cumple"    fill="#8b5cf6" stackId="a" />
-                    <Bar dataKey="noCumple" name="No Cumple" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                    <Bar dataKey="cumple" name="Cumple" fill="#8b5cf6" stackId="a" isAnimationActive={false}>
+                      <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                    </Bar>
+                    <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                      <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                      <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>

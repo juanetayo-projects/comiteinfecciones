@@ -1,13 +1,17 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
   PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts'
 import { ArrowLeft, Hand, Filter, X } from 'lucide-react'
-
-const PIE_COLORS = ['#10b981', '#f87171']
+import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import { filtrosResumen } from '../../lib/utils'
+import {
+  buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PIE_COLORS, PCT_HINT,
+} from '../../lib/chartLabels'
 
 function KpiCard({ label, value, sub, color = 'slate' }) {
   const cls = {
@@ -27,11 +31,14 @@ function KpiCard({ label, value, sub, color = 'slate' }) {
 }
 
 const INIT_FILTERS = { desde: '', hasta: '', servicio: '', perfil: '' }
+// Etiquetas legibles de los filtros — se imprimen en el encabezado del PDF
+const FILTER_LABELS = { desde:'Desde', hasta:'Hasta', servicio:'Servicio', perfil:'Perfil' }
 
 export default function HigieneDashboard() {
   const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
+  const pdfRef = useRef(null)
 
   useEffect(() => {
     supabase.from('encuesta_higiene_manos').select('*').order('fecha_evaluacion', { ascending: false })
@@ -97,33 +104,22 @@ export default function HigieneDashboard() {
     { name: 'NO CUMPLE', value: noCumple },
   ].filter(d => d.value > 0)
 
-  const barServicio = Object.values(
-    filtered.reduce((acc, r) => {
-      const s = r.servicio_evaluado || 'Sin servicio'
-      if (!acc[s]) acc[s] = { name: s, CUMPLE: 0, 'NO CUMPLE': 0 }
-      r.resultado_cumplimiento === 'CUMPLE' ? acc[s].CUMPLE++ : acc[s]['NO CUMPLE']++
-      return acc
-    }, {})
-  )
+  const esCumple = r => r.resultado_cumplimiento === 'CUMPLE'
+  const barServicio = buildBarData(filtered, 'servicio_evaluado',  'Sin servicio', esCumple)
+  const barPerfil   = buildBarData(filtered, 'perfil_colaborador', 'Sin perfil',   esCumple)
 
-  const barPerfil = Object.values(
-    filtered.reduce((acc, r) => {
-      const p = r.perfil_colaborador || 'Sin perfil'
-      if (!acc[p]) acc[p] = { name: p, CUMPLE: 0, 'NO CUMPLE': 0 }
-      r.resultado_cumplimiento === 'CUMPLE' ? acc[p].CUMPLE++ : acc[p]['NO CUMPLE']++
-      return acc
-    }, {})
+  const sumDist = withPct(
+    [0,1,2,3,4,5].map(v => ({
+      name: `${v}/5`,
+      cantidad: filtered.filter(r => r.sumatoria_cumplimiento === v).length,
+    })),
+    'cantidad', total
   )
-
-  const sumDist = [0,1,2,3,4,5].map(v => ({
-    name: `${v}/5`,
-    cantidad: filtered.filter(r => r.sumatoria_cumplimiento === v).length,
-  }))
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in space-y-6">
+    <div ref={pdfRef} className="p-6 lg:p-8 animate-fade-in space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Link to="/encuestas/higiene-manos"
           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft className="w-4 h-4" />
@@ -135,10 +131,19 @@ export default function HigieneDashboard() {
           <h1 className="page-title">Dashboard — Higiene de Manos</h1>
           <p className="page-subtitle">Cumplimiento de los 5 momentos OMS</p>
         </div>
+        <div className="ml-auto" data-pdf-hide>
+          <DashboardPdfButton
+            targetRef={pdfRef}
+            filename="dashboard_higiene_manos"
+            title="Dashboard — Higiene de Manos"
+            subtitle="Cumplimiento de los 5 momentos OMS"
+            filtros={filtrosResumen(filters, FILTER_LABELS)}
+          />
+        </div>
       </div>
 
       {/* Filtros */}
-      <div className="card p-4">
+      <div className="card p-4" data-pdf-hide>
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-slate-500" />
           <span className="text-sm font-medium text-slate-700">Filtros</span>
@@ -210,44 +215,59 @@ export default function HigieneDashboard() {
             </div>
 
             <div className="card p-5">
-              <h3 className="section-title mb-4">Distribución Sumatoria (0–5 momentos)</h3>
+              <h3 className="section-title mb-1">Distribución Sumatoria (0–5 momentos)</h3>
+              <p className="text-[10px] text-slate-500 mb-2">Cantidad y % sobre el total de observaciones</p>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={sumDist} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <BarChart data={sumDist} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Bar dataKey="cantidad" fill="#3b82f6" radius={[3,3,0,0]} />
+                  <Tooltip formatter={(v, _n, p) => [`${v} (${p.payload.pct}%)`, 'Observaciones']} />
+                  <Bar dataKey="cantidad" fill="#2f6fe4" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <LabelList dataKey="etiqueta" content={TopLabel} position="top" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             <div className="card p-5">
-              <h3 className="section-title mb-4">Cumplimiento por Servicio</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={barServicio} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <h3 className="section-title mb-1">Cumplimiento por Servicio</h3>
+              <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={barServicio} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
+                  <Tooltip content={<BarTooltip />} cursor={{ fill: 'rgba(31,86,196,0.06)' }} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="CUMPLE"    fill="#10b981" stackId="a" />
-                  <Bar dataKey="NO CUMPLE" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false}>
+                    <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                  </Bar>
+                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                    <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             <div className="card p-5">
-              <h3 className="section-title mb-4">Cumplimiento por Perfil</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={barPerfil} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <h3 className="section-title mb-1">Cumplimiento por Perfil</h3>
+              <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={barPerfil} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
+                  <Tooltip content={<BarTooltip />} cursor={{ fill: 'rgba(31,86,196,0.06)' }} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="CUMPLE"    fill="#10b981" stackId="a" />
-                  <Bar dataKey="NO CUMPLE" fill="#f87171" stackId="a" radius={[3,3,0,0]} />
+                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false}>
+                    <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                  </Bar>
+                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                    <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
