@@ -265,6 +265,48 @@ filtros del dashboard en el listado legible que se imprime.
 
 ---
 
+### Notas de implementación del PDF
+
+- **El velo gris**: html2canvas clona el DOM y eso *reinicia* las animaciones CSS.
+  Como el contenedor lleva `.animate-fade-in` (que arranca en `opacity: 0`), la
+  captura salía siendo sólo el fondo gris. En `onclone` se inyecta un `<style>`
+  que anula `animation`/`transition` y fuerza `opacity: 1`.
+- El logo se dibuja con `drawLogoFitted()`, que respeta la proporción real
+  (1909×538 ≈ 3,55:1); antes se forzaba a un cuadro de 20×20 mm y se aplastaba.
+
+---
+
+## 6-bis. Exportación a Excel
+
+`exportToExcel(data, columns, filename, title, subtitle, filtros)` usa **ExcelJS**
+(SheetJS en su versión comunidad no permite insertar imágenes).
+
+Estructura del archivo:
+
+| Filas | Contenido |
+|-------|-----------|
+| 1–3 | Banda azul institucional con el **logo** (proporción respetada) |
+| 4–5 | Nombre de la clínica y "Comité de Infecciones" |
+| 7 | **Título** del reporte |
+| 8 | Subtítulo |
+| 9 | **Filtros aplicados** (recuadro gris con barra azul lateral) |
+| 10 | Fecha de generación y número de registros |
+| 12 | Cabecera de la tabla (azul de marca, texto blanco) |
+| 13+ | Datos con filas alternas |
+
+Además: paneles congelados hasta la cabecera, autofiltro y anchos de columna.
+
+> `xlsx` (SheetJS) se **desinstaló** al quedar sin uso; con ello desaparece su
+> vulnerabilidad alta de prototype pollution.
+
+### Carga diferida
+
+ExcelJS (939 kB), jsPDF (357 kB) y html2canvas (201 kB) se importan
+dinámicamente dentro de las funciones de exportación. El bundle principal bajó de
+2.894 kB a **1.351 kB** (menos incluso que los 2.014 kB previos a ExcelJS).
+
+---
+
 ## 7. Actividad Reciente del dashboard
 
 Cada entrada muestra ahora:

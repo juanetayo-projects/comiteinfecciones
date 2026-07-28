@@ -116,9 +116,8 @@ export default function RondaCirugia() {
             columns={EXPORT_COLS}
             filename="ronda_cirugia"
             title="Ronda de Cirugía — Control de Infecciones"
-            subtitle={ft.summary.length
-              ? `Filtros — ${ft.summary.join(' · ')}`
-              : 'Clínica de Alta Complejidad Santa Bárbara'}
+            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            filtros={ft.summary}
           />
         </div>
         {loading ? (

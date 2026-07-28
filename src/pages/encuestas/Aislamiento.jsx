@@ -106,9 +106,8 @@ export default function Aislamiento() {
             data={exportData} columns={EXPORT_COLS}
             filename="aislamiento_hospitalario"
             title="Encuesta de Aislamiento Hospitalario"
-            subtitle={ft.summary.length
-              ? `Filtros — ${ft.summary.join(' · ')}`
-              : 'Clínica de Alta Complejidad Santa Bárbara'}
+            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            filtros={ft.summary}
           />
         </div>
         {loading ? (

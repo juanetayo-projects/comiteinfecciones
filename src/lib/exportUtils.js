@@ -1,9 +1,17 @@
-import * as XLSX from 'xlsx'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-import html2canvas from 'html2canvas'
+// ExcelJS, jsPDF y html2canvas pesan ~1,5 MB juntos y sólo se usan al pulsar un
+// botón de exportar: se cargan bajo demanda para no lastrar el arranque de la app.
+const loadExcelJS     = () => import('exceljs').then(m => m.default ?? m)
+const loadJsPDF       = async () => {
+  const [{ default: jsPDF }, { default: autoTable }] =
+    await Promise.all([import('jspdf'), import('jspdf-autotable')])
+  return { jsPDF, autoTable }
+}
+const loadHtml2Canvas = () => import('html2canvas').then(m => m.default ?? m)
 
-const BLUE = [26, 79, 160]   // #1a4fa0 — color banner de la app
+const BLUE     = [26, 79, 160]   // #1a4fa0 — color banner de la app
+const BLUE_HEX = 'FF1A4FA0'      // el mismo azul en ARGB para Excel
+const GRIS_HEX = 'FFEFF3FA'      // fondo del bloque de filtros
+const ZEBRA    = 'FFF1F5F9'      // filas alternas de la tabla
 
 // Resuelve el label de una columna (soporta { header } y { label })
 function colLabel(c) { return c.header ?? c.label ?? '' }
@@ -23,6 +31,18 @@ async function loadLogoDataUrl() {
   } catch {
     return null
   }
+}
+
+/** Igual que loadLogoDataUrl pero devolviendo también su tamaño natural. */
+async function loadLogo() {
+  const dataUrl = await loadLogoDataUrl()
+  if (!dataUrl) return null
+  return new Promise(resolve => {
+    const img = new Image()
+    img.onload  = () => resolve({ dataUrl, width: img.naturalWidth, height: img.naturalHeight })
+    img.onerror = () => resolve(null)
+    img.src = dataUrl
+  })
 }
 
 /**
@@ -50,28 +70,161 @@ function drawLogoFitted(doc, dataUrl, x, y, maxW, maxH) {
 }
 
 // ── EXCEL ──────────────────────────────────────────────────────
-export function exportToExcel(data, columns, filename) {
-  const headers = columns.map(colLabel)
-  const rows = data.map(row =>
-    columns.map(col => {
-      const val = row[col.key]
-      if (val == null)               return ''
-      if (typeof val === 'boolean')  return val ? 'Sí' : 'No'
-      return val
+/**
+ * Exporta a .xlsx con encabezado institucional (logo sin deformar), título,
+ * subtítulo y el detalle de los filtros aplicados.
+ *
+ * @param {Array}    data
+ * @param {Array}    columns   [{ key, header|label, width }]
+ * @param {string}   filename
+ * @param {string}  [title]
+ * @param {string}  [subtitle]
+ * @param {string[]}[filtros]  resumen legible de los filtros aplicados
+ */
+export async function exportToExcel(data, columns, filename, title = '', subtitle = '', filtros = []) {
+  const ExcelJS = await loadExcelJS()
+  const wb = new ExcelJS.Workbook()
+  wb.creator  = 'Comité de Infecciones — Clínica de Alta Complejidad Santa Bárbara'
+  wb.created  = new Date()
+  const ws = wb.addWorksheet('Datos', {
+    views: [{ showGridLines: false }],
+  })
+
+  const nCols   = columns.length
+  const lastCol = String.fromCharCode(64 + Math.min(nCols, 26))   // A..Z
+  const span    = (r) => `A${r}:${lastCol}${r}`
+
+  // ── Banda azul institucional con el logo ──────────────────────
+  // El logo ocupa las filas 1-3; el texto va debajo para que nunca se solapen.
+  for (let r = 1; r <= 5; r++) {
+    ws.getRow(r).height = r <= 3 ? 15 : 18
+    for (let c = 1; c <= nCols; c++) {
+      ws.getCell(r, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BLUE_HEX } }
+    }
+  }
+
+  const logo = await loadLogo()
+  if (logo) {
+    // Alto disponible: 3 filas × 15pt ≈ 60 px. El ancho se deriva de la
+    // proporción real de la imagen para NO deformarla.
+    const maxH  = 56
+    const ratio = logo.width / logo.height
+    const h     = maxH
+    const w     = Math.round(h * ratio)
+    const imgId = wb.addImage({ base64: logo.dataUrl, extension: 'png' })
+    ws.addImage(imgId, {
+      tl:  { col: 0.15, row: 0.2 },
+      ext: { width: w, height: h },
+      editAs: 'oneCell',
     })
-  )
+  }
 
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+  ws.mergeCells(span(4))
+  const cName = ws.getCell(`A4`)
+  cName.value     = 'Clínica de Alta Complejidad Santa Bárbara'
+  cName.font      = { bold: true, size: 13, color: { argb: 'FFFFFFFF' } }
+  cName.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
 
-  // Anchos de columna
-  ws['!cols'] = columns.map(c => ({ wch: c.width ?? 22 }))
+  ws.mergeCells(span(5))
+  const cSub = ws.getCell(`A5`)
+  cSub.value     = 'Comité de Infecciones'
+  cSub.font      = { size: 10, color: { argb: 'FFD9E8FF' } }
+  cSub.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
 
-  // Congelar primera fila
-  ws['!freeze'] = { xSplit: 0, ySplit: 1 }
+  // ── Título del reporte ────────────────────────────────────────
+  let r = 7
+  if (title) {
+    ws.mergeCells(span(r))
+    const c = ws.getCell(`A${r}`)
+    c.value = title
+    c.font  = { bold: true, size: 14, color: { argb: BLUE_HEX } }
+    ws.getRow(r).height = 20
+    r++
+  }
+  if (subtitle) {
+    ws.mergeCells(span(r))
+    const c = ws.getCell(`A${r}`)
+    c.value = subtitle
+    c.font  = { size: 10, color: { argb: 'FF64748B' } }
+    r++
+  }
 
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Datos')
-  XLSX.writeFile(wb, `${filename}_${new Date().toISOString().slice(0,10)}.xlsx`)
+  // ── Filtros aplicados ─────────────────────────────────────────
+  ws.mergeCells(span(r))
+  const cFil = ws.getCell(`A${r}`)
+  cFil.value = filtros.length
+    ? `Filtros aplicados:   ${filtros.join('   ·   ')}`
+    : 'Filtros aplicados:   ninguno (todos los registros)'
+  cFil.font      = { size: 10, color: { argb: 'FF1E293B' } }
+  cFil.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: GRIS_HEX } }
+  cFil.alignment = { vertical: 'middle', horizontal: 'left', indent: 1, wrapText: true }
+  cFil.border    = { left: { style: 'thick', color: { argb: BLUE_HEX } } }
+  ws.getRow(r).height = filtros.length > 4 ? 28 : 18
+  r++
+
+  ws.mergeCells(span(r))
+  const cGen = ws.getCell(`A${r}`)
+  cGen.value = `Generado: ${new Date().toLocaleString('es-CO')}   ·   ${data.length} registro(s)`
+  cGen.font  = { size: 9, italic: true, color: { argb: 'FF94A3B8' } }
+  r += 2
+
+  // ── Cabecera de la tabla ──────────────────────────────────────
+  const headerRow = ws.getRow(r)
+  columns.forEach((col, i) => {
+    const c = headerRow.getCell(i + 1)
+    c.value     = colLabel(col)
+    c.font      = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } }
+    c.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: BLUE_HEX } }
+    c.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+    c.border    = { bottom: { style: 'thin', color: { argb: BLUE_HEX } } }
+  })
+  headerRow.height = 22
+  const headerRowNum = r
+  r++
+
+  // ── Datos ─────────────────────────────────────────────────────
+  data.forEach((row, idx) => {
+    const xlRow = ws.getRow(r + idx)
+    columns.forEach((col, i) => {
+      const val = row[col.key]
+      const c   = xlRow.getCell(i + 1)
+      c.value = val == null ? ''
+              : typeof val === 'boolean' ? (val ? 'Sí' : 'No')
+              : val
+      c.font      = { size: 10 }
+      c.alignment = { vertical: 'middle', wrapText: false }
+      if (idx % 2 === 1) {
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ZEBRA } }
+      }
+    })
+  })
+
+  // ── Formato final ─────────────────────────────────────────────
+  columns.forEach((col, i) => { ws.getColumn(i + 1).width = col.width ?? 22 })
+
+  // Congelar hasta la cabecera y activar autofiltro
+  ws.views = [{
+    state: 'frozen', xSplit: 0, ySplit: headerRowNum, showGridLines: false,
+  }]
+  if (data.length > 0) {
+    ws.autoFilter = {
+      from: { row: headerRowNum, column: 1 },
+      to:   { row: headerRowNum + data.length, column: nCols },
+    }
+  }
+
+  const buf  = await wb.xlsx.writeBuffer()
+  const blob = new Blob([buf], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+  const url = URL.createObjectURL(blob)
+  const a   = document.createElement('a')
+  a.href     = url
+  a.download = `${filename}_${new Date().toISOString().slice(0,10)}.xlsx`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 // ── PDF ────────────────────────────────────────────────────────
@@ -84,6 +237,7 @@ export function exportToExcel(data, columns, filename) {
  * @param {Array}  [kpis]     - [{ label, value, sub }] optional KPI cards row
  */
 export async function exportToPDF(data, columns, filename, title, subtitle = '', kpis = null) {
+  const { jsPDF, autoTable } = await loadJsPDF()
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
 
   // ─ Banda de encabezado ─
@@ -256,6 +410,7 @@ export async function exportDashboardToPDF(element, { filename, title, subtitle 
 
   // html2canvas no interpreta bien `color-mix`/gradientes en algunos navegadores:
   // se fuerza un fondo sólido equivalente al de la app durante la captura.
+  const html2canvas = await loadHtml2Canvas()
   const canvas = await html2canvas(element, {
     scale:            2,            // nitidez para texto pequeño de las gráficas
     backgroundColor:  '#e9eef7',    // neu.base — mismo fondo que la pantalla
@@ -265,9 +420,24 @@ export async function exportDashboardToPDF(element, { filename, title, subtitle 
     onclone: (docClone) => {
       // El PDF es estático: se ocultan los controles que no aportan al informe
       docClone.querySelectorAll('[data-pdf-hide]').forEach(el => { el.style.display = 'none' })
+
+      // html2canvas clona el DOM y eso REINICIA las animaciones CSS. La clase
+      // .animate-fade-in arranca en opacity:0, así que la captura salía con un
+      // velo gris (el contenido a media opacidad sobre el fondo). Se neutralizan
+      // animaciones y transiciones y se fuerza la opacidad final.
+      const style = docClone.createElement('style')
+      style.textContent = `
+        *, *::before, *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+        .animate-fade-in { opacity: 1 !important; transform: none !important; }
+      `
+      docClone.head.appendChild(style)
     },
   })
 
+  const { jsPDF } = await loadJsPDF()
   const doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
   const pageH = doc.internal.pageSize.getHeight()

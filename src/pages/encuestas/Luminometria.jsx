@@ -104,9 +104,8 @@ export default function Luminometria() {
             columns={EXPORT_COLS}
             filename="luminometria"
             title="Luminometría — Control de Limpieza"
-            subtitle={ft.summary.length
-              ? `Filtros — ${ft.summary.join(' · ')}`
-              : 'Clínica de Alta Complejidad Santa Bárbara'}
+            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            filtros={ft.summary}
           />
         </div>
         {loading ? (

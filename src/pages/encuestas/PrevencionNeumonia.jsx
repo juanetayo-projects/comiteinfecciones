@@ -104,9 +104,8 @@ export default function PrevencionNeumonia() {
             columns={EXPORT_COLS}
             filename="prevencion_neumonia"
             title="Prevención de Neumonía (NAV)"
-            subtitle={ft.summary.length
-              ? `Filtros — ${ft.summary.join(' · ')}`
-              : 'Clínica de Alta Complejidad Santa Bárbara'}
+            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            filtros={ft.summary}
           />
         </div>
         {loading ? (

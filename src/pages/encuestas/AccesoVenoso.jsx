@@ -105,9 +105,8 @@ export default function AccesoVenoso() {
             columns={EXPORT_COLS}
             filename="acceso_venoso"
             title="Acceso Venoso Periférico"
-            subtitle={ft.summary.length
-              ? `Filtros — ${ft.summary.join(' · ')}`
-              : 'Clínica de Alta Complejidad Santa Bárbara'}
+            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            filtros={ft.summary}
           />
         </div>
         {loading ? (

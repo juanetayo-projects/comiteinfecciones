@@ -106,9 +106,8 @@ export default function HigieneManos() {
             columns={EXPORT_COLS}
             filename="higiene_manos"
             title="Higiene de Manos — 5 Momentos OMS"
-            subtitle={ft.summary.length
-              ? `Filtros — ${ft.summary.join(' · ')}`
-              : 'Clínica de Alta Complejidad Santa Bárbara'}
+            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            filtros={ft.summary}
           />
         </div>
         {loading ? (
