@@ -154,27 +154,27 @@ export default function HigieneDashboard() {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="filters-row" style={{ '--cols': 4 }}>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Desde</label>
-            <input type="date" className="input text-sm"
+            <label>Desde</label>
+            <input type="date" className="input"
               value={filters.desde} onChange={e => setF('desde', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Hasta</label>
-            <input type="date" className="input text-sm"
+            <label>Hasta</label>
+            <input type="date" className="input"
               value={filters.hasta} onChange={e => setF('hasta', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Servicio</label>
-            <select className="input text-sm" value={filters.servicio} onChange={e => setF('servicio', e.target.value)}>
+            <label>Servicio</label>
+            <select className="input" value={filters.servicio} onChange={e => setF('servicio', e.target.value)}>
               <option value="">Todos</option>
               {servicios.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Perfil Colaborador</label>
-            <select className="input text-sm" value={filters.perfil} onChange={e => setF('perfil', e.target.value)}>
+            <label>Perfil Colaborador</label>
+            <select className="input" value={filters.perfil} onChange={e => setF('perfil', e.target.value)}>
               <option value="">Todos</option>
               {perfiles.map(p => <option key={p} value={p}>{p}</option>)}
             </select>

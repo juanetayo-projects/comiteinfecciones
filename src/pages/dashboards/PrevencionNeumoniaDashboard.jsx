@@ -172,18 +172,18 @@ export default function PrevencionNeumoniaDashboard() {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="filters-row" style={{ '--cols': 3 }}>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Desde</label>
-            <input type="date" className="input text-sm" value={filters.desde} onChange={e => setF('desde', e.target.value)} />
+            <label>Desde</label>
+            <input type="date" className="input" value={filters.desde} onChange={e => setF('desde', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Hasta</label>
-            <input type="date" className="input text-sm" value={filters.hasta} onChange={e => setF('hasta', e.target.value)} />
+            <label>Hasta</label>
+            <input type="date" className="input" value={filters.hasta} onChange={e => setF('hasta', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Ubicación / Cama</label>
-            <select className="input text-sm" value={filters.ubicacion} onChange={e => setF('ubicacion', e.target.value)}>
+            <label>Ubicación / Cama</label>
+            <select className="input" value={filters.ubicacion} onChange={e => setF('ubicacion', e.target.value)}>
               <option value="">Todas</option>
               {ubicaciones.map(u => <option key={u} value={u}>{u}</option>)}
             </select>

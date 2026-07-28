@@ -404,43 +404,42 @@ export default function Dashboard() {
               const noEstado = !r.estado
               return (
                 <div key={`${r.tipo}-${r.id}-${i}`}
-                  className="flex items-start justify-between gap-3 py-2.5 border-b border-white/70 last:border-0">
-                  <div className="flex items-start gap-3 min-w-0">
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2 border-b border-white/70 last:border-0">
+
+                  {/* Encuesta y servicio — columna izquierda de ancho fijo */}
+                  <div className="flex items-center gap-2.5 min-w-0 w-full sm:w-64 shrink-0">
                     <div className={`w-8 h-8 shrink-0 rounded-xl shadow-neu-xs flex items-center justify-center ${cfg?.bg ?? 'bg-slate-50'}`}>
                       <Icon className={`w-3.5 h-3.5 ${cfg?.ic ?? 'text-slate-400'}`} />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-brand-900">
-                        {ENCUESTAS_CFG[r.tipo]?.label} — {r.texto ?? 'Sin servicio'}
-                      </p>
-
-                      {/* Datos relevantes de la encuesta */}
-                      {r.detalles?.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1 mt-1">
-                          {r.detalles.map((d, j) => (
-                            <span key={j}
-                              className="text-[10px] font-medium text-slate-600 bg-white/70 shadow-neu-xs rounded-full px-2 py-0.5">
-                              {d}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-slate-500">
-                        <span className="inline-flex items-center gap-1">
-                          <User className="w-3 h-3 text-brand-500" />
-                          {r.autor ?? 'Sin registrar'}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <CalendarDays className="w-3 h-3 text-slate-400" />
-                          {formatDate(r.fechaEncuesta ?? r.fecha)}
-                        </span>
-                        <span className="text-slate-400">Registrado {formatDateTime(r.fecha)}</span>
-                      </div>
-                    </div>
+                    <p className="text-sm font-semibold text-brand-900 truncate"
+                      title={`${ENCUESTAS_CFG[r.tipo]?.label} — ${r.texto ?? 'Sin servicio'}`}>
+                      {ENCUESTAS_CFG[r.tipo]?.label} — {r.texto ?? 'Sin servicio'}
+                    </p>
                   </div>
 
-                  <div className="flex flex-col items-end gap-1 shrink-0">
+                  {/* Datos relevantes + autor/fechas — ocupan el ancho sobrante */}
+                  <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {r.detalles?.map((d, j) => (
+                      <span key={j}
+                        className="text-[10px] font-medium text-slate-600 bg-white/70 shadow-neu-xs rounded-full px-2 py-0.5 whitespace-nowrap">
+                        {d}
+                      </span>
+                    ))}
+                    <span className="inline-flex items-center gap-1 text-xs text-slate-500 whitespace-nowrap">
+                      <User className="w-3 h-3 text-brand-500" />
+                      {r.autor ?? 'Sin registrar'}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs text-slate-500 whitespace-nowrap">
+                      <CalendarDays className="w-3 h-3 text-slate-400" />
+                      {formatDate(r.fechaEncuesta ?? r.fecha)}
+                    </span>
+                    <span className="text-xs text-slate-400 whitespace-nowrap">
+                      Registrado {formatDateTime(r.fecha)}
+                    </span>
+                  </div>
+
+                  {/* Badges — alineados a la derecha */}
+                  <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                     {noEstado ? null : (
                       <span className={`badge ${isCumple ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
                         {isCumple ? 'Cumple' : 'No Cumple'}

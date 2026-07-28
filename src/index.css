@@ -109,6 +109,27 @@
   .kpi-blue    { @apply text-blue-800;    background-image: linear-gradient(145deg,#eff6ff,#d7e8ff); }
   .kpi-slate   { @apply text-slate-700;   background-image: linear-gradient(145deg,#f4f7fc,#e2e9f4); }
 
+  /* ─────────────── Fila de filtros ─────────────── */
+  /* En pantallas anchas TODOS los filtros van en una sola línea: el número de
+     columnas lo fija cada vista con la variable --cols (los rangos de fecha
+     cuentan como 2). Debajo de lg se reparten en varias filas para que sigan
+     siendo usables en móvil/tablet. */
+  .filters-row {
+    @apply grid gap-2.5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4;
+  }
+  @screen lg {
+    .filters-row {
+      grid-template-columns: repeat(var(--cols, 6), minmax(0, 1fr));
+    }
+  }
+  /* Controles compactos para que quepan todos en la línea */
+  .filters-row .input {
+    @apply px-2.5 py-1.5 text-xs rounded-lg;
+  }
+  .filters-row label {
+    @apply text-[10px] font-medium text-slate-500 mb-0.5 block truncate;
+  }
+
   /* ─────────────── Tablas ─────────────── */
   .table-head-brand {
     @apply text-white;

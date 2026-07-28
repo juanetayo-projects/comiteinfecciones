@@ -236,41 +236,41 @@ export default function RondaDashboard() {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="filters-row" style={{ '--cols': 6 }}>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Desde</label>
-            <input type="date" className="input text-sm"
+            <label>Desde</label>
+            <input type="date" className="input"
               value={filters.desde} onChange={e => setF('desde', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Hasta</label>
-            <input type="date" className="input text-sm"
+            <label>Hasta</label>
+            <input type="date" className="input"
               value={filters.hasta} onChange={e => setF('hasta', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Servicio</label>
-            <select className="input text-sm" value={filters.servicio} onChange={e => setF('servicio', e.target.value)}>
+            <label>Servicio</label>
+            <select className="input" value={filters.servicio} onChange={e => setF('servicio', e.target.value)}>
               <option value="">Todos</option>
               {servicios.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Quirófano</label>
-            <select className="input text-sm" value={filters.quirofano} onChange={e => setF('quirofano', e.target.value)}>
+            <label>Quirófano</label>
+            <select className="input" value={filters.quirofano} onChange={e => setF('quirofano', e.target.value)}>
               <option value="">Todos</option>
               {quirofanos.map(q => <option key={q} value={q}>Qx {q}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Especialidad</label>
-            <select className="input text-sm" value={filters.especialidad} onChange={e => setF('especialidad', e.target.value)}>
+            <label>Especialidad</label>
+            <select className="input" value={filters.especialidad} onChange={e => setF('especialidad', e.target.value)}>
               <option value="">Todas</option>
               {especialidades.map(e => <option key={e} value={e}>{e}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Profesional</label>
-            <select className="input text-sm" value={filters.profesional} onChange={e => setF('profesional', e.target.value)}>
+            <label>Profesional</label>
+            <select className="input" value={filters.profesional} onChange={e => setF('profesional', e.target.value)}>
               <option value="">Todos</option>
               {profesionales.map(p => <option key={p} value={p}>{p}</option>)}
             </select>

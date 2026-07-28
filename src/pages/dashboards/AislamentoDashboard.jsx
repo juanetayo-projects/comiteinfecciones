@@ -245,34 +245,34 @@ export default function AislamentoDashboard() {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="filters-row" style={{ '--cols': 5 }}>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Desde</label>
-            <input type="date" className="input text-sm"
+            <label>Desde</label>
+            <input type="date" className="input"
               value={filters.desde} onChange={e => setF('desde', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Hasta</label>
-            <input type="date" className="input text-sm"
+            <label>Hasta</label>
+            <input type="date" className="input"
               value={filters.hasta} onChange={e => setF('hasta', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Servicio</label>
-            <select className="input text-sm" value={filters.servicio} onChange={e => setF('servicio', e.target.value)}>
+            <label>Servicio</label>
+            <select className="input" value={filters.servicio} onChange={e => setF('servicio', e.target.value)}>
               <option value="">Todos</option>
               {servicios.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Profesional</label>
-            <select className="input text-sm" value={filters.profesional} onChange={e => setF('profesional', e.target.value)}>
+            <label>Profesional</label>
+            <select className="input" value={filters.profesional} onChange={e => setF('profesional', e.target.value)}>
               <option value="">Todos</option>
               {profesionales.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Tipo Aislamiento</label>
-            <select className="input text-sm" value={filters.tipo} onChange={e => setF('tipo', e.target.value)}>
+            <label>Tipo Aislamiento</label>
+            <select className="input" value={filters.tipo} onChange={e => setF('tipo', e.target.value)}>
               <option value="">Todos</option>
               {tipos.map(t => <option key={t} value={t}>{t}</option>)}
             </select>

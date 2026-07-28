@@ -25,6 +25,30 @@ async function loadLogoDataUrl() {
   }
 }
 
+/**
+ * Dibuja el logo dentro de la caja (maxW × maxH) SIN deformarlo: escala por el
+ * lado más restrictivo y centra verticalmente. El logo institucional es muy
+ * apaisado (1909×538 ≈ 3.55:1), por eso forzarlo a un cuadrado lo aplastaba.
+ *
+ * @returns {number} la X donde termina el logo (para colocar el texto al lado),
+ *                   o null si no se pudo dibujar.
+ */
+function drawLogoFitted(doc, dataUrl, x, y, maxW, maxH) {
+  if (!dataUrl) return null
+  try {
+    const props = doc.getImageProperties(dataUrl)
+    const ratio = props.width / props.height
+    let w = maxW
+    let h = w / ratio
+    if (h > maxH) { h = maxH; w = h * ratio }
+    const offsetY = y + (maxH - h) / 2          // centrado vertical en la banda
+    doc.addImage(dataUrl, 'PNG', x, offsetY, w, h)
+    return x + w
+  } catch {
+    return null
+  }
+}
+
 // ── EXCEL ──────────────────────────────────────────────────────
 export function exportToExcel(data, columns, filename) {
   const headers = columns.map(colLabel)
@@ -66,26 +90,18 @@ export async function exportToPDF(data, columns, filename, title, subtitle = '',
   doc.setFillColor(...BLUE)
   doc.rect(0, 0, 297, 28, 'F')
 
-  // Logo institucional
+  // Logo institucional (respetando su proporción)
   const logoUrl = await loadLogoDataUrl()
-  if (logoUrl) {
-    try { doc.addImage(logoUrl, 'PNG', 6, 4, 20, 20) } catch { /* fallo silencioso */ }
-    doc.setTextColor(255, 255, 255)
-    doc.setFontSize(12)
-    doc.setFont('helvetica', 'bold')
-    doc.text('Clínica de Alta Complejidad Santa Bárbara', 30, 12)
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'normal')
-    doc.text('Comité de Infecciones', 30, 20)
-  } else {
-    doc.setTextColor(255, 255, 255)
-    doc.setFontSize(12)
-    doc.setFont('helvetica', 'bold')
-    doc.text('Clínica de Alta Complejidad Santa Bárbara', 14, 12)
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'normal')
-    doc.text('Comité de Infecciones', 14, 20)
-  }
+  const logoEnd = drawLogoFitted(doc, logoUrl, 8, 5, 40, 18)
+  const textX   = logoEnd != null ? logoEnd + 6 : 14
+
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(12)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Clínica de Alta Complejidad Santa Bárbara', textX, 12)
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.text('Comité de Infecciones', textX, 20)
 
   // ─ Título del reporte ─
   doc.setTextColor(...BLUE)
@@ -175,10 +191,9 @@ async function drawDashboardHeader(doc, pageW, title, subtitle, filtros) {
   doc.rect(0, 0, pageW, 26, 'F')
 
   const logoUrl = await loadLogoDataUrl()
-  let textX = 14
-  if (logoUrl) {
-    try { doc.addImage(logoUrl, 'PNG', 6, 3.5, 19, 19); textX = 29 } catch { /* sin logo */ }
-  }
+  const logoEnd = drawLogoFitted(doc, logoUrl, 8, 4, 40, 18)
+  const textX   = logoEnd != null ? logoEnd + 6 : 14
+
   doc.setTextColor(255, 255, 255)
   doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')

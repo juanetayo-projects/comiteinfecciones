@@ -81,6 +81,9 @@ export function useTableFilters(data, config) {
 }
 
 export default function TableFilters({ config, values, setF, clear, options, hasFilters, total, shown }) {
+  // Un rango de fechas ocupa dos columnas (desde / hasta)
+  const cols = config.reduce((n, f) => n + (f.type === 'daterange' ? 2 : 1), 0)
+
   return (
     <div className="neu-inset p-4 mb-4">
       <div className="flex items-center gap-2 mb-3">
@@ -99,13 +102,13 @@ export default function TableFilters({ config, values, setF, clear, options, has
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+      <div className="filters-row" style={{ '--cols': cols }}>
         {config.map(f => f.type === 'daterange' ? (
           <FilterDateRange key={f.key} field={f} values={values} setF={setF} />
         ) : (
           <div key={f.key}>
-            <label className="text-xs font-medium text-slate-500 mb-1 block">{f.label}</label>
-            <select className="input text-sm"
+            <label title={f.label}>{f.label}</label>
+            <select className="input"
               value={values[f.key] ?? ''}
               onChange={e => setF(f.key, e.target.value)}>
               <option value="">Todos</option>
@@ -124,14 +127,14 @@ function FilterDateRange({ field, values, setF }) {
   return (
     <>
       <div>
-        <label className="text-xs font-medium text-slate-500 mb-1 block">{field.label} desde</label>
-        <input type="date" className="input text-sm"
+        <label title={`${field.label} desde`}>{field.label} desde</label>
+        <input type="date" className="input"
           value={values[`${field.key}__desde`] ?? ''}
           onChange={e => setF(`${field.key}__desde`, e.target.value)} />
       </div>
       <div>
-        <label className="text-xs font-medium text-slate-500 mb-1 block">{field.label} hasta</label>
-        <input type="date" className="input text-sm"
+        <label title={`${field.label} hasta`}>{field.label} hasta</label>
+        <input type="date" className="input"
           value={values[`${field.key}__hasta`] ?? ''}
           onChange={e => setF(`${field.key}__hasta`, e.target.value)} />
       </div>
