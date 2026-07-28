@@ -19,10 +19,57 @@ const OPCIONES_MOMENTO = [
   { value: 'NO APLICA',   label: 'No Aplica' },
 ]
 
-// Ordenados alfabéticamente
+// Perfiles del colaborador — fallback si el catálogo de la BD está vacío.
+// La fuente de verdad es listas_desplegables (categoria = 'perfil_colaborador'),
+// editable desde Configuración → Listas. En MAYÚSCULAS como el resto de catálogos.
 const PERFILES = [
-  'AUXILIAR', 'ENFERMERA (O)', 'FISIOTERAPEUTA', 'INTERNO',
-  'MEDICO', 'MEDICO ESPECIALISTA', 'NUTRICIONISTA', 'TERAPEUTA RESPIRATORIO',
+  'ANESTESIÓLOGO/A',
+  'AUXILIAR DE ASEO',
+  'AUXILIAR DE ENFERMERIA',
+  'AUXILIAR DE ENFERMERIA CIRCULANTE',
+  'AUXILIAR DE ENFERMERIA RECUPERADOR',
+  'AUXILIAR LABORATORIO',
+  'CAMILLEROS',
+  'CARDIÓLOGO',
+  'ELECTROFISIÓLOGO',
+  'ENFERMERO/A',
+  'FISIOTERAPEUTA',
+  'FONOAUDIÓLOGO',
+  'HEMODINAMISTA',
+  'INSTRUMENTADOR QUIRÚRGICO',
+  'MÉDICO CARDIOVASCULAR',
+  'MÉDICO CIRUJANO GENERAL',
+  'MÉDICO CIRUJANO PLÁSTICO',
+  'MÉDICO CIRUJANO TORAX',
+  'MÉDICO FAMILIAR',
+  'MÉDICO GASTROENTEROLOGO',
+  'MÉDICO GENERAL',
+  'MÉDICO GERONTÓLOGO',
+  'MÉDICO GINECÓLOGO',
+  'MÉDICO HEPATOBILIAR',
+  'MÉDICO INTENSIVISTA',
+  'MÉDICO INTERNISTA',
+  'MÉDICO MAXILOFACIAL',
+  'MÉDICO NEFRÓLOGO',
+  'MÉDICO NEUMÓLOGO',
+  'MÉDICO NEUROCIRUJANO',
+  'MÉDICO ORTOPEDISTA',
+  'MÉDICO OTORRINOLARINGÓLOGO',
+  'MÉDICO PEDIATRA',
+  'MÉDICO URGENCIÓLOGO',
+  'MÉDICO URÓLOGO',
+  'MÉDICO VASCULAR',
+  'NEURO REHABILITADOR',
+  'NEURÓLOGO CLÍNICO',
+  'NUTRICIONISTA',
+  'PSICÓLOGO',
+  'RADIÓLOGO',
+  'RADIÓLOGO INTERVENCIONISTA',
+  'REHABILITACIÓN CARDIOPULMONAR',
+  'TECNÓLOGO IMAGENES DIAGNOSTICAS',
+  'TERAPIA OCUPACIONAL',
+  'TERAPIA RESPIRATORIA',
+  'TRABAJO SOCIAL',
 ]
 
 const PORTA_ACCESORIOS_OPC = [
@@ -104,6 +151,8 @@ export default function HigieneManosForn() {
   })
 
   const servicios = useLista('servicio', SERVICIOS_HM)
+  // El catálogo manda; PERFILES sólo actúa de respaldo si la BD no responde
+  const perfiles  = useLista('perfil_colaborador', PERFILES)
   const values    = watch()
   const sumatoria = calcSumatoria(values)
   // Columna L: CUMPLE solo si sumatoria === 5
@@ -192,7 +241,7 @@ export default function HigieneManosForn() {
               <label className="label">Perfil del Colaborador *</label>
               <select className="input" {...register('perfil_colaborador')}>
                 <option value="">Seleccionar...</option>
-                {PERFILES.map(p => <option key={p} value={p}>{p}</option>)}
+                {perfiles.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
               {errors.perfil_colaborador && <p className="text-xs text-red-600 mt-1">{errors.perfil_colaborador.message}</p>}
             </div>

@@ -141,6 +141,21 @@
   }
 }
 
+/* ─────────────── Etiquetas de las gráficas ───────────────
+   Los nombres de categoría (ejes, leyenda y etiquetas del pie) van en negro
+   para que se lean bien sobre el fondo neumórfico. Se hace en CSS y no chart a
+   chart para que aplique a los 8 tableros sin excepciones.
+   NO se tocan las etiquetas de % dentro de las barras (blancas, por contraste)
+   ni el % de adherencia sobre la barra (verde/rojo, porque comunican estado). */
+.recharts-cartesian-axis-tick-value,
+.recharts-pie-label-text,
+.recharts-label-list text:not([fill]) {
+  fill: #0f172a;          /* slate-900 */
+}
+.recharts-legend-item-text {
+  color: #0f172a !important;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
