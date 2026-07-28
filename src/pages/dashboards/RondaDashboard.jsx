@@ -7,11 +7,24 @@ import {
 } from 'recharts'
 import { ArrowLeft, Stethoscope, Filter, X } from 'lucide-react'
 import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import DetalleGraficaModal, { COL_FECHA, COL_ESTADO, colCumple }
+  from '../../components/common/DetalleGraficaModal'
 import { filtrosResumen } from '../../lib/utils'
 import {
   buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
   BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT,
 } from '../../lib/chartLabels'
+
+// Columnas del detalle que se abre al pulsar una gráfica
+const COLS_DETALLE = [
+  COL_FECHA,
+  { key: 'servicio',     header: 'Servicio' },
+  { key: 'quirofano',    header: 'Quirófano' },
+  { key: 'especialidad', header: 'Especialidad' },
+  { key: 'profesional',  header: 'Profesional' },
+  colCumple('cumplimiento_profilaxis', 'Profilaxis'),
+  COL_ESTADO,
+]
 
 const PIE_COLORS = ['#10b981', '#f87171', '#94a3b8', '#fbbf24']
 
@@ -120,6 +133,10 @@ export default function RondaDashboard() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
   const pdfRef = useRef(null)
+  // Detalle de las encuestas que hay detrás del valor de una gráfica
+  const [detalle, setDetalle] = useState(null)
+  const abrirDetalle = (titulo, rows) =>
+    setDetalle({ titulo, subtitulo: `${rows.length} encuesta(s) · según los filtros aplicados`, rows })
 
   useEffect(() => {
     supabase.from('encuesta_ronda_cirugia').select('*').order('fecha_registro', { ascending: false })
@@ -313,7 +330,12 @@ export default function RondaDashboard() {
             <div className="card p-5">
               <h3 className="section-title mb-4">Registros por Quirófano</h3>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={barQ} margin={{ top: 22, left: -10 }}>
+                <BarChart data={barQ} margin={{ top: 22, left: -10 }}
+                  onClick={(e) => {
+                    const cat = e?.activeLabel
+                    if (cat) abrirDetalle(`Quirófano — ${cat}`,
+                      filtered.filter(r => `Qx ${r.quirofano || '?'}` === cat))
+                  }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
@@ -359,6 +381,13 @@ export default function RondaDashboard() {
           </div>
         </>
       )}
+
+      <DetalleGraficaModal
+        detalle={detalle}
+        columnas={COLS_DETALLE}
+        onClose={() => setDetalle(null)}
+      />
+
     </div>
   )
 }

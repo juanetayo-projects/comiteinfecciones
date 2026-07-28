@@ -122,6 +122,22 @@ src/
 
 Constraint en DB: `user_profiles_rol_check CHECK (rol IN ('administrador','coordinador','auxiliar'))`
 
+### RLS de las tablas `encuesta_*`
+
+Políticas `<tabla>_sel|_ins|_upd|_del`, apoyadas en `puede_editar_encuesta(registrado_por, estado)`:
+
+| Operación | Quién |
+|-----------|-------|
+| ver | cualquier usuario autenticado |
+| crear | cualquier usuario autenticado (queda como `registrado_por`) |
+| **editar** | dueño, coordinador o administrador, **sólo si el estado NO es `validado` ni `cerrado`**. El administrador puede editar siempre. |
+| eliminar | sólo administrador |
+
+> ⚠️ **Un UPDATE bloqueado por RLS NO devuelve error**: PostgREST responde 204 y
+> actualiza 0 filas. Por eso todo guardado va por `guardarEncuesta()`
+> (`src/lib/guardarEncuesta.js`), que añade `.select()` y avisa si no se afectó
+> ninguna fila. Nunca llamar a `.update()` directamente desde un formulario.
+
 ---
 
 ## 6. Hook useLista
@@ -235,6 +251,16 @@ Función: `exportToPDF(data, columns, filename, title, subtitle, kpis?)`
     `isAnimationActive={false}`.
 11. **PDF de dashboards:** `<DashboardPdfButton targetRef={pdfRef} …>` sobre el
     contenedor de la vista; marcar con `data-pdf-hide` lo que no deba capturarse.
+12. **Guardar encuestas:** siempre con `guardarEncuesta(tabla, payload, id)`. Al
+    editar NO se envía `registrado_por` (reescribirlo robaba la autoría y rompía
+    las políticas de RLS).
+13. **Registros validados:** `esEditable(estado, rol)` decide si el formulario se
+    abre en modo consulta (`<fieldset disabled>` + `<BannerSoloLectura>`) y si la
+    lista muestra el icono de lápiz o de ojo. Debe coincidir con la RLS.
+14. **Luminometría sin insumos:** el servicio `COMITÉ DE INFECCIONES`
+    (`SERVICIO_SIN_MEDICION`) documenta que la medición no pudo hacerse: sólo pide
+    Observaciones y guarda `rango = 'NO APLICA'`. El dashboard excluye esos
+    registros del cálculo de adherencia y del promedio de RLU.
 
 ---
 

@@ -4,8 +4,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '../../lib/supabase'
+import { guardarEncuesta, esEditable } from '../../lib/guardarEncuesta'
 import { useAuth } from '../../contexts/AuthContext'
 import FileUpload from '../../components/common/FileUpload'
+import BannerSoloLectura from '../../components/common/BannerSoloLectura'
 import { ArrowLeft, Save, BarChart3 } from 'lucide-react'
 import { useLista } from '../../hooks/useLista'
 
@@ -55,11 +57,14 @@ function SH({ children }) {
 export default function AccesoVenosoForm() {
   const { id }   = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, rol } = useAuth()
   const isEdit   = Boolean(id)
   const [saving,    setSaving]    = useState(false)
   const [adjuntos,  setAdjuntos]  = useState([])
   const [saveError, setSaveError] = useState('')
+  // Un registro validado/cerrado se abre en modo consulta (ver RLS: puede_editar_encuesta)
+  const [soloLectura, setSoloLectura] = useState(false)
+  const [estadoReg,   setEstadoReg]   = useState(null)
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -77,7 +82,12 @@ export default function AccesoVenosoForm() {
     if (isEdit) {
       supabase.from('encuesta_acceso_venoso').select('*').eq('id', id).single()
         .then(({ data }) => {
-          if (data) { reset(data); setAdjuntos(data.adjuntos ?? []) }
+          if (data) {
+            reset(data)
+            setAdjuntos(data.adjuntos ?? [])
+            setEstadoReg(data.estado)
+            setSoloLectura(!esEditable(data.estado, rol))
+          }
         })
     }
   }, [id])
@@ -89,13 +99,11 @@ export default function AccesoVenosoForm() {
       ...values,
       // semana_mes is a GENERATED ALWAYS AS column — DB computes it from fecha_registro
       adjuntos,
-      registrado_por: user?.id,
+      registrado_por: isEdit ? undefined : user?.id,
     }
-    const { error } = isEdit
-      ? await supabase.from('encuesta_acceso_venoso').update(payload).eq('id', id)
-      : await supabase.from('encuesta_acceso_venoso').insert([payload])
+    const { error } = await guardarEncuesta('encuesta_acceso_venoso', payload, isEdit ? id : undefined)
     if (error) {
-      setSaveError(error.message)
+      setSaveError(error)
       setSaving(false)
       return
     }
@@ -120,6 +128,10 @@ export default function AccesoVenosoForm() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
+        {soloLectura && <BannerSoloLectura estado={estadoReg} />}
+
+        <fieldset disabled={soloLectura} className="space-y-5 min-w-0">
 
         {/* Datos generales */}
         <div className="card p-5">
@@ -215,12 +227,13 @@ export default function AccesoVenosoForm() {
 
         <div className="flex items-center justify-end gap-3">
           <Link to="/encuestas/acceso-venoso" className="btn-secondary">Cancelar</Link>
-          <button type="submit" disabled={saving} className="btn-primary">
+          <button type="submit" disabled={saving || soloLectura} hidden={soloLectura} className="btn-primary">
             {saving
               ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Guardando...</>
               : <><Save className="w-4 h-4" /> {isEdit ? 'Actualizar' : 'Guardar'}</>}
           </button>
         </div>
+        </fieldset>
       </form>
     </div>
   )

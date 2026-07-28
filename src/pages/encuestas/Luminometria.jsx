@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { esEditable } from '../../lib/guardarEncuesta'
 import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
-import { Plus, Paperclip, Pencil, Trash2, Microscope, BarChart3 } from 'lucide-react'
+import { Plus, Paperclip, Pencil, Trash2, Microscope, BarChart3 , Eye } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
 import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
@@ -30,6 +31,7 @@ const EXPORT_COLS = [
   { key: 'objeto',            label: 'Superficie',    width: 24 },
   { key: 'resultado',         label: 'RLU',           width:  8 },
   { key: 'rango',             label: 'Clasificación', width: 18 },
+  { key: 'observaciones',     label: 'Observaciones', width: 40 },
   { key: 'estado',            label: 'Estado',        width: 12 },
 ]
 
@@ -65,6 +67,8 @@ export default function Luminometria() {
     { key: 'objeto',            header: 'Superficie',   sortable: true },
     { key: 'resultado',         header: 'RLU',          sortable: true,
       render: v => <span className="font-mono font-semibold text-slate-700">{v ?? '—'}</span> },
+    { key: 'observaciones',     header: 'Observaciones',
+      render: v => v ? <span className="text-slate-600" title={v}>{v.length > 40 ? v.slice(0,40) + '…' : v}</span> : '—' },
     { key: 'rango',             header: 'Clasificación', sortable: true,
       render: v => v ? <span className={`badge ${rangoBadge(v)}`}>{v}</span> : '—' },
     { key: 'estado',            header: 'Estado',       sortable: true,
@@ -131,8 +135,14 @@ export default function Luminometria() {
                 </button>
                 {rol !== 'auxiliar' && (
                   <Link to={`/encuestas/luminometria/${row.id}/editar`}
-                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-amber-600 transition-colors">
-                    <Pencil className="w-3.5 h-3.5" />
+                    title={esEditable(row.estado, rol) ? 'Editar' : 'Ver — registro cerrado a edición'}
+                    className={`p-1.5 rounded-lg hover:bg-slate-100 transition-colors ${
+                      esEditable(row.estado, rol)
+                        ? 'text-slate-500 hover:text-amber-600'
+                        : 'text-slate-400 hover:text-brand-600'}`}>
+                    {esEditable(row.estado, rol)
+                      ? <Pencil className="w-3.5 h-3.5" />
+                      : <Eye className="w-3.5 h-3.5" />}
                   </Link>
                 )}
                 {rol === 'administrador' && (

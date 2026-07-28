@@ -7,80 +7,26 @@ import {
 } from 'recharts'
 import { ArrowLeft, ShieldAlert, Filter, X } from 'lucide-react'
 import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import DetalleGraficaModal, { COL_FECHA, COL_ESTADO, colCumple }
+  from '../../components/common/DetalleGraficaModal'
 import { filtrosResumen } from '../../lib/utils'
+import {
+  buildBarData, SegmentLabel, TotalPctLabel, BarTooltip,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PIE_COLORS, PCT_HINT,
+} from '../../lib/chartLabels'
 
-const PIE_COLORS = ['#059669', '#e11d48']
-const BAR_CUMPLE    = '#059669'
-const BAR_NO_CUMPLE = '#e11d48'
 
-// Agrupa por campo y devuelve datos listos para BarChart, con % por segmento
-function buildBarData(rows, key, fallback) {
-  return Object.values(
-    rows.reduce((acc, r) => {
-      const k = r[key] || fallback
-      if (!acc[k]) acc[k] = { name: k, CUMPLE: 0, 'NO CUMPLE': 0 }
-      r.adherencia === 'CUMPLE' ? acc[k].CUMPLE++ : acc[k]['NO CUMPLE']++
-      return acc
-    }, {})
-  ).map(d => {
-    const total = d.CUMPLE + d['NO CUMPLE']
-    return {
-      ...d,
-      total,
-      pctCumple:   total > 0 ? Math.round((d.CUMPLE / total) * 100) : 0,
-      pctNoCumple: total > 0 ? Math.round((d['NO CUMPLE'] / total) * 100) : 0,
-    }
-  }).sort((a, b) => b.total - a.total)
-}
+// Columnas del detalle que se abre al pulsar una gráfica
+const COLS_DETALLE = [
+  COL_FECHA,
+  { key: 'servicio',         header: 'Servicio' },
+  { key: 'profesional',      header: 'Profesional' },
+  { key: 'tipo_aislamiento', header: 'Tipo Aislamiento' },
+  colCumple('adherencia', 'Adherencia'),
+  { key: 'nombre_evaluado',  header: 'Evaluado' },
+  COL_ESTADO,
+]
 
-// Etiqueta de % dentro de cada segmento de la barra apilada
-function SegmentLabel({ x, y, width, height, value }) {
-  if (!value || height < 16) return null      // sin espacio suficiente → no dibujar
-  return (
-    <text
-      x={x + width / 2}
-      y={y + height / 2}
-      fill="#ffffff"
-      fontSize={11}
-      fontWeight={700}
-      textAnchor="middle"
-      dominantBaseline="central"
-    >
-      {value}%
-    </text>
-  )
-}
-
-// Etiqueta de adherencia total encima de la barra apilada
-function TotalPctLabel({ x, y, width, value }) {
-  if (value == null) return null
-  return (
-    <text
-      x={x + width / 2}
-      y={y - 6}
-      fill={value >= 80 ? '#047857' : '#be123c'}
-      fontSize={11}
-      fontWeight={800}
-      textAnchor="middle"
-    >
-      {value}%
-    </text>
-  )
-}
-
-// Tooltip con conteos y porcentajes
-function BarTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null
-  const d = payload[0].payload
-  return (
-    <div className="rounded-xl bg-white/95 shadow-neu px-3 py-2 text-xs border border-white">
-      <p className="font-bold text-brand-900 mb-1">{label}</p>
-      <p className="text-emerald-700 font-semibold">CUMPLE: {d.CUMPLE} ({d.pctCumple}%)</p>
-      <p className="text-rose-700 font-semibold">NO CUMPLE: {d['NO CUMPLE']} ({d.pctNoCumple}%)</p>
-      <p className="text-slate-500 mt-1">Total: {d.total} · Adherencia {d.pctCumple}%</p>
-    </div>
-  )
-}
 
 function KpiCard({ label, value, sub, color = 'slate' }) {
   const cls = {
@@ -158,6 +104,10 @@ export default function AislamentoDashboard() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
   const pdfRef = useRef(null)
+  // Detalle de las encuestas que hay detrás del valor de una gráfica
+  const [detalle, setDetalle] = useState(null)
+  const abrirDetalle = (titulo, rows) =>
+    setDetalle({ titulo, subtitulo: `${rows.length} encuesta(s) · según los filtros aplicados`, rows })
 
   useEffect(() => {
     supabase.from('encuesta_aislamiento').select('*').order('fecha_registro', { ascending: false })
@@ -295,14 +245,21 @@ export default function AislamentoDashboard() {
         <div className="card p-8 text-center text-slate-400">No hay registros para los filtros seleccionados</div>
       ) : (
         <>
-          {/* Gráficas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Gráficas — el pie ocupa 1 columna de 3 para dejar el doble de ancho
+              al gráfico de barras y que quepan los nombres de servicio completos */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="card p-5">
-              <h3 className="section-title mb-2">Adherencia Global</h3>
+              <h3 className="section-title mb-1">Adherencia Global</h3>
+              <p className="text-[10px] text-slate-500 mb-2">Pulsa un sector para ver las encuestas</p>
               <ResponsiveContainer width="100%" height={230}>
                 <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" outerRadius={85}
+                  <Pie data={pieData} cx="50%" cy="50%" outerRadius={72}
                     dataKey="value" isAnimationActive={false}
+                    onClick={(d) => abrirDetalle(
+                      `Adherencia Global — ${d.name}`,
+                      filtered.filter(r => (r.adherencia === 'CUMPLE' ? 'CUMPLE' : 'NO CUMPLE') === d.name)
+                    )}
+                    className="cursor-pointer"
                     label={({ name, value, percent }) => `${name} ${value} (${Math.round(percent * 100)}%)`}
                     labelLine={false}>
                     {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} stroke="#ffffff" strokeWidth={2} />)}
@@ -312,22 +269,27 @@ export default function AislamentoDashboard() {
               </ResponsiveContainer>
             </div>
 
-            <div className="card p-5">
+            <div className="card p-5 lg:col-span-2">
               <div className="flex items-baseline justify-between mb-1">
                 <h3 className="section-title">Adherencia por Servicio</h3>
-                <span className="text-[10px] text-slate-500">% dentro de cada barra · % de adherencia arriba</span>
+                <span className="text-[10px] text-slate-500">{PCT_HINT} · pulsa una barra para el detalle</span>
               </div>
               <ResponsiveContainer width="100%" height={230}>
-                <BarChart data={barServicio} margin={{ top: 22, left: -10 }}>
+                <BarChart data={barServicio} margin={{ top: 22, left: -10 }}
+                  onClick={(e) => {
+                    const cat = e?.activeLabel
+                    if (cat) abrirDetalle(`Servicio — ${cat}`,
+                      filtered.filter(r => (r.servicio || 'Sin servicio') === cat))
+                  }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip content={<BarTooltip />} cursor={{ fill: 'rgba(31,86,196,0.06)' }} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false}>
+                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false} className="cursor-pointer">
                     <LabelList dataKey="pctCumple" content={SegmentLabel} />
                   </Bar>
-                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" isAnimationActive={false} radius={[4,4,0,0]}>
+                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" isAnimationActive={false} radius={[4,4,0,0]} className="cursor-pointer">
                     <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
                     <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
                   </Bar>
@@ -335,13 +297,18 @@ export default function AislamentoDashboard() {
               </ResponsiveContainer>
             </div>
 
-            <div className="card p-5 lg:col-span-2">
+            <div className="card p-5 lg:col-span-3">
               <div className="flex items-baseline justify-between mb-1">
                 <h3 className="section-title">Adherencia por Tipo de Aislamiento</h3>
-                <span className="text-[10px] text-slate-500">% dentro de cada barra · % de adherencia arriba</span>
+                <span className="text-[10px] text-slate-500">{PCT_HINT} · pulsa una barra para el detalle</span>
               </div>
               <ResponsiveContainer width="100%" height={230}>
-                <BarChart data={barTipo} margin={{ top: 22, left: -10 }}>
+                <BarChart data={barTipo} margin={{ top: 22, left: -10 }}
+                  onClick={(e) => {
+                    const cat = e?.activeLabel
+                    if (cat) abrirDetalle(`Tipo de Aislamiento — ${cat}`,
+                      filtered.filter(r => (r.tipo_aislamiento || 'Sin tipo') === cat))
+                  }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
@@ -376,6 +343,12 @@ export default function AislamentoDashboard() {
           </div>
         </>
       )}
+
+      <DetalleGraficaModal
+        detalle={detalle}
+        columnas={COLS_DETALLE}
+        onClose={() => setDetalle(null)}
+      />
     </div>
   )
 }

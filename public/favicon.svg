@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img"
+     aria-label="Comité de Infecciones — Clínica Santa Bárbara">
+  <title>Comité de Infecciones</title>
+
+  <defs>
+    <linearGradient id="escudo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"   stop-color="#2F6FE4"/>
+      <stop offset="0.55" stop-color="#1A4FA0"/>
+      <stop offset="1"   stop-color="#0D2D6B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Escudo: vigilancia y protección epidemiológica -->
+  <path fill="url(#escudo)"
+        d="M32 2 58 11v22c0 15.2-10.4 25.6-26 29C16.4 58.6 6 48.2 6 33V11L32 2z"/>
+
+  <!-- Microorganismo bajo vigilancia -->
+  <g stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" fill="none">
+    <!-- espículas -->
+    <path d="M32 9.5v6M32 48.5v6M12.5 30h6M45.5 30h6
+             M18.2 16.2l4.3 4.3M41.5 39.5l4.3 4.3
+             M45.8 16.2l-4.3 4.3M22.5 39.5l-4.3 4.3"/>
+  </g>
+  <circle cx="32" cy="30" r="13.5" fill="#FFFFFF"/>
+
+  <!-- Marcadores internos del patógeno, en el turquesa de acento -->
+  <g fill="#0891B2">
+    <circle cx="27.5" cy="26" r="2.9"/>
+    <circle cx="36.4" cy="31.6" r="2.4"/>
+    <circle cx="28.8" cy="35.2" r="2"/>
+  </g>
+</svg>

@@ -7,11 +7,24 @@ import {
 } from 'recharts'
 import { ArrowLeft, Hand, Filter, X } from 'lucide-react'
 import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import DetalleGraficaModal, { COL_FECHA, COL_ESTADO, colCumple }
+  from '../../components/common/DetalleGraficaModal'
 import { filtrosResumen } from '../../lib/utils'
 import {
   buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
   BAR_CUMPLE, BAR_NO_CUMPLE, PIE_COLORS, PCT_HINT,
 } from '../../lib/chartLabels'
+
+// Columnas del detalle que se abre al pulsar una gráfica
+const COLS_DETALLE = [
+  COL_FECHA,
+  { key: 'servicio_evaluado',  header: 'Servicio' },
+  { key: 'nombre_evaluado',    header: 'Evaluado' },
+  { key: 'perfil_colaborador', header: 'Perfil' },
+  { key: 'sumatoria_cumplimiento', header: 'Momentos', render: v => `${v ?? 0}/5` },
+  colCumple('resultado_cumplimiento', 'Resultado'),
+  COL_ESTADO,
+]
 
 function KpiCard({ label, value, sub, color = 'slate' }) {
   const cls = {
@@ -39,6 +52,10 @@ export default function HigieneDashboard() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
   const pdfRef = useRef(null)
+  // Detalle de las encuestas que hay detrás del valor de una gráfica
+  const [detalle, setDetalle] = useState(null)
+  const abrirDetalle = (titulo, rows) =>
+    setDetalle({ titulo, subtitulo: `${rows.length} encuesta(s) · según los filtros aplicados`, rows })
 
   useEffect(() => {
     supabase.from('encuesta_higiene_manos').select('*').order('fecha_evaluacion', { ascending: false })
@@ -234,7 +251,12 @@ export default function HigieneDashboard() {
               <h3 className="section-title mb-1">Cumplimiento por Servicio</h3>
               <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={barServicio} margin={{ top: 22, left: -10 }}>
+                <BarChart data={barServicio} margin={{ top: 22, left: -10 }}
+                  onClick={(e) => {
+                    const cat = e?.activeLabel
+                    if (cat) abrirDetalle(`Servicio — ${cat}`,
+                      filtered.filter(r => (r.servicio_evaluado || 'Sin servicio') === cat))
+                  }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 11 }} />
@@ -255,7 +277,12 @@ export default function HigieneDashboard() {
               <h3 className="section-title mb-1">Cumplimiento por Perfil</h3>
               <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={barPerfil} margin={{ top: 22, left: -10 }}>
+                <BarChart data={barPerfil} margin={{ top: 22, left: -10 }}
+                  onClick={(e) => {
+                    const cat = e?.activeLabel
+                    if (cat) abrirDetalle(`Perfil — ${cat}`,
+                      filtered.filter(r => (r.perfil_colaborador || 'Sin perfil') === cat))
+                  }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 11 }} />
@@ -325,6 +352,13 @@ export default function HigieneDashboard() {
           </div>
         </>
       )}
+
+      <DetalleGraficaModal
+        detalle={detalle}
+        columnas={COLS_DETALLE}
+        onClose={() => setDetalle(null)}
+      />
+
     </div>
   )
 }

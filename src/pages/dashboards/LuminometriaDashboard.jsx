@@ -7,11 +7,23 @@ import {
 } from 'recharts'
 import { ArrowLeft, Microscope, Filter, X } from 'lucide-react'
 import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import DetalleGraficaModal, { COL_FECHA, COL_ESTADO, colCumple }
+  from '../../components/common/DetalleGraficaModal'
 import { filtrosResumen } from '../../lib/utils'
 import {
   buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
   BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT,
 } from '../../lib/chartLabels'
+
+// Columnas del detalle que se abre al pulsar una gráfica
+const COLS_DETALLE = [
+  COL_FECHA,
+  { key: 'servicio_evaluado', header: 'Servicio' },
+  { key: 'objeto',            header: 'Superficie' },
+  { key: 'resultado',         header: 'RLU' },
+  colCumple('rango', 'Clasificación'),
+  COL_ESTADO,
+]
 
 const PIE_COLORS = ['#10b981', '#f87171']
 
@@ -107,6 +119,10 @@ export default function LuminometriaDashboard() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
   const pdfRef = useRef(null)
+  // Detalle de las encuestas que hay detrás del valor de una gráfica
+  const [detalle, setDetalle] = useState(null)
+  const abrirDetalle = (titulo, rows) =>
+    setDetalle({ titulo, subtitulo: `${rows.length} encuesta(s) · según los filtros aplicados`, rows })
 
   useEffect(() => {
     supabase.from('encuesta_luminometria').select('*').order('fecha_registro', { ascending: false })
@@ -136,12 +152,18 @@ export default function LuminometriaDashboard() {
     </div>
   )
 
-  const total    = filtered.length
-  const cumple   = filtered.filter(r => r.rango === 'CUMPLE').length
+  // Los registros "NO APLICA" documentan que la medición no pudo realizarse
+  // (servicio COMITÉ DE INFECCIONES). No son una medición, así que quedan fuera
+  // del cálculo de adherencia y del promedio de RLU.
+  const noAplica = filtered.filter(r => r.rango === 'NO APLICA')
+  const medidos  = filtered.filter(r => r.rango !== 'NO APLICA')
+
+  const total    = medidos.length
+  const cumple   = medidos.filter(r => r.rango === 'CUMPLE').length
   const noCumple = total - cumple
   const pct      = total > 0 ? Math.round((cumple / total) * 100) : 0
   const avgRLU   = total > 0
-    ? Math.round(filtered.reduce((s, r) => s + (Number(r.resultado) || 0), 0) / total)
+    ? Math.round(medidos.reduce((s, r) => s + (Number(r.resultado) || 0), 0) / total)
     : 0
 
   const pieData = [
@@ -150,11 +172,11 @@ export default function LuminometriaDashboard() {
   ].filter(d => d.value > 0)
 
   const barServicio = buildBarData(
-    filtered, 'servicio_evaluado', 'Sin servicio', r => r.rango === 'CUMPLE'
+    medidos, 'servicio_evaluado', 'Sin servicio', r => r.rango === 'CUMPLE'
   )
 
   const barObjeto = Object.values(
-    filtered.reduce((acc, r) => {
+    medidos.reduce((acc, r) => {
       const o = r.objeto || 'Sin objeto'
       if (!acc[o]) acc[o] = { name: o, CUMPLE: 0, 'NO CUMPLE': 0, totalRLU: 0, count: 0 }
       r.rango === 'CUMPLE' ? acc[o].CUMPLE++ : acc[o]['NO CUMPLE']++
@@ -174,8 +196,8 @@ export default function LuminometriaDashboard() {
     }
   })
 
-  const summaryByServicio = buildSummaryRLU(filtered, 'servicio_evaluado')
-  const summaryByObjeto   = buildSummaryRLU(filtered, 'objeto')
+  const summaryByServicio = buildSummaryRLU(medidos, 'servicio_evaluado')
+  const summaryByObjeto   = buildSummaryRLU(medidos, 'objeto')
 
   return (
     <div ref={pdfRef} className="p-6 lg:p-8 animate-fade-in space-y-6">
@@ -252,6 +274,10 @@ export default function LuminometriaDashboard() {
         <KpiCard label="CUMPLE (<100 RLU)" value={`${pct}%`} color={pct >= 80 ? 'emerald' : 'red'} sub={`${cumple} superficies`} />
         <KpiCard label="Promedio RLU"      value={avgRLU}     color="amber" sub="valor medio" />
         <KpiCard label="NO CUMPLE"         value={noCumple}   color="red" sub="requieren limpieza" />
+        {noAplica.length > 0 && (
+          <KpiCard label="Sin medición"    value={noAplica.length} color="slate"
+            sub="no se pudo realizar — fuera del %" />
+        )}
       </div>
 
       {total === 0 ? (
@@ -280,7 +306,12 @@ export default function LuminometriaDashboard() {
               <h3 className="section-title mb-4">Cumplimiento por Servicio</h3>
               <p className="text-[10px] text-slate-500 mb-2">{PCT_HINT}</p>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={barServicio} margin={{ top: 22, left: -10 }}>
+                <BarChart data={barServicio} margin={{ top: 22, left: -10 }}
+                  onClick={(e) => {
+                    const cat = e?.activeLabel
+                    if (cat) abrirDetalle(`Servicio — ${cat}`,
+                      filtered.filter(r => (r.servicio_evaluado || 'Sin servicio') === cat))
+                  }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
@@ -301,7 +332,12 @@ export default function LuminometriaDashboard() {
               <h3 className="section-title mb-1">Promedio RLU por Objeto / Superficie</h3>
               <p className="text-[10px] text-slate-500 mb-2">Promedio RLU · % de mediciones que cumplen (&lt;100 RLU)</p>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={barObjeto} margin={{ top: 22, left: -5 }}>
+                <BarChart data={barObjeto} margin={{ top: 22, left: -5 }}
+                  onClick={(e) => {
+                    const cat = e?.activeLabel
+                    if (cat) abrirDetalle(`Superficie — ${cat}`,
+                      filtered.filter(r => (r.objeto || 'Sin objeto') === cat))
+                  }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
                   <YAxis tick={{ fontSize: 11 }} />
@@ -323,6 +359,13 @@ export default function LuminometriaDashboard() {
           </div>
         </>
       )}
+
+      <DetalleGraficaModal
+        detalle={detalle}
+        columnas={COLS_DETALLE}
+        onClose={() => setDetalle(null)}
+      />
+
     </div>
   )
 }
