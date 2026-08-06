@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { guardarEncuesta, esEditable } from '../../lib/guardarEncuesta'
 import { useAuth } from '../../contexts/AuthContext'
 import FileUpload from '../../components/common/FileUpload'
+import SearchableSelect from '../../components/common/SearchableSelect'
 import BannerSoloLectura from '../../components/common/BannerSoloLectura'
 import { ArrowLeft, Save } from 'lucide-react'
 import { useLista } from '../../hooks/useLista'
@@ -165,6 +166,7 @@ export default function RondaCirugiaForm() {
   })
 
   const especialidades = useLista('especialidad', ESPECIALIDADES)
+  const procedimientos = useLista('procedimiento', PROCEDIMIENTOS)
 
   const servicioSel          = watch('servicio')
   const quirofanosDisponibles = QUIROFANOS_POR_SERVICIO[servicioSel] ?? []
@@ -265,10 +267,12 @@ export default function RondaCirugiaForm() {
             </div>
             <div>
               <label className="label">Procedimiento</label>
-              <select className="input" {...register('procedimiento')}>
-                <option value="">Seleccionar...</option>
-                {PROCEDIMIENTOS.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
+              <SearchableSelect
+                options={procedimientos}
+                value={watch('procedimiento') ?? ''}
+                onChange={v => setValue('procedimiento', v, { shouldDirty: true })}
+                placeholder="Buscar procedimiento..."
+              />
             </div>
             <div>
               <label className="label">Profesional Evaluador *</label>
