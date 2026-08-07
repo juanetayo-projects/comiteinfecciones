@@ -82,6 +82,15 @@ const TIPOS_CFG = [
     },
     getProfesional: r => '',
   },
+  {
+    key:'adh', label:'Adherencia Fichas Epi.', color:'sky',
+    table:'encuesta_adherencia_fichas', dateField:'fecha_revision',
+    editPath: id => `/encuestas/adherencia-fichas/${id}/editar`,
+    getServicio:    r => r.servicio,
+    getSujeto:      r => r.codigo_evento || '',
+    getResultado:   r => r.resultado || '',
+    getProfesional: r => r.medico || '',
+  },
 ]
 
 // ── Badge helpers ─────────────────────────────────────────────────
@@ -93,6 +102,7 @@ const TIPO_BADGE = {
   indigo: 'bg-brand-100 text-brand-700',
   cyan:   'bg-cyan-100   text-cyan-700',
   violet: 'bg-violet-100 text-violet-700',
+  sky:    'bg-sky-100    text-sky-700',
 }
 const ESTADO_BADGE = {
   pendiente:  'bg-yellow-100 text-yellow-700',
@@ -103,8 +113,8 @@ const ESTADO_BADGE = {
 
 function resultadoBadge(v) {
   if (!v) return null
-  if (v === 'CUMPLE')    return 'bg-emerald-100 text-emerald-700'
-  if (v === 'NO CUMPLE') return 'bg-red-100     text-red-700'
+  if (v === 'CUMPLE' || v === 'ADECUADO')    return 'bg-emerald-100 text-emerald-700'
+  if (v === 'NO CUMPLE' || v === 'CON ERROR') return 'bg-red-100     text-red-700'
   return 'bg-slate-100 text-slate-600'
 }
 
@@ -215,7 +225,7 @@ export default function Registros() {
       </div>
 
       {/* Resumen por tipo */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-6">
         {TIPOS_CFG.map(cfg => {
           const count = allRows.filter(r => r.tipo === cfg.key).length
           return (

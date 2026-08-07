@@ -2,18 +2,19 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, ClipboardList,
   Kanban, BookOpen, FileBarChart2, Settings, X,
-  ShieldAlert, Hand, Microscope, Stethoscope, Activity,
+  ShieldAlert, Hand, Microscope, Stethoscope, Activity, ClipboardCheck,
   ChevronDown, ChevronRight,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '../../lib/utils'
 
 const ENCUESTAS = [
-  { to: '/encuestas/aislamiento',              label: 'Aislamiento',          icon: ShieldAlert, color: 'text-red-300'     },
-  { to: '/encuestas/higiene-manos',            label: 'Higiene de Manos',     icon: Hand,        color: 'text-cyan-300'    },
-  { to: '/encuestas/luminometria',             label: 'Luminometría',         icon: Microscope,  color: 'text-amber-300'   },
-  { to: '/encuestas/ronda-cirugia',            label: 'Ronda de Cirugía',     icon: Stethoscope, color: 'text-purple-300'  },
-  { to: '/encuestas/seguimiento-dispositivos', label: 'Seguimiento Disp.',    icon: Activity,    color: 'text-emerald-300' },
+  { to: '/encuestas/aislamiento',              label: 'Aislamiento',          icon: ShieldAlert,    color: 'text-red-300'     },
+  { to: '/encuestas/higiene-manos',            label: 'Higiene de Manos',     icon: Hand,           color: 'text-cyan-300'    },
+  { to: '/encuestas/luminometria',             label: 'Luminometría',         icon: Microscope,     color: 'text-amber-300'   },
+  { to: '/encuestas/ronda-cirugia',            label: 'Ronda de Cirugía',     icon: Stethoscope,    color: 'text-purple-300'  },
+  { to: '/encuestas/seguimiento-dispositivos', label: 'Seguimiento Disp.',    icon: Activity,       color: 'text-emerald-300' },
+  { to: '/encuestas/adherencia-fichas',        label: 'Adherencia Fichas Epi.', icon: ClipboardCheck, color: 'text-sky-300'   },
 ]
 
 function NavItem({ to, icon: Icon, label, iconColor = 'text-white/70', end = false }) {

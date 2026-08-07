@@ -18,6 +18,10 @@ import Configuracion from './pages/Configuracion'
 import Aislamiento     from './pages/encuestas/Aislamiento'
 import AislamientoForm from './pages/encuestas/AislamientoForm'
 
+// ── Adherencia a Fichas Epidemiológicas ──────────────────────
+import AdherenciaFichas     from './pages/encuestas/AdherenciaFichas'
+import AdherenciaFichasForm from './pages/encuestas/AdherenciaFichasForm'
+
 // ── Higiene de Manos ─────────────────────────────────────────
 import HigieneManos    from './pages/encuestas/HigieneManos'
 import HigieneManosForn from './pages/encuestas/HigieneManosForn'
@@ -48,6 +52,7 @@ import DispositivosDashboard      from './pages/dashboards/DispositivosDashboard
 import AccesoVenasoDashboard      from './pages/dashboards/AccesoVenasoDashboard'
 import CateterVesicalDashboard    from './pages/dashboards/CateterVesicalDashboard'
 import PrevencionNeumoniaDashboard from './pages/dashboards/PrevencionNeumoniaDashboard'
+import AdherenciaFichasDashboard  from './pages/dashboards/AdherenciaFichasDashboard'
 
 export default function App() {
   return (
@@ -108,6 +113,12 @@ export default function App() {
             <Route path="/encuestas/prevencion-neumonia/nuevo"        element={<PrevencionNeumoniaForm />} />
             <Route path="/encuestas/prevencion-neumonia/:id/editar"   element={<PrevencionNeumoniaForm />} />
             <Route path="/encuestas/prevencion-neumonia/dashboard"    element={<PrevencionNeumoniaDashboard />} />
+
+            {/* Adherencia a Fichas Epidemiológicas */}
+            <Route path="/encuestas/adherencia-fichas"            element={<AdherenciaFichas />} />
+            <Route path="/encuestas/adherencia-fichas/nuevo"      element={<AdherenciaFichasForm />} />
+            <Route path="/encuestas/adherencia-fichas/:id/editar" element={<AdherenciaFichasForm />} />
+            <Route path="/encuestas/adherencia-fichas/dashboard"  element={<AdherenciaFichasDashboard />} />
 
             {/* Resto */}
             <Route path="/kanban"        element={<Kanban />} />
