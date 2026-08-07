@@ -57,8 +57,9 @@ function KpiCard({ label, value, sub, color = 'slate' }) {
   )
 }
 
-const INIT_FILTERS = { desde: '', hasta: '', sede: '', servicio: '' }
-const FILTER_LABELS = { desde: 'Desde', hasta: 'Hasta', sede: 'Sede', servicio: 'Servicio' }
+const INIT_FILTERS = { anio: '', mes: '', sede: '', servicio: '' }
+const FILTER_LABELS = { anio: 'Año', mes: 'Mes', sede: 'Sede', servicio: 'Servicio' }
+const MESES_OPTIONS = MESES_LABEL.map((label, i) => ({ value: i + 1, label }))
 
 export default function AdherenciaFichasDashboard() {
   const [data,       setData]       = useState([])
@@ -87,8 +88,8 @@ export default function AdherenciaFichasDashboard() {
 
   const filtered = useMemo(() => {
     return data.filter(r => {
-      if (filters.desde && r.fecha_revision < filters.desde) return false
-      if (filters.hasta && r.fecha_revision > filters.hasta) return false
+      if (filters.anio && r.anio !== Number(filters.anio)) return false
+      if (filters.mes && r.mes_num !== Number(filters.mes)) return false
       if (filters.sede && r.sede !== filters.sede) return false
       if (filters.servicio && r.servicio !== filters.servicio) return false
       return true
@@ -153,23 +154,25 @@ export default function AdherenciaFichasDashboard() {
     }
   }), [mesesMerged, anioTabla])
 
-  // KPI de % adherencia global: suma los meses fusionados que caen dentro del
-  // rango Desde/Hasta elegido. Solo aplica cuando no hay filtro de sede o
-  // servicio (el resumen histórico no tiene ese desglose); con esos filtros
-  // activos se cae al conteo directo sobre `filtered` más abajo.
+  // KPI de % adherencia global: suma los meses fusionados que coinciden con el
+  // Año/Mes elegido. Solo aplica cuando no hay filtro de sede o servicio (el
+  // resumen histórico no tiene ese desglose); con esos filtros activos se cae
+  // al conteo directo sobre `filtered` más abajo.
   const kpiHistorico = useMemo(() => {
     const rows = mesesMerged.filter(m => {
-      const dd = String(m.mes_num).padStart(2, '0')
-      const primerDia = `${m.anio}-${dd}-01`
-      const ultimoDia = `${m.anio}-${dd}-${String(new Date(m.anio, m.mes_num, 0).getDate()).padStart(2, '0')}`
-      if (filters.desde && ultimoDia < filters.desde) return false
-      if (filters.hasta && primerDia > filters.hasta) return false
+      if (filters.anio && m.anio !== Number(filters.anio)) return false
+      if (filters.mes && m.mes_num !== Number(filters.mes)) return false
       return true
     })
     const total    = rows.reduce((s, m) => s + m.total, 0)
     const adecuado = rows.reduce((s, m) => s + m.adecuado, 0)
     return { total, adecuado, pct: total > 0 ? Math.round((adecuado / total) * 100) : 0 }
-  }, [mesesMerged, filters.desde, filters.hasta])
+  }, [mesesMerged, filters.anio, filters.mes])
+
+  // El selector de la tabla "Resumen Mensual" sigue al filtro Año cuando está activo
+  useEffect(() => {
+    if (filters.anio) setAnioTabla(Number(filters.anio))
+  }, [filters.anio])
 
   if (loading) return (
     <div className="p-8 flex justify-center">
@@ -264,14 +267,18 @@ export default function AdherenciaFichasDashboard() {
         </div>
         <div className="filters-row" style={{ '--cols': 4 }}>
           <div>
-            <label>Desde</label>
-            <input type="date" className="input"
-              value={filters.desde} onChange={e => setF('desde', e.target.value)} />
+            <label>Año</label>
+            <select className="input" value={filters.anio} onChange={e => setF('anio', e.target.value)}>
+              <option value="">Todos</option>
+              {aniosDisponibles.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
           </div>
           <div>
-            <label>Hasta</label>
-            <input type="date" className="input"
-              value={filters.hasta} onChange={e => setF('hasta', e.target.value)} />
+            <label>Mes</label>
+            <select className="input" value={filters.mes} onChange={e => setF('mes', e.target.value)}>
+              <option value="">Todos</option>
+              {MESES_OPTIONS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+            </select>
           </div>
           <div>
             <label>Sede</label>

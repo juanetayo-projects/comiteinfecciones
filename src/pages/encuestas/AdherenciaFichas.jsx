@@ -12,8 +12,13 @@ import { useAuth } from '../../contexts/AuthContext'
 
 const RESULTADO_OPTIONS = ['ADECUADO', 'CON ERROR']
 
+const MESES_OPTIONS = [
+  'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC',
+].map((label, i) => ({ value: i + 1, label }))
+
 const FILTER_CONFIG = [
-  { key: 'fecha_revision', label: 'Fecha',     type: 'daterange' },
+  { key: 'anio',           label: 'Año',        type: 'select' },
+  { key: 'mes_num',        label: 'Mes',        type: 'select', options: MESES_OPTIONS },
   { key: 'sede',           label: 'Sede',       type: 'select' },
   { key: 'servicio',       label: 'Servicio',   type: 'select' },
   { key: 'resultado',      label: 'Resultado',  type: 'select', options: RESULTADO_OPTIONS },
