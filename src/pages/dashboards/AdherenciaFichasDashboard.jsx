@@ -133,15 +133,27 @@ export default function AdherenciaFichasDashboard() {
     [mesesMerged]
   )
 
-  const lineData = useMemo(() => MESES_LABEL.map((mesLabel, i) => {
-    const mes_num = i + 1
-    const row = { mes: mesLabel }
-    aniosDisponibles.forEach(anio => {
+  // La línea año-a-año respeta el filtro de Año/Mes: si hay Año elegido, solo
+  // se dibuja esa línea; si hay Mes elegido, el eje X se reduce a ese mes.
+  const aniosLinea = useMemo(
+    () => filters.anio ? aniosDisponibles.filter(a => a === Number(filters.anio)) : aniosDisponibles,
+    [aniosDisponibles, filters.anio]
+  )
+  const mesesLinea = useMemo(
+    () => filters.mes
+      ? [{ label: MESES_LABEL[Number(filters.mes) - 1], mes_num: Number(filters.mes) }]
+      : MESES_LABEL.map((label, i) => ({ label, mes_num: i + 1 })),
+    [filters.mes]
+  )
+
+  const lineData = useMemo(() => mesesLinea.map(({ label, mes_num }) => {
+    const row = { mes: label }
+    aniosLinea.forEach(anio => {
       const m = mesesMerged.find(x => x.anio === anio && x.mes_num === mes_num)
       row[anio] = m && m.total > 0 ? Math.round((m.adecuado / m.total) * 100) : null
     })
     return row
-  }), [mesesMerged, aniosDisponibles])
+  }), [mesesMerged, aniosLinea, mesesLinea])
 
   // Tabla resumen mensual del año seleccionado
   const tablaAnio = useMemo(() => MESES_LABEL.map((mesLabel, i) => {
@@ -328,7 +340,7 @@ export default function AdherenciaFichasDashboard() {
                 <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} unit="%" />
                 <Tooltip formatter={v => v == null ? 'Sin datos' : `${v}%`} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                {aniosDisponibles.map(anio => (
+                {aniosLinea.map(anio => (
                   <Line key={anio} type="monotone" dataKey={anio} name={String(anio)}
                     stroke={ANIO_COLORS[anio] ?? '#64748b'} strokeWidth={2}
                     dot={{ r: 2 }} connectNulls={false} isAnimationActive={false} />
