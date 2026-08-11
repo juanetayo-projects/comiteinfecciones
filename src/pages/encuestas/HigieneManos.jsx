@@ -39,7 +39,8 @@ export default function HigieneManos() {
   const [data,     setData]     = useState([])
   const [loading,  setLoading]  = useState(true)
   const [adjModal, setAdjModal] = useState(null)
-  const { rol }  = useAuth()
+  const { rol, puedeCapturar: puedeCapturarModulo }  = useAuth()
+  const puedeCapturar = puedeCapturarModulo('higiene_manos')
 
   useEffect(() => { load() }, [])
 
@@ -90,9 +91,11 @@ export default function HigieneManos() {
           <Link to="/encuestas/higiene-manos/dashboard" className="btn-secondary text-xs gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Dashboard
           </Link>
-          <Link to="/encuestas/higiene-manos/nuevo" className="btn-primary text-xs gap-1.5">
-            <Plus className="w-3.5 h-3.5" /> Nueva Observación
-          </Link>
+          {puedeCapturar && (
+            <Link to="/encuestas/higiene-manos/nuevo" className="btn-primary text-xs gap-1.5">
+              <Plus className="w-3.5 h-3.5" /> Nueva Observación
+            </Link>
+          )}
         </div>
       </div>
 

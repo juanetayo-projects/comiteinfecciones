@@ -35,7 +35,8 @@ export default function Aislamiento() {
   const [loading,  setLoading]  = useState(true)
   const [adjModal, setAdjModal] = useState(null)   // null | array de URLs
   const navigate = useNavigate()
-  const { rol }  = useAuth()
+  const { rol, puedeCapturar: puedeCapturarModulo }  = useAuth()
+  const puedeCapturar = puedeCapturarModulo('aislamiento')
 
   useEffect(() => { load() }, [])
 
@@ -90,9 +91,11 @@ export default function Aislamiento() {
           <Link to="/encuestas/aislamiento/dashboard" className="btn-secondary text-xs gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Dashboard
           </Link>
-          <Link to="/encuestas/aislamiento/nuevo" className="btn-primary text-xs gap-1.5">
-            <Plus className="w-3.5 h-3.5" /> Nueva Encuesta
-          </Link>
+          {puedeCapturar && (
+            <Link to="/encuestas/aislamiento/nuevo" className="btn-primary text-xs gap-1.5">
+              <Plus className="w-3.5 h-3.5" /> Nueva Encuesta
+            </Link>
+          )}
         </div>
       </div>
 

@@ -7,8 +7,9 @@ import { supabase } from '../../lib/supabase'
 import { guardarEncuesta, esEditable } from '../../lib/guardarEncuesta'
 import { useAuth } from '../../contexts/AuthContext'
 import BannerSoloLectura from '../../components/common/BannerSoloLectura'
+import SinPermisoCaptura from '../../components/common/SinPermisoCaptura'
 import SearchableSelect from '../../components/common/SearchableSelect'
-import { ArrowLeft, Save, BarChart3, ShieldOff } from 'lucide-react'
+import { ArrowLeft, Save, BarChart3 } from 'lucide-react'
 import { useLista } from '../../hooks/useLista'
 
 const SEDES_FALLBACK = ['TORRE CACSB', 'URGENCIAS CACSB']
@@ -56,7 +57,8 @@ function SH({ children }) {
 export default function AdherenciaFichasForm() {
   const { id }    = useParams()
   const navigate  = useNavigate()
-  const { user, rol } = useAuth()
+  const { user, rol, puedeCapturar: puedeCapturarModulo } = useAuth()
+  const puedeCapturar = puedeCapturarModulo('adherencia_fichas')
   const isEdit    = Boolean(id)
   const [saving,    setSaving]    = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -88,7 +90,7 @@ export default function AdherenciaFichasForm() {
           if (data) {
             reset(data)
             setEstadoReg(data.estado)
-            setSoloLectura(!esEditable(data.estado, rol) || rol === 'auxiliar')
+            setSoloLectura(!esEditable(data.estado, rol) || !puedeCapturar)
           }
           setLoaded(true)
         })
@@ -118,27 +120,9 @@ export default function AdherenciaFichasForm() {
     </div>
   )
 
-  // Un auxiliar no puede crear registros nuevos en este módulo (solo coordinador/administrador)
-  if (!isEdit && rol === 'auxiliar') {
-    return (
-      <div className="p-6 lg:p-8 animate-fade-in max-w-2xl">
-        <div className="card p-6 flex items-start gap-3">
-          <div className="w-9 h-9 shrink-0 rounded-xl bg-amber-100 flex items-center justify-center">
-            <ShieldOff className="w-4 h-4 text-amber-700" />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-amber-900">Sin permiso para crear este registro</p>
-            <p className="text-xs text-amber-800 mt-1">
-              La captura de adherencia a fichas epidemiológicas es exclusiva de coordinación y
-              administración. Puedes consultar el listado y el dashboard.
-            </p>
-            <Link to="/encuestas/adherencia-fichas" className="btn-secondary text-xs mt-3 inline-flex">
-              <ArrowLeft className="w-3.5 h-3.5" /> Volver al listado
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
+  // El rol no tiene habilitada la captura en este módulo (Configuración → Permisos)
+  if (!isEdit && !puedeCapturar) {
+    return <SinPermisoCaptura volverTo="/encuestas/adherencia-fichas" />
   }
 
   return (

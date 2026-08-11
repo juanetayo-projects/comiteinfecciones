@@ -39,7 +39,8 @@ export default function Luminometria() {
   const [data,     setData]     = useState([])
   const [loading,  setLoading]  = useState(true)
   const [adjModal, setAdjModal] = useState(null)
-  const { rol }  = useAuth()
+  const { rol, puedeCapturar: puedeCapturarModulo }  = useAuth()
+  const puedeCapturar = puedeCapturarModulo('luminometria')
 
   useEffect(() => { load() }, [])
 
@@ -91,9 +92,11 @@ export default function Luminometria() {
           <Link to="/encuestas/luminometria/dashboard" className="btn-secondary text-xs gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Dashboard
           </Link>
-          <Link to="/encuestas/luminometria/nuevo" className="btn-primary text-xs gap-1.5">
-            <Plus className="w-3.5 h-3.5" /> Nueva Medición
-          </Link>
+          {puedeCapturar && (
+            <Link to="/encuestas/luminometria/nuevo" className="btn-primary text-xs gap-1.5">
+              <Plus className="w-3.5 h-3.5" /> Nueva Medición
+            </Link>
+          )}
         </div>
       </div>
 

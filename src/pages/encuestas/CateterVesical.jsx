@@ -29,7 +29,8 @@ export default function CateterVesical() {
   const [data,     setData]     = useState([])
   const [loading,  setLoading]  = useState(true)
   const [adjModal, setAdjModal] = useState(null)
-  const { rol }  = useAuth()
+  const { rol, puedeCapturar: puedeCapturarModulo }  = useAuth()
+  const puedeCapturar = puedeCapturarModulo('cateter_vesical')
 
   useEffect(() => { load() }, [])
 
@@ -88,9 +89,11 @@ export default function CateterVesical() {
           <Link to="/encuestas/cateter-vesical/dashboard" className="btn-secondary text-xs gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Dashboard
           </Link>
-          <Link to="/encuestas/cateter-vesical/nuevo" className="btn-primary text-xs gap-1.5">
-            <Plus className="w-3.5 h-3.5" /> Nuevo Registro
-          </Link>
+          {puedeCapturar && (
+            <Link to="/encuestas/cateter-vesical/nuevo" className="btn-primary text-xs gap-1.5">
+              <Plus className="w-3.5 h-3.5" /> Nuevo Registro
+            </Link>
+          )}
         </div>
       </div>
 

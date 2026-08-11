@@ -29,7 +29,8 @@ export default function PrevencionNeumonia() {
   const [data,     setData]     = useState([])
   const [loading,  setLoading]  = useState(true)
   const [adjModal, setAdjModal] = useState(null)
-  const { rol }  = useAuth()
+  const { rol, puedeCapturar: puedeCapturarModulo }  = useAuth()
+  const puedeCapturar = puedeCapturarModulo('prevencion_neumonia')
 
   useEffect(() => { load() }, [])
 
@@ -88,9 +89,11 @@ export default function PrevencionNeumonia() {
           <Link to="/encuestas/prevencion-neumonia/dashboard" className="btn-secondary text-xs gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Dashboard
           </Link>
-          <Link to="/encuestas/prevencion-neumonia/nuevo" className="btn-primary text-xs gap-1.5">
-            <Plus className="w-3.5 h-3.5" /> Nuevo Registro
-          </Link>
+          {puedeCapturar && (
+            <Link to="/encuestas/prevencion-neumonia/nuevo" className="btn-primary text-xs gap-1.5">
+              <Plus className="w-3.5 h-3.5" /> Nuevo Registro
+            </Link>
+          )}
         </div>
       </div>
 

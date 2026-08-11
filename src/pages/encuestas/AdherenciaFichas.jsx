@@ -46,8 +46,8 @@ const EXPORT_COLS = [
 export default function AdherenciaFichas() {
   const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(true)
-  const { rol } = useAuth()
-  const puedeCapturar = rol === 'coordinador' || rol === 'administrador'
+  const { rol, puedeCapturar: puedeCapturarModulo } = useAuth()
+  const puedeCapturar = puedeCapturarModulo('adherencia_fichas')
 
   useEffect(() => { load() }, [])
 

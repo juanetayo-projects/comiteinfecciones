@@ -8,12 +8,13 @@ export function AuthProvider({ children }) {
   const [profile,           setProfile]           = useState(null)
   const [loading,           setLoading]           = useState(true)
   const [needsPasswordReset, setNeedsPasswordReset] = useState(false)
+  const [permisos,          setPermisos]          = useState([])
 
   useEffect(() => {
     // Sesión actual
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
+      if (session?.user) { fetchProfile(session.user.id); fetchPermisos() }
       else setLoading(false)
     })
 
@@ -26,8 +27,8 @@ export function AuthProvider({ children }) {
         setLoading(false)
         return
       }
-      if (session?.user) fetchProfile(session.user.id)
-      else { setProfile(null); setLoading(false) }
+      if (session?.user) { fetchProfile(session.user.id); fetchPermisos() }
+      else { setProfile(null); setPermisos([]); setLoading(false) }
     })
 
     return () => subscription.unsubscribe()
@@ -41,6 +42,21 @@ export function AuthProvider({ children }) {
       .single()
     setProfile(data)
     setLoading(false)
+  }
+
+  // Permisos configurables por rol/módulo (Configuración → Permisos).
+  // No bloquea `loading`: si falla o tarda, puedeCapturar() usa su default seguro.
+  async function fetchPermisos() {
+    const { data } = await supabase.from('modulo_permisos').select('modulo, rol, puede_capturar')
+    setPermisos(data ?? [])
+  }
+
+  // ¿El usuario actual puede capturar (crear) registros en este módulo?
+  // Si el módulo no tiene fila configurada, se permite por defecto (fail-open,
+  // igual que el comportamiento histórico antes de existir esta tabla).
+  function puedeCapturar(modulo) {
+    const fila = permisos.find(p => p.modulo === modulo && p.rol === rol)
+    return fila ? fila.puede_capturar : true
   }
 
   async function signIn(email, password) {
@@ -70,8 +86,9 @@ export function AuthProvider({ children }) {
   const rol = profile?.rol ?? 'auxiliar'
 
   const value = {
-    user, profile, rol, loading, needsPasswordReset,
+    user, profile, rol, loading, needsPasswordReset, permisos,
     signIn, signOut, updatePassword, resetPasswordForEmail,
+    puedeCapturar, reloadPermisos: fetchPermisos,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

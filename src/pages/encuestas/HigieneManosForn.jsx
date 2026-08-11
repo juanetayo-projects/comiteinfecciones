@@ -8,6 +8,7 @@ import { guardarEncuesta, esEditable } from '../../lib/guardarEncuesta'
 import { useAuth } from '../../contexts/AuthContext'
 import FileUpload from '../../components/common/FileUpload'
 import BannerSoloLectura from '../../components/common/BannerSoloLectura'
+import SinPermisoCaptura from '../../components/common/SinPermisoCaptura'
 import { ArrowLeft, Save, BarChart3 } from 'lucide-react'
 import { useLista } from '../../hooks/useLista'
 
@@ -131,7 +132,8 @@ function SH({ children }) {
 export default function HigieneManosForn() {
   const { id }    = useParams()
   const navigate  = useNavigate()
-  const { user, rol } = useAuth()
+  const { user, rol, puedeCapturar: puedeCapturarModulo } = useAuth()
+  const puedeCapturar = puedeCapturarModulo('higiene_manos')
   const isEdit    = Boolean(id)
   const [saving,    setSaving]    = useState(false)
   const [adjuntos,  setAdjuntos]  = useState([])
@@ -189,6 +191,11 @@ export default function HigieneManosForn() {
       return
     }
     navigate('/encuestas/higiene-manos')
+  }
+
+  // El rol no tiene habilitada la captura en este módulo (Configuración → Permisos)
+  if (!isEdit && !puedeCapturar) {
+    return <SinPermisoCaptura volverTo="/encuestas/higiene-manos" />
   }
 
   return (

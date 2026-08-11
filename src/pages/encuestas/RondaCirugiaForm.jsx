@@ -9,6 +9,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import FileUpload from '../../components/common/FileUpload'
 import SearchableSelect from '../../components/common/SearchableSelect'
 import BannerSoloLectura from '../../components/common/BannerSoloLectura'
+import SinPermisoCaptura from '../../components/common/SinPermisoCaptura'
 import { ArrowLeft, Save } from 'lucide-react'
 import { useLista } from '../../hooks/useLista'
 
@@ -151,7 +152,8 @@ const schema = z.object({
 export default function RondaCirugiaForm() {
   const { id }   = useParams()
   const navigate = useNavigate()
-  const { user, rol } = useAuth()
+  const { user, rol, puedeCapturar: puedeCapturarModulo } = useAuth()
+  const puedeCapturar = puedeCapturarModulo('ronda_cirugia')
   const isEdit   = Boolean(id)
   const [saving,    setSaving]    = useState(false)
   const [adjuntos,  setAdjuntos]  = useState([])
@@ -201,6 +203,11 @@ export default function RondaCirugiaForm() {
       return
     }
     navigate('/encuestas/ronda-cirugia')
+  }
+
+  // El rol no tiene habilitada la captura en este módulo (Configuración → Permisos)
+  if (!isEdit && !puedeCapturar) {
+    return <SinPermisoCaptura volverTo="/encuestas/ronda-cirugia" />
   }
 
   return (

@@ -5,7 +5,7 @@ import {
   Settings, Users, List, Paperclip, Mail,
   Plus, Pencil, Trash2, X, Save, ShieldCheck,
   User, Lock, AlertCircle, CheckCircle2,
-  Search, RefreshCw, FileText, Send,
+  Search, RefreshCw, FileText, Send, KeyRound,
 } from 'lucide-react'
 
 // ── Shared constants ──────────────────────────────────────────
@@ -862,11 +862,142 @@ function EmailLogsTab() {
 }
 
 // ════════════════════════════════════════════════════════════════
+// TAB: PERMISOS
+// ════════════════════════════════════════════════════════════════
+
+// Módulos de encuesta que soportan el permiso "puede capturar" por rol.
+// El slug debe coincidir con el usado en el código de cada módulo
+// (useAuth().puedeCapturar(slug)) y con la columna `modulo` en Supabase.
+const MODULOS_PERMISOS = [
+  { modulo: 'higiene_manos',       label: 'Higiene de Manos' },
+  { modulo: 'aislamiento',         label: 'Aislamiento' },
+  { modulo: 'luminometria',        label: 'Luminometría' },
+  { modulo: 'ronda_cirugia',       label: 'Ronda de Cirugía' },
+  { modulo: 'acceso_venoso',       label: 'Acceso Venoso Periférico' },
+  { modulo: 'cateter_vesical',     label: 'Catéter Vesical' },
+  { modulo: 'prevencion_neumonia', label: 'Prevención de Neumonía (NAV)' },
+  { modulo: 'adherencia_fichas',   label: 'Adherencia a Fichas Epi.' },
+]
+
+function PermisosTab({ showToast }) {
+  const { reloadPermisos } = useAuth()
+  const [permisos, setPermisos] = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [saving,   setSaving]   = useState(null) // `${modulo}:${rol}` en vuelo
+
+  useEffect(() => { loadPermisos() }, [])
+
+  async function loadPermisos() {
+    setLoading(true)
+    const { data } = await supabase.from('modulo_permisos').select('*')
+    setPermisos(data ?? [])
+    setLoading(false)
+  }
+
+  function valor(modulo, r) {
+    return permisos.find(p => p.modulo === modulo && p.rol === r)?.puede_capturar ?? true
+  }
+
+  async function toggle(modulo, r) {
+    const actual = valor(modulo, r)
+    const key = `${modulo}:${r}`
+    setSaving(key)
+    setPermisos(prev => prev.map(p =>
+      p.modulo === modulo && p.rol === r ? { ...p, puede_capturar: !actual } : p
+    ))
+    const { error } = await supabase
+      .from('modulo_permisos')
+      .update({ puede_capturar: !actual, updated_at: new Date().toISOString() })
+      .eq('modulo', modulo).eq('rol', r)
+    setSaving(null)
+    if (error) {
+      // revertir en caso de error
+      setPermisos(prev => prev.map(p =>
+        p.modulo === modulo && p.rol === r ? { ...p, puede_capturar: actual } : p
+      ))
+      showToast('Error al guardar el permiso')
+      return
+    }
+    reloadPermisos()
+    showToast('Permiso actualizado')
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="card p-4 bg-blue-50 border border-blue-100">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-blue-700">
+            Controla qué roles pueden <strong>capturar (crear) registros nuevos</strong> en cada módulo de
+            encuesta. El administrador siempre tiene acceso total. Los cambios aplican de inmediato para
+            los usuarios que inicien o recarguen sesión.
+          </p>
+        </div>
+      </div>
+
+      <div className="card overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+          <KeyRound className="w-4 h-4 text-teal-600" />
+          <span className="font-semibold text-slate-700 text-sm">Permiso de captura por módulo y rol</span>
+        </div>
+        {loading ? (
+          <div className="flex justify-center p-8">
+            <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="table-head-brand">
+                  <th className="text-left px-4 py-3 font-semibold text-xs">Módulo</th>
+                  <th className="text-center px-4 py-3 font-semibold text-xs">Administrador</th>
+                  <th className="text-center px-4 py-3 font-semibold text-xs">Coordinador</th>
+                  <th className="text-center px-4 py-3 font-semibold text-xs">Auxiliar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MODULOS_PERMISOS.map((m, i) => (
+                  <tr key={m.modulo} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''}`}>
+                    <td className="px-4 py-3 font-medium text-slate-700">{m.label}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-brand-100 text-brand-700">
+                        Siempre
+                      </span>
+                    </td>
+                    {['coordinador', 'auxiliar'].map(r => (
+                      <td key={r} className="px-4 py-3 text-center">
+                        <button
+                          type="button"
+                          disabled={saving === `${m.modulo}:${r}`}
+                          onClick={() => toggle(m.modulo, r)}
+                          title={valor(m.modulo, r) ? 'Puede capturar — clic para deshabilitar' : 'No puede capturar — clic para habilitar'}
+                          className={`w-10 h-6 rounded-full transition-colors relative disabled:opacity-50 ${
+                            valor(m.modulo, r) ? 'bg-emerald-500' : 'bg-slate-300'
+                          }`}>
+                          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                            valor(m.modulo, r) ? 'translate-x-[18px]' : 'translate-x-0.5'
+                          }`} />
+                        </button>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════════
 
 const TABS = [
   { key: 'usuarios',  label: 'Usuarios',            icon: Users,     adminOnly: true  },
+  { key: 'permisos',  label: 'Permisos',             icon: KeyRound,  adminOnly: true  },
   { key: 'listas',    label: 'Listas Desplegables',  icon: List,      adminOnly: true  },
   { key: 'archivos',  label: 'Archivos Adjuntos',    icon: Paperclip, adminOnly: false },
   { key: 'email',     label: 'Email Logs',           icon: Mail,      adminOnly: true  },
@@ -945,6 +1076,7 @@ export default function Configuracion() {
 
       {/* Tab content */}
       {effectiveTab === 'usuarios'  && <UsuariosTab  showToast={showToast} />}
+      {effectiveTab === 'permisos'  && <PermisosTab  showToast={showToast} />}
       {effectiveTab === 'listas'    && <ListasTab    showToast={showToast} />}
       {effectiveTab === 'archivos'  && <ArchivosTab />}
       {effectiveTab === 'email'     && <EmailLogsTab />}
