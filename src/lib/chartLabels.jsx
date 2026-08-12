@@ -43,6 +43,21 @@ export function useSeriesToggle() {
   return { hidden, toggle, onLegendClick, legendFormatter }
 }
 
+/**
+ * Etiqueta de % sobre una barra individual (no apilada), leyendo un campo
+ * `<pctField>` del payload de esa fila. Útil en BarChart agrupados donde cada
+ * serie trae su propio porcentaje precalculado (ej. `criterio_1_pct`).
+ */
+export function BarPctLabel({ x, y, width, payload, pctField }) {
+  const v = payload?.[pctField]
+  if (v == null) return null
+  return (
+    <text x={x + width / 2} y={y - 4} textAnchor="middle" fontSize={9} fontWeight={600} fill="#475569">
+      {v}%
+    </text>
+  )
+}
+
 export const BAR_CUMPLE    = '#059669'   // emerald-600
 export const BAR_NO_CUMPLE = '#e11d48'   // rose-600
 export const PIE_COLORS    = [BAR_CUMPLE, BAR_NO_CUMPLE]

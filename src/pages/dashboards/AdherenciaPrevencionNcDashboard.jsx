@@ -8,7 +8,7 @@ import {
 import { ArrowLeft, Stethoscope, Filter, X, BarChart3, TrendingUp, TrendingDown } from 'lucide-react'
 import DashboardPdfButton from '../../components/common/DashboardPdfButton'
 import { filtrosResumen, formatDate } from '../../lib/utils'
-import { useSeriesToggle } from '../../lib/chartLabels'
+import { useSeriesToggle, SegmentLabel, TotalPctLabel, BarPctLabel } from '../../lib/chartLabels'
 
 const CRITERIOS = [
   { key: 'criterio_1_cabecera',        label: 'Cabecera 30–45°' },
@@ -156,7 +156,7 @@ export default function AdherenciaPrevencionNcDashboard() {
 
   const resumenValoresChart = useMemo(() => resumenMensual.map(m => {
     const row = { mes: m.mes }
-    m.porCriterio.forEach(c => { row[c.key] = c.SI })
+    m.porCriterio.forEach(c => { row[c.key] = c.SI; row[`${c.key}_pct`] = c.pctCumple })
     return row
   }), [resumenMensual])
 
@@ -268,16 +268,21 @@ export default function AdherenciaPrevencionNcDashboard() {
                   · <span className="italic">clic en la leyenda para mostrar/ocultar</span>
                 </p>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={barData} margin={{ top: 5, left: -10 }}>
+                  <BarChart data={barData} margin={{ top: 20, left: -10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                     <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} angle={-15} textAnchor="end" height={60} />
                     <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                     <Tooltip content={<BarTooltip3 />} />
                     <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglDist.onLegendClick} formatter={tglDist.legendFormatter} />
-                    <Bar dataKey="SI" name="SI" stackId="a" fill={COL_SI} hide={tglDist.hidden.has('SI')} isAnimationActive={false} />
-                    <Bar dataKey="NA" name="N/A" stackId="a" fill={COL_NA} hide={tglDist.hidden.has('NA')} isAnimationActive={false} />
+                    <Bar dataKey="SI" name="SI" stackId="a" fill={COL_SI} hide={tglDist.hidden.has('SI')} isAnimationActive={false}>
+                      <LabelList dataKey="pctSI" content={SegmentLabel} />
+                    </Bar>
+                    <Bar dataKey="NA" name="N/A" stackId="a" fill={COL_NA} hide={tglDist.hidden.has('NA')} isAnimationActive={false}>
+                      <LabelList dataKey="pctNA" content={SegmentLabel} />
+                    </Bar>
                     <Bar dataKey="NO" name="NO" stackId="a" fill={COL_NO} radius={[4, 4, 0, 0]} hide={tglDist.hidden.has('NO')} isAnimationActive={false}>
-                      <LabelList dataKey="total" position="top" style={{ fontSize: 10, fill: '#334155' }} />
+                      <LabelList dataKey="pctNO" content={SegmentLabel} />
+                      <LabelList dataKey="cumplimiento" content={TotalPctLabel} position="top" />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -362,18 +367,23 @@ export default function AdherenciaPrevencionNcDashboard() {
           <div className="card p-5">
             <SH>Resumen Mensual — Valores (conteo de SI por criterio)</SH>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={resumenValoresChart} margin={{ top: 10, left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
-                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 10, cursor: 'pointer' }} onClick={tglResVal.onLegendClick} formatter={tglResVal.legendFormatter} />
-                  {CRITERIOS.map(c => (
-                    <Bar key={c.key} dataKey={c.key} name={c.label} fill={CRITERIO_COLORS[c.key]} hide={tglResVal.hidden.has(c.key)} isAnimationActive={false} />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
+              <div>
+                <p className="text-[10px] text-slate-500 mb-2">% sobre el total de registros del mes para cada criterio</p>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={resumenValoresChart} margin={{ top: 20, left: -10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
+                    <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: 10, cursor: 'pointer' }} onClick={tglResVal.onLegendClick} formatter={tglResVal.legendFormatter} />
+                    {CRITERIOS.map(c => (
+                      <Bar key={c.key} dataKey={c.key} name={c.label} fill={CRITERIO_COLORS[c.key]} hide={tglResVal.hidden.has(c.key)} isAnimationActive={false}>
+                        <LabelList content={props => <BarPctLabel {...props} pctField={`${c.key}_pct`} />} />
+                      </Bar>
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
