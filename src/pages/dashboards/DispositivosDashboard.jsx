@@ -10,7 +10,7 @@ import DashboardPdfButton from '../../components/common/DashboardPdfButton'
 import { filtrosResumen } from '../../lib/utils'
 import {
   buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
-  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT, useSeriesToggle,
 } from '../../lib/chartLabels'
 
 const PIE_COLORS  = ['#6366f1', '#06b6d4', '#8b5cf6']
@@ -129,6 +129,9 @@ export default function DispositivosDashboard() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
   const pdfRef = useRef(null)
+  const tglAvp = useSeriesToggle()
+  const tglCv = useSeriesToggle()
+  const tglPn = useSeriesToggle()
 
   useEffect(() => {
     Promise.all([
@@ -327,11 +330,11 @@ export default function DispositivosDashboard() {
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="cumple" name="Cumple" fill="#10b981" stackId="a" isAnimationActive={false}>
+                    <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglAvp.onLegendClick} formatter={tglAvp.legendFormatter} />
+                    <Bar dataKey="cumple" name="Cumple" fill="#10b981" stackId="a" hide={tglAvp.hidden.has('cumple')} isAnimationActive={false}>
                       <LabelList dataKey="pctCumple" content={SegmentLabel} />
                     </Bar>
-                    <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} hide={tglAvp.hidden.has('noCumple')} isAnimationActive={false}>
                       <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
                       <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
                     </Bar>
@@ -351,11 +354,11 @@ export default function DispositivosDashboard() {
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="cumple" name="Cumple" fill="#06b6d4" stackId="a" isAnimationActive={false}>
+                    <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglCv.onLegendClick} formatter={tglCv.legendFormatter} />
+                    <Bar dataKey="cumple" name="Cumple" fill="#06b6d4" stackId="a" hide={tglCv.hidden.has('cumple')} isAnimationActive={false}>
                       <LabelList dataKey="pctCumple" content={SegmentLabel} />
                     </Bar>
-                    <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} hide={tglCv.hidden.has('noCumple')} isAnimationActive={false}>
                       <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
                       <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
                     </Bar>
@@ -375,11 +378,11 @@ export default function DispositivosDashboard() {
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="cumple" name="Cumple" fill="#8b5cf6" stackId="a" isAnimationActive={false}>
+                    <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglPn.onLegendClick} formatter={tglPn.legendFormatter} />
+                    <Bar dataKey="cumple" name="Cumple" fill="#8b5cf6" stackId="a" hide={tglPn.hidden.has('cumple')} isAnimationActive={false}>
                       <LabelList dataKey="pctCumple" content={SegmentLabel} />
                     </Bar>
-                    <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                    <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} hide={tglPn.hidden.has('noCumple')} isAnimationActive={false}>
                       <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
                       <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
                     </Bar>

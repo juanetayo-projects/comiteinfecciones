@@ -12,7 +12,7 @@ import DetalleGraficaModal, { COL_FECHA, COL_ESTADO, colCumple }
 import { filtrosResumen } from '../../lib/utils'
 import {
   buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
-  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT, useSeriesToggle,
 } from '../../lib/chartLabels'
 
 // Columnas del detalle que se abre al pulsar una gráfica
@@ -119,6 +119,7 @@ export default function LuminometriaDashboard() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
   const pdfRef = useRef(null)
+  const tglServicio = useSeriesToggle()
   // Detalle de las encuestas que hay detrás del valor de una gráfica
   const [detalle, setDetalle] = useState(null)
   const abrirDetalle = (titulo, rows) =>
@@ -291,9 +292,10 @@ export default function LuminometriaDashboard() {
               <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
                   <Pie data={pieData} cx="50%" cy="50%" outerRadius={90}
-                    dataKey="value"
+                    dataKey="value" cursor="pointer"
                     label={({ name, percent }) => `${Math.round(percent * 100)}%`}
-                    labelLine>
+                    labelLine
+                    onClick={d => abrirDetalle(`Resultado — ${d.name}`, medidos.filter(r => (r.rango === 'CUMPLE' ? 'CUMPLE (<100 RLU)' : 'NO CUMPLE (≥100 RLU)') === d.name))}>
                     {pieData.map((e, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
                   </Pie>
                   <Tooltip formatter={(v, n) => [v, n]} />
@@ -316,11 +318,11 @@ export default function LuminometriaDashboard() {
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false}>
+                  <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglServicio.onLegendClick} formatter={tglServicio.legendFormatter} />
+                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" hide={tglServicio.hidden.has('CUMPLE')} isAnimationActive={false}>
                     <LabelList dataKey="pctCumple" content={SegmentLabel} />
                   </Bar>
-                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" radius={[4,4,0,0]} hide={tglServicio.hidden.has('NO CUMPLE')} isAnimationActive={false}>
                     <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
                     <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
                   </Bar>

@@ -12,7 +12,7 @@ import DetalleGraficaModal, { COL_FECHA, COL_ESTADO, colCumple }
 import { filtrosResumen } from '../../lib/utils'
 import {
   buildBarData, SegmentLabel, TotalPctLabel, BarTooltip,
-  BAR_CUMPLE, BAR_NO_CUMPLE, PIE_COLORS, PCT_HINT,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PIE_COLORS, PCT_HINT, useSeriesToggle,
 } from '../../lib/chartLabels'
 
 
@@ -104,6 +104,8 @@ export default function AislamentoDashboard() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
   const pdfRef = useRef(null)
+  const tglServicio = useSeriesToggle()
+  const tglTipo = useSeriesToggle()
   // Detalle de las encuestas que hay detrás del valor de una gráfica
   const [detalle, setDetalle] = useState(null)
   const abrirDetalle = (titulo, rows) =>
@@ -285,11 +287,11 @@ export default function AislamentoDashboard() {
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip content={<BarTooltip />} cursor={{ fill: 'rgba(31,86,196,0.06)' }} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false} className="cursor-pointer">
+                  <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglServicio.onLegendClick} formatter={tglServicio.legendFormatter} />
+                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" hide={tglServicio.hidden.has('CUMPLE')} isAnimationActive={false} className="cursor-pointer">
                     <LabelList dataKey="pctCumple" content={SegmentLabel} />
                   </Bar>
-                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" isAnimationActive={false} radius={[4,4,0,0]} className="cursor-pointer">
+                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" hide={tglServicio.hidden.has('NO CUMPLE')} isAnimationActive={false} radius={[4,4,0,0]} className="cursor-pointer">
                     <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
                     <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
                   </Bar>
@@ -313,11 +315,11 @@ export default function AislamentoDashboard() {
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip content={<BarTooltip />} cursor={{ fill: 'rgba(31,86,196,0.06)' }} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false}>
+                  <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglTipo.onLegendClick} formatter={tglTipo.legendFormatter} />
+                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" hide={tglTipo.hidden.has('CUMPLE')} isAnimationActive={false}>
                     <LabelList dataKey="pctCumple" content={SegmentLabel} />
                   </Bar>
-                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" isAnimationActive={false} radius={[4,4,0,0]}>
+                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" hide={tglTipo.hidden.has('NO CUMPLE')} isAnimationActive={false} radius={[4,4,0,0]}>
                     <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
                     <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
                   </Bar>

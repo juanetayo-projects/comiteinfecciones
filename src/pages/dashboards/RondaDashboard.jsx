@@ -12,7 +12,7 @@ import DetalleGraficaModal, { COL_FECHA, COL_ESTADO, colCumple }
 import { filtrosResumen } from '../../lib/utils'
 import {
   buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
-  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT, useSeriesToggle,
 } from '../../lib/chartLabels'
 
 // Columnas del detalle que se abre al pulsar una gráfica
@@ -133,6 +133,7 @@ export default function RondaDashboard() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
   const pdfRef = useRef(null)
+  const tglCriterios = useSeriesToggle()
   // Detalle de las encuestas que hay detrás del valor de una gráfica
   const [detalle, setDetalle] = useState(null)
   const abrirDetalle = (titulo, rows) =>
@@ -317,9 +318,10 @@ export default function RondaDashboard() {
               <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
                   <Pie data={piePro} cx="50%" cy="50%" outerRadius={90}
-                    dataKey="value"
+                    dataKey="value" cursor="pointer"
                     label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`}
-                    labelLine={false}>
+                    labelLine={false}
+                    onClick={d => abrirDetalle(`Profilaxis — ${d.name}`, filtered.filter(r => (r.cumplimiento_profilaxis || 'SIN DATO') === d.name))}>
                     {piePro.map((e, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
                   </Pie>
                   <Tooltip />
@@ -356,14 +358,14 @@ export default function RondaDashboard() {
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" isAnimationActive={false}>
+                  <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglCriterios.onLegendClick} formatter={tglCriterios.legendFormatter} />
+                  <Bar dataKey="CUMPLE" fill={BAR_CUMPLE} stackId="a" hide={tglCriterios.hidden.has('CUMPLE')} isAnimationActive={false}>
                     <LabelList dataKey="pctCumple" content={SegmentLabel} />
                   </Bar>
-                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" isAnimationActive={false}>
+                  <Bar dataKey="NO CUMPLE" fill={BAR_NO_CUMPLE} stackId="a" hide={tglCriterios.hidden.has('NO CUMPLE')} isAnimationActive={false}>
                     <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
                   </Bar>
-                  <Bar dataKey="NO APLICA" fill="#94a3b8" stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                  <Bar dataKey="NO APLICA" fill="#94a3b8" stackId="a" radius={[4,4,0,0]} hide={tglCriterios.hidden.has('NO APLICA')} isAnimationActive={false}>
                     <LabelList dataKey="pctNoAplica" content={SegmentLabel} />
                     <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
                   </Bar>

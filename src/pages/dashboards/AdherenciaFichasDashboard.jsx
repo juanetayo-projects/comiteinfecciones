@@ -9,7 +9,7 @@ import { ArrowLeft, ClipboardCheck, Filter, X } from 'lucide-react'
 import DashboardPdfButton from '../../components/common/DashboardPdfButton'
 import DetalleGraficaModal, { COL_ESTADO } from '../../components/common/DetalleGraficaModal'
 import { filtrosResumen, formatDate } from '../../lib/utils'
-import { PCT_HINT } from '../../lib/chartLabels'
+import { PCT_HINT, withPct, useSeriesToggle } from '../../lib/chartLabels'
 
 const MESES_LABEL = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC']
 const ANIO_COLORS = { 2022: '#94a3b8', 2023: '#38bdf8', 2024: '#a78bfa', 2025: '#f59e0b', 2026: '#059669' }
@@ -68,6 +68,7 @@ export default function AdherenciaFichasDashboard() {
   const [filters,    setFilters]    = useState(INIT_FILTERS)
   const [anioTabla,  setAnioTabla]  = useState(new Date().getFullYear())
   const pdfRef = useRef(null)
+  const tglAnios = useSeriesToggle()
   const [detalle, setDetalle] = useState(null)
   const abrirDetalle = (titulo, rows) =>
     setDetalle({ titulo, subtitulo: `${rows.length} registro(s) · según los filtros aplicados`, rows })
@@ -212,32 +213,32 @@ export default function AdherenciaFichasDashboard() {
 
   const soloErrores = filtered.filter(r => r.resultado === 'CON ERROR')
 
-  const causasData = Object.values(
+  const causasData = withPct(Object.values(
     soloErrores.reduce((acc, r) => {
       const k = r.tipo_error || 'Sin especificar'
       if (!acc[k]) acc[k] = { name: k, cantidad: 0 }
       acc[k].cantidad++
       return acc
     }, {})
-  ).sort((a, b) => b.cantidad - a.cantidad)
+  ).sort((a, b) => b.cantidad - a.cantidad), 'cantidad', soloErrores.length)
 
-  const servicioData = Object.values(
+  const servicioData = withPct(Object.values(
     soloErrores.reduce((acc, r) => {
       const k = r.servicio || 'Sin especificar'
       if (!acc[k]) acc[k] = { name: k, cantidad: 0 }
       acc[k].cantidad++
       return acc
     }, {})
-  ).sort((a, b) => b.cantidad - a.cantidad)
+  ).sort((a, b) => b.cantidad - a.cantidad), 'cantidad', soloErrores.length)
 
-  const medicoData = Object.values(
+  const medicoData = withPct(Object.values(
     soloErrores.reduce((acc, r) => {
       const k = r.medico || 'Sin especificar'
       if (!acc[k]) acc[k] = { name: k, cantidad: 0 }
       acc[k].cantidad++
       return acc
     }, {})
-  ).sort((a, b) => b.cantidad - a.cantidad).slice(0, 10)
+  ).sort((a, b) => b.cantidad - a.cantidad).slice(0, 10), 'cantidad', soloErrores.length)
 
   return (
     <div ref={pdfRef} className="p-6 lg:p-8 animate-fade-in space-y-6">
@@ -339,10 +340,11 @@ export default function AdherenciaFichasDashboard() {
                 <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} unit="%" />
                 <Tooltip formatter={v => v == null ? 'Sin datos' : `${v}%`} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglAnios.onLegendClick} formatter={tglAnios.legendFormatter} />
                 {aniosLinea.map(anio => (
                   <Line key={anio} type="monotone" dataKey={anio} name={String(anio)}
                     stroke={ANIO_COLORS[anio] ?? '#64748b'} strokeWidth={2}
+                    hide={tglAnios.hidden.has(anio)}
                     dot={{ r: 2 }} connectNulls={false} isAnimationActive={false} />
                 ))}
               </LineChart>
@@ -356,9 +358,10 @@ export default function AdherenciaFichasDashboard() {
               <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
                   <Pie data={pieData} cx="50%" cy="50%" outerRadius={90}
-                    dataKey="value"
+                    dataKey="value" cursor="pointer"
                     label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`}
-                    labelLine={false}>
+                    labelLine={false}
+                    onClick={d => abrirDetalle(`Resultado — ${d.name}`, filtered.filter(r => r.resultado === d.name))}>
                     {pieData.map((d, i) => (
                       <Cell key={i} fill={d.name === 'ADECUADO' ? RESULTADO_COLORS[0] : RESULTADO_COLORS[1]} />
                     ))}
@@ -379,7 +382,7 @@ export default function AdherenciaFichasDashboard() {
                   <Tooltip />
                   <Bar dataKey="cantidad" fill={CAUSA_COLOR} radius={[0, 4, 4, 0]} isAnimationActive={false}
                     onClick={d => abrirDetalle(`Causa — ${d.name}`, soloErrores.filter(r => (r.tipo_error || 'Sin especificar') === d.name))}>
-                    <LabelList dataKey="cantidad" position="right" style={{ fontSize: 10, fill: '#334155' }} />
+                    <LabelList dataKey="etiqueta" position="right" style={{ fontSize: 10, fill: '#334155' }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -399,7 +402,7 @@ export default function AdherenciaFichasDashboard() {
                   <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                   <Tooltip />
                   <Bar dataKey="cantidad" fill={SERVICIO_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={false}>
-                    <LabelList dataKey="cantidad" position="top" style={{ fontSize: 10, fill: '#334155' }} />
+                    <LabelList dataKey="etiqueta" position="top" style={{ fontSize: 10, fill: '#334155' }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -416,7 +419,7 @@ export default function AdherenciaFichasDashboard() {
                   <Tooltip />
                   <Bar dataKey="cantidad" fill={MEDICO_COLOR} radius={[0, 4, 4, 0]} isAnimationActive={false}
                     onClick={d => abrirDetalle(`Médico — ${d.name}`, soloErrores.filter(r => (r.medico || 'Sin especificar') === d.name))}>
-                    <LabelList dataKey="cantidad" position="right" style={{ fontSize: 10, fill: '#334155' }} />
+                    <LabelList dataKey="etiqueta" position="right" style={{ fontSize: 10, fill: '#334155' }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

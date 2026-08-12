@@ -10,7 +10,7 @@ import DashboardPdfButton from '../../components/common/DashboardPdfButton'
 import { filtrosResumen } from '../../lib/utils'
 import {
   buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
-  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT,
+  BAR_CUMPLE, BAR_NO_CUMPLE, PCT_HINT, useSeriesToggle,
 } from '../../lib/chartLabels'
 
 const AVP_KEYS   = ['criterio_1_rotulo','criterio_2_fijacion','criterio_3_mantenimiento','criterio_4_pertinencia','criterio_5_educacion']
@@ -55,6 +55,7 @@ export default function AccesoVenasoDashboard() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
   const pdfRef = useRef(null)
+  const tglCriterios = useSeriesToggle()
 
   useEffect(() => {
     supabase.from('encuesta_acceso_venoso').select('*')
@@ -221,11 +222,11 @@ export default function AccesoVenasoDashboard() {
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
                   <Tooltip formatter={v => `${v}`} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="cumple" name="Cumple" fill="#10b981" stackId="a" isAnimationActive={false}>
+                  <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglCriterios.onLegendClick} formatter={tglCriterios.legendFormatter} />
+                  <Bar dataKey="cumple" name="Cumple" fill="#10b981" stackId="a" hide={tglCriterios.hidden.has('cumple')} isAnimationActive={false}>
                     <LabelList dataKey="pctCumple" content={SegmentLabel} />
                   </Bar>
-                  <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} isAnimationActive={false}>
+                  <Bar dataKey="noCumple" name="No Cumple" fill="#e11d48" stackId="a" radius={[4,4,0,0]} hide={tglCriterios.hidden.has('noCumple')} isAnimationActive={false}>
                     <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
                     <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
                   </Bar>
