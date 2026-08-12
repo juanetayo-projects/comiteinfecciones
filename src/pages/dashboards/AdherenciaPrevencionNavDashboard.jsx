@@ -282,84 +282,84 @@ export default function AdherenciaPrevencionNavDashboard() {
             </p>
           </div>
 
-          {/* Tabla de totales por pregunta */}
+          {/* Totales por pregunta: gráfico izquierda · tabla derecha */}
           <div className="card p-5">
             <SH>Totales por Pregunta (SI=1 · N/A=1 · NO=0)</SH>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="table-head-brand">
-                    <th className="text-left px-3 py-2 font-semibold rounded-tl-lg">Pregunta</th>
-                    <th className="text-center px-2 py-2 font-semibold text-emerald-300">SI</th>
-                    <th className="text-center px-2 py-2 font-semibold">%</th>
-                    <th className="text-center px-2 py-2 font-semibold text-red-300">NO</th>
-                    <th className="text-center px-2 py-2 font-semibold">%</th>
-                    <th className="text-center px-2 py-2 font-semibold">N/A</th>
-                    <th className="text-center px-2 py-2 font-semibold">%</th>
-                    <th className="text-center px-2 py-2 font-semibold">Total</th>
-                    <th className="text-center px-2 py-2 font-semibold rounded-tr-lg">% Cumplimiento</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tablaPreguntas.map((q, i) => (
-                    <tr key={q.name} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''}`}>
-                      <td className="px-3 py-1.5 font-medium text-slate-700">{q.name}</td>
-                      <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{q.SI}</td>
-                      <td className="px-2 py-1.5 text-center text-slate-500">{q.pctSI}%</td>
-                      <td className="px-2 py-1.5 text-center font-semibold text-red-500">{q.NO}</td>
-                      <td className="px-2 py-1.5 text-center text-slate-500">{q.pctNO}%</td>
-                      <td className="px-2 py-1.5 text-center text-slate-500">{q.NA}</td>
-                      <td className="px-2 py-1.5 text-center text-slate-500">{q.pctNA}%</td>
-                      <td className="px-2 py-1.5 text-center text-slate-500">{q.total}</td>
-                      <td className="px-2 py-1.5 text-center">
-                        <span className={`inline-block px-1.5 py-0.5 rounded-full font-semibold
-                          ${q.cumplimiento >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                          {q.cumplimiento}%
-                        </span>
-                      </td>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              <div>
+                <p className="text-[10px] text-slate-500 mb-2">
+                  % dentro de cada barra · verde = SI (o dentro de rango en el criterio 5) · rojo = NO (o fuera de rango) · gris = N/A
+                </p>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={barData} margin={{ top: 5, left: -10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
+                    <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} angle={-15} textAnchor="end" height={60} />
+                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <Tooltip content={<BarTooltip3 />} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="SI" name="SI / Dentro de rango" stackId="a" fill={COL_SI} isAnimationActive={false} />
+                    <Bar dataKey="NA" name="N/A" stackId="a" fill={COL_NA} isAnimationActive={false} />
+                    <Bar dataKey="NO" name="NO / Fuera de rango" stackId="a" fill={COL_NO} radius={[4, 4, 0, 0]} isAnimationActive={false}>
+                      <LabelList dataKey="total" position="top" style={{ fontSize: 10, fill: '#334155' }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="table-head-brand">
+                      <th className="text-left px-3 py-2 font-semibold rounded-tl-lg">Pregunta</th>
+                      <th className="text-center px-2 py-2 font-semibold text-emerald-300">SI</th>
+                      <th className="text-center px-2 py-2 font-semibold">%</th>
+                      <th className="text-center px-2 py-2 font-semibold text-red-300">NO</th>
+                      <th className="text-center px-2 py-2 font-semibold">%</th>
+                      <th className="text-center px-2 py-2 font-semibold">N/A</th>
+                      <th className="text-center px-2 py-2 font-semibold">%</th>
+                      <th className="text-center px-2 py-2 font-semibold">Total</th>
+                      <th className="text-center px-2 py-2 font-semibold rounded-tr-lg">% Cumplimiento</th>
                     </tr>
-                  ))}
-                  <tr className="bg-amber-50/70">
-                    <td className="px-3 py-1.5 font-medium text-slate-700">Presión Neumotaponador (criterio 5)*</td>
-                    <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{dentroRango}</td>
-                    <td className="px-2 py-1.5 text-center text-slate-500">{pct(dentroRango, conPresion.length)}%</td>
-                    <td className="px-2 py-1.5 text-center font-semibold text-red-500">{fueraRango.length}</td>
-                    <td className="px-2 py-1.5 text-center text-slate-500">{pctFueraRango}%</td>
-                    <td className="px-2 py-1.5 text-center text-slate-400" colSpan={2}>N/A no aplica</td>
-                    <td className="px-2 py-1.5 text-center text-slate-500">{conPresion.length}</td>
-                    <td className="px-2 py-1.5 text-center text-slate-400">ver nota*</td>
-                  </tr>
-                </tbody>
-              </table>
-              <p className="text-[10px] text-slate-500 mt-2">
-                * Criterio 5: "SI" = dentro de rango (22–30) · "NO" = fuera de rango (&lt;22 o &gt;30, cuenta como hallazgo = 1)
-              </p>
+                  </thead>
+                  <tbody>
+                    {tablaPreguntas.map((q, i) => (
+                      <tr key={q.name} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''}`}>
+                        <td className="px-3 py-1.5 font-medium text-slate-700">{q.name}</td>
+                        <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{q.SI}</td>
+                        <td className="px-2 py-1.5 text-center text-slate-500">{q.pctSI}%</td>
+                        <td className="px-2 py-1.5 text-center font-semibold text-red-500">{q.NO}</td>
+                        <td className="px-2 py-1.5 text-center text-slate-500">{q.pctNO}%</td>
+                        <td className="px-2 py-1.5 text-center text-slate-500">{q.NA}</td>
+                        <td className="px-2 py-1.5 text-center text-slate-500">{q.pctNA}%</td>
+                        <td className="px-2 py-1.5 text-center text-slate-500">{q.total}</td>
+                        <td className="px-2 py-1.5 text-center">
+                          <span className={`inline-block px-1.5 py-0.5 rounded-full font-semibold
+                            ${q.cumplimiento >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                            {q.cumplimiento}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="bg-amber-50/70">
+                      <td className="px-3 py-1.5 font-medium text-slate-700">Presión Neumotaponador (criterio 5)*</td>
+                      <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{dentroRango}</td>
+                      <td className="px-2 py-1.5 text-center text-slate-500">{pct(dentroRango, conPresion.length)}%</td>
+                      <td className="px-2 py-1.5 text-center font-semibold text-red-500">{fueraRango.length}</td>
+                      <td className="px-2 py-1.5 text-center text-slate-500">{pctFueraRango}%</td>
+                      <td className="px-2 py-1.5 text-center text-slate-400" colSpan={2}>N/A no aplica</td>
+                      <td className="px-2 py-1.5 text-center text-slate-500">{conPresion.length}</td>
+                      <td className="px-2 py-1.5 text-center text-slate-400">ver nota*</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p className="text-[10px] text-slate-500 mt-2">
+                  * Criterio 5: "SI" = dentro de rango (22–30) · "NO" = fuera de rango (&lt;22 o &gt;30, cuenta como hallazgo = 1)
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Gráficas */}
+          {/* Tendencia */}
           <div className="grid grid-cols-1 gap-6">
-            <div className="card p-5">
-              <h3 className="section-title mb-1">Distribución de Respuestas por Pregunta</h3>
-              <p className="text-[10px] text-slate-500 mb-3">
-                % dentro de cada barra · verde = SI (o dentro de rango en el criterio 5) · rojo = NO (o fuera de rango) · gris = N/A
-              </p>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={barData} margin={{ top: 5, left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
-                  <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} angle={-15} textAnchor="end" height={60} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip content={<BarTooltip3 />} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="SI" name="SI / Dentro de rango" stackId="a" fill={COL_SI} isAnimationActive={false} />
-                  <Bar dataKey="NA" name="N/A" stackId="a" fill={COL_NA} isAnimationActive={false} />
-                  <Bar dataKey="NO" name="NO / Fuera de rango" stackId="a" fill={COL_NO} radius={[4, 4, 0, 0]} isAnimationActive={false}>
-                    <LabelList dataKey="total" position="top" style={{ fontSize: 10, fill: '#334155' }} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
             {lineData.length > 1 && (
               <div className="card p-5">
                 <h3 className="section-title mb-1">Tendencia de % Cumplimiento por Pregunta</h3>
