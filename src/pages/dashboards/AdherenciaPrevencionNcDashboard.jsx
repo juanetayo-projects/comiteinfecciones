@@ -21,7 +21,12 @@ const COL_SI = '#059669'
 const COL_NO = '#e11d48'
 const COL_NA = '#94a3b8'
 
+const MESES_LABEL = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC']
+const CRITERIO_COLORS = { criterio_1_cabecera: '#2f6fe4', criterio_2_higiene_oral: '#7c3aed', criterio_3_implementos: '#f59e0b', criterio_4_movilizacion: '#059669', criterio_5_riesgo_disfagia: '#e11d48' }
+
 function pct(n, total) { return total > 0 ? Math.round((n / total) * 100) : 0 }
+function yearOf(f) { return f ? Number(f.slice(0, 4)) : null }
+function monthOf(f) { return f ? Number(f.slice(5, 7)) : null }
 
 function SH({ children }) {
   return (
@@ -69,6 +74,7 @@ export default function AdherenciaPrevencionNcDashboard() {
   const [raw,     setRaw]     = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(INIT_FILTERS)
+  const [anioResumen, setAnioResumen] = useState(new Date().getFullYear())
   const pdfRef = useRef(null)
 
   useEffect(() => {
@@ -76,6 +82,14 @@ export default function AdherenciaPrevencionNcDashboard() {
       .order('fecha_registro', { ascending: true })
       .then(({ data }) => { setRaw(data ?? []); setLoading(false) })
   }, [])
+
+  const aniosDisponibles = useMemo(
+    () => [...new Set(raw.map(r => yearOf(r.fecha_registro)).filter(Boolean))].sort((a, b) => b - a),
+    [raw]
+  )
+  useEffect(() => {
+    if (aniosDisponibles.length > 0 && !aniosDisponibles.includes(anioResumen)) setAnioResumen(aniosDisponibles[0])
+  }, [aniosDisponibles])
 
   const servicios = useMemo(() => [...new Set(raw.map(r => r.servicio).filter(Boolean))].sort(), [raw])
 
@@ -115,6 +129,36 @@ export default function AdherenciaPrevencionNcDashboard() {
   }, [rows])
 
   const LINE_COLORS = { criterio_1_cabecera: '#2f6fe4', criterio_2_higiene_oral: '#7c3aed', criterio_3_implementos: '#f59e0b', criterio_4_movilizacion: '#059669', criterio_5_riesgo_disfagia: '#e11d48' }
+
+  // ── Resumen mensual del año seleccionado (valores + %) ──────────────
+  const resumenMensual = useMemo(() => MESES_LABEL.map((label, i) => {
+    const mesNum = i + 1
+    const rowsMes = raw.filter(r => yearOf(r.fecha_registro) === anioResumen && monthOf(r.fecha_registro) === mesNum)
+    const porCriterio = CRITERIOS.map(c => {
+      const SI = rowsMes.filter(r => r[c.key] === 'SI').length
+      const NA = rowsMes.filter(r => r[c.key] === 'NA').length
+      const NO = rowsMes.filter(r => r[c.key] === 'NO').length
+      const tot = SI + NA + NO
+      return { key: c.key, label: c.label, SI, pctCumple: tot > 0 ? pct(SI + NA, tot) : null }
+    })
+    const pctsValidos = porCriterio.filter(c => c.pctCumple != null).map(c => c.pctCumple)
+    const adherenciaGeneral = pctsValidos.length > 0
+      ? Math.round(pctsValidos.reduce((s, p) => s + p, 0) / pctsValidos.length) : null
+    return { mes: label, total: rowsMes.length, porCriterio, adherenciaGeneral }
+  }), [raw, anioResumen])
+
+  const resumenValoresChart = useMemo(() => resumenMensual.map(m => {
+    const row = { mes: m.mes }
+    m.porCriterio.forEach(c => { row[c.key] = c.SI })
+    return row
+  }), [resumenMensual])
+
+  const resumenPctChart = useMemo(() => resumenMensual.map(m => {
+    const row = { mes: m.mes }
+    m.porCriterio.forEach(c => { row[c.key] = c.pctCumple })
+    row.adherenciaGeneral = m.adherenciaGeneral
+    return row
+  }), [resumenMensual])
 
   if (loading) return (
     <div className="p-8 flex justify-center">
@@ -290,6 +334,101 @@ export default function AdherenciaPrevencionNcDashboard() {
                 </ResponsiveContainer>
               </div>
             )}
+          </div>
+
+          {/* Resumen Mensual por Año */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-base font-bold text-brand-900">Resumen Mensual — {anioResumen}</h2>
+            <select className="input w-28" value={anioResumen} onChange={e => setAnioResumen(Number(e.target.value))} data-pdf-hide>
+              {(aniosDisponibles.length ? aniosDisponibles : [anioResumen]).map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+          </div>
+
+          {/* Tabla + gráfico de VALORES */}
+          <div className="card p-5">
+            <SH>Resumen Mensual — Valores (conteo de SI por criterio)</SH>
+            <div className="overflow-x-auto mb-4">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="table-head-brand">
+                    <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">Mes</th>
+                    {CRITERIOS.map(c => <th key={c.key} className="text-center px-2 py-2 font-semibold">{c.label}</th>)}
+                    <th className="text-center px-2 py-2 font-semibold rounded-tr-md">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resumenMensual.map((m, i) => (
+                    <tr key={m.mes} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''}`}>
+                      <td className="px-2.5 py-1.5 text-slate-700 font-medium">{m.mes}</td>
+                      {m.porCriterio.map(c => (
+                        <td key={c.key} className="px-2 py-1.5 text-center text-slate-600">{m.total ? c.SI : '—'}</td>
+                      ))}
+                      <td className="px-2 py-1.5 text-center text-slate-500">{m.total || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={resumenValoresChart} margin={{ top: 10, left: -10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
+                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                {CRITERIOS.map(c => (
+                  <Bar key={c.key} dataKey={c.key} name={c.label} fill={CRITERIO_COLORS[c.key]} isAnimationActive={false} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Tabla + gráfico de PORCENTAJES */}
+          <div className="card p-5">
+            <SH>Resumen Mensual — % Adherencia</SH>
+            <div className="overflow-x-auto mb-4">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="table-head-brand">
+                    <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">Mes</th>
+                    {CRITERIOS.map(c => <th key={c.key} className="text-center px-2 py-2 font-semibold">{c.label}</th>)}
+                    <th className="text-center px-2 py-2 font-semibold rounded-tr-md">Adherencia General</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resumenMensual.map((m, i) => (
+                    <tr key={m.mes} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''}`}>
+                      <td className="px-2.5 py-1.5 text-slate-700 font-medium">{m.mes}</td>
+                      {m.porCriterio.map(c => (
+                        <td key={c.key} className="px-2 py-1.5 text-center text-slate-600">{c.pctCumple != null ? `${c.pctCumple}%` : '—'}</td>
+                      ))}
+                      <td className="px-2 py-1.5 text-center">
+                        {m.adherenciaGeneral != null
+                          ? <span className={`inline-block px-1.5 py-0.5 rounded-full font-semibold
+                              ${m.adherenciaGeneral >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                              {m.adherenciaGeneral}%
+                            </span>
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={resumenPctChart} margin={{ top: 10, left: -10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
+                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
+                <Tooltip formatter={v => v == null ? 'Sin datos' : `${v}%`} />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                {CRITERIOS.map(c => (
+                  <Line key={c.key} type="monotone" dataKey={c.key} name={c.label}
+                    stroke={CRITERIO_COLORS[c.key]} strokeWidth={1.5} dot={{ r: 2 }} connectNulls={false} isAnimationActive={false} />
+                ))}
+                <Line type="monotone" dataKey="adherenciaGeneral" name="Adherencia General" stroke="#0d2d6b" strokeWidth={3} dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </>
       )}
