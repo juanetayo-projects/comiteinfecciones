@@ -8,6 +8,8 @@ import ExportButtons from '../components/common/ExportButtons'
 const AVP_KEYS = ['criterio_1_rotulo','criterio_2_fijacion','criterio_3_mantenimiento','criterio_4_pertinencia','criterio_5_educacion']
 const CV_KEYS  = ['criterio_1_fijacion','criterio_2_posicion_bolsa','criterio_3_rotulacion','criterio_4_indicacion','criterio_5_flujo_continuo','criterio_6_lista_chequeo_sonda']
 const PN_KEYS  = ['criterio_1_cabecera','criterio_2_higiene_oral','criterio_3_implementos','criterio_4_lista_chequeo_nav']
+const APN_KEYS = ['criterio_1_cabecera','criterio_2_higiene_oral','criterio_3_implementos','criterio_4_lista_chequeo','criterio_6_interrupcion_sedacion']
+const APC_KEYS = ['criterio_1_cabecera','criterio_2_higiene_oral','criterio_3_implementos','criterio_4_movilizacion','criterio_5_riesgo_disfagia']
 
 const TIPOS_CFG = [
   {
@@ -90,6 +92,30 @@ const TIPOS_CFG = [
     getSujeto:      r => r.codigo_evento || '',
     getResultado:   r => r.resultado || '',
     getProfesional: r => r.medico || '',
+  },
+  {
+    key:'apn', label:'Adherencia Prevención NAV', color:'violet',
+    table:'encuesta_adherencia_prevencion_nav', dateField:'fecha_registro',
+    editPath: id => `/encuestas/adherencia-prevencion-nav/${id}/editar`,
+    getServicio:    r => r.servicio,
+    getSujeto:      r => r.documento_identificacion || '',
+    getResultado:   r => {
+      const c = APN_KEYS.filter(k => r[k] === 'SI' || r[k] === 'NA').length
+      return `${c}/${APN_KEYS.length} criterios`
+    },
+    getProfesional: r => '',
+  },
+  {
+    key:'apc', label:'Adherencia Prevención NC', color:'cyan',
+    table:'encuesta_adherencia_prevencion_nc', dateField:'fecha_registro',
+    editPath: id => `/encuestas/adherencia-prevencion-nc/${id}/editar`,
+    getServicio:    r => r.servicio,
+    getSujeto:      r => r.documento_identificacion || '',
+    getResultado:   r => {
+      const c = APC_KEYS.filter(k => r[k] === 'SI' || r[k] === 'NA').length
+      return `${c}/${APC_KEYS.length} criterios`
+    },
+    getProfesional: r => '',
   },
 ]
 

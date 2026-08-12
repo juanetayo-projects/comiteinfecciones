@@ -3,7 +3,7 @@ import {
   LayoutDashboard, ClipboardList,
   Kanban, BookOpen, FileBarChart2, Settings, X,
   ShieldAlert, Hand, Microscope, Stethoscope, Activity, ClipboardCheck,
-  ChevronDown, ChevronRight,
+  Wind, ChevronDown, ChevronRight,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '../../lib/utils'
@@ -15,6 +15,8 @@ const ENCUESTAS = [
   { to: '/encuestas/ronda-cirugia',            label: 'Ronda de Cirugía',     icon: Stethoscope,    color: 'text-purple-300'  },
   { to: '/encuestas/seguimiento-dispositivos', label: 'Seguimiento Disp.',    icon: Activity,       color: 'text-emerald-300' },
   { to: '/encuestas/adherencia-fichas',        label: 'Adherencia Fichas Epi.', icon: ClipboardCheck, color: 'text-sky-300'   },
+  { to: '/encuestas/adherencia-prevencion-nav', label: 'Adherencia Prevención NAV', icon: Wind,        color: 'text-violet-300' },
+  { to: '/encuestas/adherencia-prevencion-nc',  label: 'Adherencia Prevención NC',  icon: Stethoscope, color: 'text-teal-300'  },
 ]
 
 function NavItem({ to, icon: Icon, label, iconColor = 'text-white/70', end = false }) {

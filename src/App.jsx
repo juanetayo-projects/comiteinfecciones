@@ -22,6 +22,12 @@ import AislamientoForm from './pages/encuestas/AislamientoForm'
 import AdherenciaFichas     from './pages/encuestas/AdherenciaFichas'
 import AdherenciaFichasForm from './pages/encuestas/AdherenciaFichasForm'
 
+// ── Adherencia Prevención NAV / NC ───────────────────────────
+import AdherenciaPrevencionNav     from './pages/encuestas/AdherenciaPrevencionNav'
+import AdherenciaPrevencionNavForm from './pages/encuestas/AdherenciaPrevencionNavForm'
+import AdherenciaPrevencionNc      from './pages/encuestas/AdherenciaPrevencionNc'
+import AdherenciaPrevencionNcForm  from './pages/encuestas/AdherenciaPrevencionNcForm'
+
 // ── Higiene de Manos ─────────────────────────────────────────
 import HigieneManos    from './pages/encuestas/HigieneManos'
 import HigieneManosForn from './pages/encuestas/HigieneManosForn'
@@ -53,6 +59,8 @@ import AccesoVenasoDashboard      from './pages/dashboards/AccesoVenasoDashboard
 import CateterVesicalDashboard    from './pages/dashboards/CateterVesicalDashboard'
 import PrevencionNeumoniaDashboard from './pages/dashboards/PrevencionNeumoniaDashboard'
 import AdherenciaFichasDashboard  from './pages/dashboards/AdherenciaFichasDashboard'
+import AdherenciaPrevencionNavDashboard from './pages/dashboards/AdherenciaPrevencionNavDashboard'
+import AdherenciaPrevencionNcDashboard  from './pages/dashboards/AdherenciaPrevencionNcDashboard'
 
 export default function App() {
   return (
@@ -119,6 +127,18 @@ export default function App() {
             <Route path="/encuestas/adherencia-fichas/nuevo"      element={<AdherenciaFichasForm />} />
             <Route path="/encuestas/adherencia-fichas/:id/editar" element={<AdherenciaFichasForm />} />
             <Route path="/encuestas/adherencia-fichas/dashboard"  element={<AdherenciaFichasDashboard />} />
+
+            {/* Adherencia Prevención NAV */}
+            <Route path="/encuestas/adherencia-prevencion-nav"            element={<AdherenciaPrevencionNav />} />
+            <Route path="/encuestas/adherencia-prevencion-nav/nuevo"      element={<AdherenciaPrevencionNavForm />} />
+            <Route path="/encuestas/adherencia-prevencion-nav/:id/editar" element={<AdherenciaPrevencionNavForm />} />
+            <Route path="/encuestas/adherencia-prevencion-nav/dashboard" element={<AdherenciaPrevencionNavDashboard />} />
+
+            {/* Adherencia Prevención NC */}
+            <Route path="/encuestas/adherencia-prevencion-nc"            element={<AdherenciaPrevencionNc />} />
+            <Route path="/encuestas/adherencia-prevencion-nc/nuevo"      element={<AdherenciaPrevencionNcForm />} />
+            <Route path="/encuestas/adherencia-prevencion-nc/:id/editar" element={<AdherenciaPrevencionNcForm />} />
+            <Route path="/encuestas/adherencia-prevencion-nc/dashboard" element={<AdherenciaPrevencionNcDashboard />} />
 
             {/* Resto */}
             <Route path="/kanban"        element={<Kanban />} />
