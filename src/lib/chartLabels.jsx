@@ -6,6 +6,43 @@
  * barra (verde ≥80 %, rojo <80 %).
  */
 
+import { useState } from 'react'
+
+/**
+ * Habilita mostrar/ocultar series en un gráfico (barra o línea) haciendo clic
+ * sobre su ítem en la leyenda. Uso:
+ *
+ *   const tgl = useSeriesToggle()
+ *   <Legend onClick={tgl.onLegendClick} formatter={tgl.legendFormatter} />
+ *   <Line dataKey="criterio_1" hide={tgl.hidden.has('criterio_1')} ... />
+ */
+export function useSeriesToggle() {
+  const [hidden, setHidden] = useState(() => new Set())
+
+  function toggle(dataKey) {
+    setHidden(prev => {
+      const next = new Set(prev)
+      next.has(dataKey) ? next.delete(dataKey) : next.add(dataKey)
+      return next
+    })
+  }
+
+  function onLegendClick(entry) {
+    if (entry?.dataKey != null) toggle(entry.dataKey)
+  }
+
+  function legendFormatter(value, entry) {
+    const isHidden = hidden.has(entry?.dataKey)
+    return (
+      <span style={{ opacity: isHidden ? 0.4 : 1, textDecoration: isHidden ? 'line-through' : 'none' }}>
+        {value}
+      </span>
+    )
+  }
+
+  return { hidden, toggle, onLegendClick, legendFormatter }
+}
+
 export const BAR_CUMPLE    = '#059669'   // emerald-600
 export const BAR_NO_CUMPLE = '#e11d48'   // rose-600
 export const PIE_COLORS    = [BAR_CUMPLE, BAR_NO_CUMPLE]

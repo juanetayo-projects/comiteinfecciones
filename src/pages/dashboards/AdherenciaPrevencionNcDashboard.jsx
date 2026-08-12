@@ -8,6 +8,7 @@ import {
 import { ArrowLeft, Stethoscope, Filter, X, BarChart3, TrendingUp, TrendingDown } from 'lucide-react'
 import DashboardPdfButton from '../../components/common/DashboardPdfButton'
 import { filtrosResumen, formatDate } from '../../lib/utils'
+import { useSeriesToggle } from '../../lib/chartLabels'
 
 const CRITERIOS = [
   { key: 'criterio_1_cabecera',        label: 'Cabecera 30–45°' },
@@ -76,6 +77,12 @@ export default function AdherenciaPrevencionNcDashboard() {
   const [filters, setFilters] = useState(INIT_FILTERS)
   const [anioResumen, setAnioResumen] = useState(new Date().getFullYear())
   const pdfRef = useRef(null)
+
+  // Mostrar/ocultar series haciendo clic en la leyenda de cada gráfico
+  const tglDist   = useSeriesToggle()
+  const tglTend   = useSeriesToggle()
+  const tglResVal = useSeriesToggle()
+  const tglResPct = useSeriesToggle()
 
   useEffect(() => {
     supabase.from('encuesta_adherencia_prevencion_nc').select('*')
@@ -256,17 +263,20 @@ export default function AdherenciaPrevencionNcDashboard() {
             <SH>Totales por Pregunta (SI=1 · N/A=1 · NO=0)</SH>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
               <div>
-                <p className="text-[10px] text-slate-500 mb-2">% dentro de cada barra · verde = SI · rojo = NO · gris = N/A</p>
+                <p className="text-[10px] text-slate-500 mb-2">
+                  % dentro de cada barra · verde = SI · rojo = NO · gris = N/A
+                  · <span className="italic">clic en la leyenda para mostrar/ocultar</span>
+                </p>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={barData} margin={{ top: 5, left: -10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                     <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} angle={-15} textAnchor="end" height={60} />
                     <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                     <Tooltip content={<BarTooltip3 />} />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="SI" name="SI" stackId="a" fill={COL_SI} isAnimationActive={false} />
-                    <Bar dataKey="NA" name="N/A" stackId="a" fill={COL_NA} isAnimationActive={false} />
-                    <Bar dataKey="NO" name="NO" stackId="a" fill={COL_NO} radius={[4, 4, 0, 0]} isAnimationActive={false}>
+                    <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglDist.onLegendClick} formatter={tglDist.legendFormatter} />
+                    <Bar dataKey="SI" name="SI" stackId="a" fill={COL_SI} hide={tglDist.hidden.has('SI')} isAnimationActive={false} />
+                    <Bar dataKey="NA" name="N/A" stackId="a" fill={COL_NA} hide={tglDist.hidden.has('NA')} isAnimationActive={false} />
+                    <Bar dataKey="NO" name="NO" stackId="a" fill={COL_NO} radius={[4, 4, 0, 0]} hide={tglDist.hidden.has('NO')} isAnimationActive={false}>
                       <LabelList dataKey="total" position="top" style={{ fontSize: 10, fill: '#334155' }} />
                     </Bar>
                   </BarChart>
@@ -317,17 +327,21 @@ export default function AdherenciaPrevencionNcDashboard() {
             {lineData.length > 1 && (
               <div className="card p-5">
                 <h3 className="section-title mb-1">Tendencia de % Cumplimiento por Pregunta</h3>
-                <p className="text-xs text-slate-400 mb-3">Cada punto = fecha de auditoría · % SI+N/A sobre el total del día</p>
+                <p className="text-xs text-slate-400 mb-3">
+                  Cada punto = fecha de auditoría · % SI+N/A sobre el total del día
+                  · <span className="italic">clic en la leyenda para mostrar/ocultar</span>
+                </p>
                 <ResponsiveContainer width="100%" height={260}>
                   <LineChart data={lineData} margin={{ top: 10, left: -10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
                     <XAxis dataKey="fecha" tick={{ fontSize: 10 }} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
                     <Tooltip formatter={v => `${v}%`} />
-                    <Legend wrapperStyle={{ fontSize: 10 }} />
+                    <Legend wrapperStyle={{ fontSize: 10, cursor: 'pointer' }} onClick={tglTend.onLegendClick} formatter={tglTend.legendFormatter} />
                     {CRITERIOS.map(c => (
                       <Line key={c.key} type="monotone" dataKey={c.key} name={c.label}
                         stroke={LINE_COLORS[c.key]} strokeWidth={2} dot={{ r: 3 }}
+                        hide={tglTend.hidden.has(c.key)}
                         connectNulls isAnimationActive={false} />
                     ))}
                   </LineChart>
@@ -354,9 +368,9 @@ export default function AdherenciaPrevencionNcDashboard() {
                   <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                   <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Legend wrapperStyle={{ fontSize: 10, cursor: 'pointer' }} onClick={tglResVal.onLegendClick} formatter={tglResVal.legendFormatter} />
                   {CRITERIOS.map(c => (
-                    <Bar key={c.key} dataKey={c.key} name={c.label} fill={CRITERIO_COLORS[c.key]} isAnimationActive={false} />
+                    <Bar key={c.key} dataKey={c.key} name={c.label} fill={CRITERIO_COLORS[c.key]} hide={tglResVal.hidden.has(c.key)} isAnimationActive={false} />
                   ))}
                 </BarChart>
               </ResponsiveContainer>
@@ -395,12 +409,14 @@ export default function AdherenciaPrevencionNcDashboard() {
                   <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
                   <Tooltip formatter={v => v == null ? 'Sin datos' : `${v}%`} />
-                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Legend wrapperStyle={{ fontSize: 10, cursor: 'pointer' }} onClick={tglResPct.onLegendClick} formatter={tglResPct.legendFormatter} />
                   {CRITERIOS.map(c => (
                     <Line key={c.key} type="monotone" dataKey={c.key} name={c.label}
-                      stroke={CRITERIO_COLORS[c.key]} strokeWidth={1.5} dot={{ r: 2 }} connectNulls={false} isAnimationActive={false} />
+                      stroke={CRITERIO_COLORS[c.key]} strokeWidth={1.5} dot={{ r: 2 }} connectNulls={false}
+                      hide={tglResPct.hidden.has(c.key)} isAnimationActive={false} />
                   ))}
-                  <Line type="monotone" dataKey="adherenciaGeneral" name="Adherencia General" stroke="#0d2d6b" strokeWidth={3} dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="adherenciaGeneral" name="Adherencia General" stroke="#0d2d6b" strokeWidth={3} dot={{ r: 3 }} connectNulls={false}
+                    hide={tglResPct.hidden.has('adherenciaGeneral')} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
               <div className="overflow-x-auto">
