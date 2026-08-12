@@ -391,100 +391,104 @@ export default function AdherenciaPrevencionNavDashboard() {
             </select>
           </div>
 
-          {/* Tabla + gráfico de VALORES */}
+          {/* VALORES: gráfico izquierda · tabla derecha */}
           <div className="card p-5">
             <SH>Resumen Mensual — Valores (conteo de SI por criterio)</SH>
-            <div className="overflow-x-auto mb-4">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="table-head-brand">
-                    <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">Mes</th>
-                    {CRITERIOS.map(c => <th key={c.key} className="text-center px-2 py-2 font-semibold">{c.label}</th>)}
-                    <th className="text-center px-2 py-2 font-semibold text-emerald-300">Dentro Rango</th>
-                    <th className="text-center px-2 py-2 font-semibold text-red-300">Fuera Rango</th>
-                    <th className="text-center px-2 py-2 font-semibold rounded-tr-md">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {resumenMensual.map((m, i) => (
-                    <tr key={m.mes} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''}`}>
-                      <td className="px-2.5 py-1.5 text-slate-700 font-medium">{m.mes}</td>
-                      {m.porCriterio.map(c => (
-                        <td key={c.key} className="px-2 py-1.5 text-center text-slate-600">{m.total ? c.SI : '—'}</td>
-                      ))}
-                      <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{m.totalPresion ? m.dentro : '—'}</td>
-                      <td className="px-2 py-1.5 text-center font-semibold text-red-500">{m.totalPresion ? m.fuera : '—'}</td>
-                      <td className="px-2 py-1.5 text-center text-slate-500">{m.total || '—'}</td>
-                    </tr>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={resumenValoresChart} margin={{ top: 10, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
+                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  {CRITERIOS.map(c => (
+                    <Bar key={c.key} dataKey={c.key} name={c.label} fill={CRITERIO_COLORS[c.key]} isAnimationActive={false} />
                   ))}
-                </tbody>
-              </table>
+                  <Bar dataKey="dentroRango" name="Dentro Rango (Presión)" fill={COL_SI} isAnimationActive={false} />
+                  <Bar dataKey="fueraRango" name="Fuera Rango (Presión)" fill={COL_NO} isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="table-head-brand">
+                      <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">Mes</th>
+                      {CRITERIOS.map(c => <th key={c.key} className="text-center px-2 py-2 font-semibold">{c.label}</th>)}
+                      <th className="text-center px-2 py-2 font-semibold text-emerald-300">Dentro Rango</th>
+                      <th className="text-center px-2 py-2 font-semibold text-red-300">Fuera Rango</th>
+                      <th className="text-center px-2 py-2 font-semibold rounded-tr-md">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resumenMensual.map((m, i) => (
+                      <tr key={m.mes} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''}`}>
+                        <td className="px-2.5 py-1.5 text-slate-700 font-medium">{m.mes}</td>
+                        {m.porCriterio.map(c => (
+                          <td key={c.key} className="px-2 py-1.5 text-center text-slate-600">{m.total ? c.SI : '—'}</td>
+                        ))}
+                        <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{m.totalPresion ? m.dentro : '—'}</td>
+                        <td className="px-2 py-1.5 text-center font-semibold text-red-500">{m.totalPresion ? m.fuera : '—'}</td>
+                        <td className="px-2 py-1.5 text-center text-slate-500">{m.total || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={resumenValoresChart} margin={{ top: 10, left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
-                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 10 }} />
-                {CRITERIOS.map(c => (
-                  <Bar key={c.key} dataKey={c.key} name={c.label} fill={CRITERIO_COLORS[c.key]} isAnimationActive={false} />
-                ))}
-                <Bar dataKey="dentroRango" name="Dentro Rango (Presión)" fill={COL_SI} isAnimationActive={false} />
-                <Bar dataKey="fueraRango" name="Fuera Rango (Presión)" fill={COL_NO} isAnimationActive={false} />
-              </BarChart>
-            </ResponsiveContainer>
           </div>
 
-          {/* Tabla + gráfico de PORCENTAJES */}
+          {/* PORCENTAJES: gráfico izquierda · tabla derecha */}
           <div className="card p-5">
             <SH>Resumen Mensual — % Adherencia</SH>
-            <div className="overflow-x-auto mb-4">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="table-head-brand">
-                    <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">Mes</th>
-                    {CRITERIOS.map(c => <th key={c.key} className="text-center px-2 py-2 font-semibold">{c.label}</th>)}
-                    <th className="text-center px-2 py-2 font-semibold">Presión Dentro Rango</th>
-                    <th className="text-center px-2 py-2 font-semibold rounded-tr-md">Adherencia General</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {resumenMensual.map((m, i) => (
-                    <tr key={m.mes} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''}`}>
-                      <td className="px-2.5 py-1.5 text-slate-700 font-medium">{m.mes}</td>
-                      {m.porCriterio.map(c => (
-                        <td key={c.key} className="px-2 py-1.5 text-center text-slate-600">{c.pctCumple != null ? `${c.pctCumple}%` : '—'}</td>
-                      ))}
-                      <td className="px-2 py-1.5 text-center text-slate-600">{m.pctDentro != null ? `${m.pctDentro}%` : '—'}</td>
-                      <td className="px-2 py-1.5 text-center">
-                        {m.adherenciaGeneral != null
-                          ? <span className={`inline-block px-1.5 py-0.5 rounded-full font-semibold
-                              ${m.adherenciaGeneral >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                              {m.adherenciaGeneral}%
-                            </span>
-                          : '—'}
-                      </td>
-                    </tr>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={resumenPctChart} margin={{ top: 10, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
+                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
+                  <Tooltip formatter={v => v == null ? 'Sin datos' : `${v}%`} />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  {CRITERIOS.map(c => (
+                    <Line key={c.key} type="monotone" dataKey={c.key} name={c.label}
+                      stroke={CRITERIO_COLORS[c.key]} strokeWidth={1.5} dot={{ r: 2 }} connectNulls={false} isAnimationActive={false} />
                   ))}
-                </tbody>
-              </table>
+                  <Line type="monotone" dataKey="presion" name="Presión Dentro Rango" stroke="#e11d48" strokeWidth={1.5} strokeDasharray="4 3" dot={{ r: 2 }} connectNulls={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="adherenciaGeneral" name="Adherencia General" stroke="#0d2d6b" strokeWidth={3} dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
+                </LineChart>
+              </ResponsiveContainer>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="table-head-brand">
+                      <th className="text-left px-2.5 py-2 font-semibold rounded-tl-md">Mes</th>
+                      {CRITERIOS.map(c => <th key={c.key} className="text-center px-2 py-2 font-semibold">{c.label}</th>)}
+                      <th className="text-center px-2 py-2 font-semibold">Presión Dentro Rango</th>
+                      <th className="text-center px-2 py-2 font-semibold rounded-tr-md">Adherencia General</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resumenMensual.map((m, i) => (
+                      <tr key={m.mes} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''}`}>
+                        <td className="px-2.5 py-1.5 text-slate-700 font-medium">{m.mes}</td>
+                        {m.porCriterio.map(c => (
+                          <td key={c.key} className="px-2 py-1.5 text-center text-slate-600">{c.pctCumple != null ? `${c.pctCumple}%` : '—'}</td>
+                        ))}
+                        <td className="px-2 py-1.5 text-center text-slate-600">{m.pctDentro != null ? `${m.pctDentro}%` : '—'}</td>
+                        <td className="px-2 py-1.5 text-center">
+                          {m.adherenciaGeneral != null
+                            ? <span className={`inline-block px-1.5 py-0.5 rounded-full font-semibold
+                                ${m.adherenciaGeneral >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                {m.adherenciaGeneral}%
+                              </span>
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={resumenPctChart} margin={{ top: 10, left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
-                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
-                <Tooltip formatter={v => v == null ? 'Sin datos' : `${v}%`} />
-                <Legend wrapperStyle={{ fontSize: 10 }} />
-                {CRITERIOS.map(c => (
-                  <Line key={c.key} type="monotone" dataKey={c.key} name={c.label}
-                    stroke={CRITERIO_COLORS[c.key]} strokeWidth={1.5} dot={{ r: 2 }} connectNulls={false} isAnimationActive={false} />
-                ))}
-                <Line type="monotone" dataKey="presion" name="Presión Dentro Rango" stroke="#e11d48" strokeWidth={1.5} strokeDasharray="4 3" dot={{ r: 2 }} connectNulls={false} isAnimationActive={false} />
-                <Line type="monotone" dataKey="adherenciaGeneral" name="Adherencia General" stroke="#0d2d6b" strokeWidth={3} dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
-              </LineChart>
-            </ResponsiveContainer>
           </div>
         </>
       )}
