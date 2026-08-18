@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '../../lib/utils'
+import { useAuth } from '../../contexts/AuthContext'
 
 const ENCUESTAS = [
   { to: '/encuestas/aislamiento',              label: 'Aislamiento',          icon: ShieldAlert,    color: 'text-red-300'     },
@@ -39,6 +40,45 @@ function NavItem({ to, icon: Icon, label, iconColor = 'text-white/70', end = fal
 
 export default function Sidebar({ open, onClose }) {
   const [encuestasOpen, setEncuestasOpen] = useState(true)
+  const { rol } = useAuth()
+
+  // Rol restringido a un único módulo: sin dashboard general ni resto de menú.
+  if (rol === 'lector_adherencia') {
+    return (
+      <>
+        {open && (
+          <div className="fixed inset-0 z-20 bg-black/40 lg:hidden" onClick={onClose} />
+        )}
+        <aside className={cn(
+          'fixed top-0 left-0 h-full w-64 z-30',
+          'flex flex-col transition-transform duration-200',
+          'lg:translate-x-0 shadow-[10px_0_30px_-12px_rgba(13,45,107,0.55)]',
+          open ? 'translate-x-0' : '-translate-x-full'
+        )}
+          style={{ backgroundImage: 'linear-gradient(180deg, #1f56c4 0%, #1a4fa0 45%, #0d2d6b 100%)' }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+            <div className="flex items-center gap-2.5">
+              <img src="./logo_cacsb2.png" alt="Clínica Santa Bárbara" className="h-8 w-auto brightness-0 invert" />
+              <div>
+                <p className="text-xs font-bold text-white leading-tight">Comité de Infecciones</p>
+                <p className="text-[10px] text-white/60 leading-tight">Clínica Santa Bárbara</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="lg:hidden p-1 rounded text-white/60 hover:text-white">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+            <NavItem to="/encuestas/adherencia-fichas" icon={ClipboardCheck} label="Adherencia Fichas Epi." iconColor="text-sky-300" />
+          </nav>
+          <div className="px-4 py-3 border-t border-white/10">
+            <p className="text-[10px] text-white/40 text-center">v2.0 · 2025</p>
+          </div>
+        </aside>
+      </>
+    )
+  }
 
   return (
     <>

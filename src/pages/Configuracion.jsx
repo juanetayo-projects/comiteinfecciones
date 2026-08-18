@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseAuthOnly } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import {
   Settings, Users, List, Paperclip, Mail,
@@ -9,16 +9,18 @@ import {
 } from 'lucide-react'
 
 // ── Shared constants ──────────────────────────────────────────
-const ROLES = ['administrador', 'coordinador', 'auxiliar']
+const ROLES = ['administrador', 'coordinador', 'auxiliar', 'lector_adherencia']
 const ROLE_BADGE = {
-  administrador: 'bg-brand-100 text-brand-700',
-  coordinador:   'bg-blue-100   text-blue-700',
-  auxiliar:      'bg-slate-100  text-slate-600',
+  administrador:      'bg-brand-100 text-brand-700',
+  coordinador:        'bg-blue-100   text-blue-700',
+  auxiliar:           'bg-slate-100  text-slate-600',
+  lector_adherencia:  'bg-sky-100    text-sky-700',
 }
 const ROLE_LABEL = {
-  administrador: 'Administrador',
-  coordinador:   'Coordinador',
-  auxiliar:      'Auxiliar',
+  administrador:      'Administrador',
+  coordinador:        'Coordinador',
+  auxiliar:            'Auxiliar',
+  lector_adherencia:  'Lector Adherencia Fichas',
 }
 
 function SH({ children }) {
@@ -75,15 +77,20 @@ function ProfileModal({ profile, onClose, onSaved }) {
         onSaved({ ...profile, ...update })
       } else {
         if (!form.email || !form.password) throw new Error('Email y contraseña son requeridos')
-        const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+        // Cliente aislado: signUp() no debe reemplazar la sesión del admin actual
+        const { data: signUpData, error: signUpErr } = await supabaseAuthOnly.auth.signUp({
           email: form.email, password: form.password,
+          options: { data: { nombre: form.nombre, rol: form.rol } },
         })
         if (signUpErr) throw signUpErr
         const uid = signUpData?.user?.id
         if (!uid) throw new Error('No se pudo obtener el ID del usuario')
-        const { error: profErr } = await supabase.from('user_profiles').upsert({
-          id: uid, nombre: form.nombre, rol: form.rol, activo: form.activo,
-        })
+        // El trigger on_auth_user_created ya creó el perfil con nombre/rol correctos;
+        // solo falta aplicar el estado activo/inactivo elegido en el formulario.
+        const { error: profErr } = await supabase
+          .from('user_profiles')
+          .update({ activo: form.activo })
+          .eq('id', uid)
         if (profErr) throw profErr
         onSaved({ id: uid, nombre: form.nombre, email: form.email, rol: form.rol, activo: form.activo })
       }
@@ -169,10 +176,10 @@ function ProfileModal({ profile, onClose, onSaved }) {
           )}
           <div>
             <label className="label">Rol *</label>
-            <div className="flex gap-3 mt-1">
+            <div className="grid grid-cols-2 gap-2 mt-1">
               {ROLES.map(r => (
                 <button key={r} type="button" onClick={() => setF('rol', r)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-semibold border-2 transition-colors ${
+                  className={`py-2 px-2 rounded-lg text-xs font-semibold border-2 transition-colors ${
                     form.rol === r
                       ? 'border-brand-500 bg-brand-50 text-brand-700'
                       : 'border-slate-200 text-slate-600 hover:border-slate-300'
@@ -263,7 +270,7 @@ function UsuariosTab({ showToast }) {
       </div>
 
       {/* Rol summary */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {ROLES.map(r => {
           const count = activos.filter(p => p.rol === r).length
           return (
@@ -378,7 +385,7 @@ function UsuariosTab({ showToast }) {
           <div className="text-xs text-blue-700 space-y-1">
             <p className="font-semibold">Gestión de credenciales</p>
             <p>Los nuevos usuarios reciben un correo de confirmación al registrarse. Para cambiar la contraseña de un usuario existente, abra su perfil con el botón editar y use el botón <strong>"Enviar link de restablecimiento"</strong> — el usuario recibirá un enlace seguro en su correo para establecer una nueva contraseña.</p>
-            <p><strong>Roles:</strong> Administrador — acceso total · Coordinador — sin eliminación · Auxiliar — solo lectura y creación.</p>
+            <p><strong>Roles:</strong> Administrador — acceso total · Coordinador — sin eliminación · Auxiliar — solo lectura y creación · Lector Adherencia Fichas — solo puede ver el listado y el dashboard de Adherencia a Fichas Epidemiológicas, sin acceso al resto del sistema.</p>
           </div>
         </div>
       </div>
