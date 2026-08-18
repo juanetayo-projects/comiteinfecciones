@@ -52,11 +52,23 @@ export function AuthProvider({ children }) {
   }
 
   // ¿El usuario actual puede capturar (crear) registros en este módulo?
-  // Si el módulo no tiene fila configurada, se permite por defecto (fail-open,
+  // lector_adherencia nunca captura, sin importar el módulo. Para el resto,
+  // si el módulo no tiene fila configurada se permite por defecto (fail-open,
   // igual que el comportamiento histórico antes de existir esta tabla).
   function puedeCapturar(modulo) {
+    if (rol === 'lector_adherencia') return false
     const fila = permisos.find(p => p.modulo === modulo && p.rol === rol)
     return fila ? fila.puede_capturar : true
+  }
+
+  // ¿El usuario actual puede ver (acceder a) este módulo de encuesta?
+  // Administrador/coordinador siempre. Para el resto, la lista
+  // `modulos_permitidos` del perfil restringe; vacía o nula = sin restricción.
+  function tieneAccesoModulo(moduloKey) {
+    if (rol === 'administrador' || rol === 'coordinador') return true
+    const lista = profile?.modulos_permitidos
+    if (!lista || lista.length === 0) return true
+    return lista.includes(moduloKey)
   }
 
   async function signIn(email, password) {
@@ -88,7 +100,7 @@ export function AuthProvider({ children }) {
   const value = {
     user, profile, rol, loading, needsPasswordReset, permisos,
     signIn, signOut, updatePassword, resetPasswordForEmail,
-    puedeCapturar, reloadPermisos: fetchPermisos,
+    puedeCapturar, tieneAccesoModulo, reloadPermisos: fetchPermisos,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

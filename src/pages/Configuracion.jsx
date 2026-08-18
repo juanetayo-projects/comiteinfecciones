@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase, supabaseAuthOnly } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { MODULOS_ENCUESTA } from '../lib/modulos'
 import {
   Settings, Users, List, Paperclip, Mail,
   Plus, Pencil, Trash2, X, Save, ShieldCheck,
@@ -23,6 +24,10 @@ const ROLE_LABEL = {
   lector_adherencia:  'Lector Adherencia Fichas',
 }
 
+// Roles cuyo acceso a módulos de encuesta se puede restringir por usuario.
+// Administrador/coordinador siempre ven todo.
+const ROLES_ACCESO_RESTRINGIBLE = ['auxiliar', 'lector_adherencia']
+
 function SH({ children }) {
   return (
     <div className="px-3.5 py-2.5 bg-brand-gradient border-l-4 border-accent-400 rounded-r-xl shadow-neu-sm mb-4">
@@ -38,10 +43,11 @@ function SH({ children }) {
 function ProfileModal({ profile, onClose, onSaved }) {
   const isEdit = Boolean(profile?.id)
   const [form, setForm] = useState({
-    nombre:   profile?.nombre ?? '',
-    email:    profile?.email  ?? '',
-    rol:      profile?.rol    ?? 'auxiliar',
-    activo:   profile?.activo ?? true,
+    nombre:             profile?.nombre    ?? '',
+    email:              profile?.email     ?? '',
+    rol:                profile?.rol       ?? 'auxiliar',
+    activo:             profile?.activo    ?? true,
+    modulos_permitidos: profile?.modulos_permitidos ?? [],
     password: '',
   })
   const [saving,     setSaving]     = useState(false)
@@ -50,6 +56,27 @@ function ProfileModal({ profile, onClose, onSaved }) {
   const [resetSent,  setResetSent]  = useState(false)
 
   function setF(k, v) { setForm(p => ({ ...p, [k]: v })) }
+
+  function setRol(r) {
+    setForm(p => ({
+      ...p,
+      rol: r,
+      // Sugerencia útil al elegir el rol lector: preseleccionar Adherencia
+      // Fichas (su caso de uso original) si aún no hay nada seleccionado.
+      modulos_permitidos: r === 'lector_adherencia' && p.modulos_permitidos.length === 0
+        ? ['adherencia_fichas']
+        : p.modulos_permitidos,
+    }))
+  }
+
+  function toggleModulo(key) {
+    setForm(p => ({
+      ...p,
+      modulos_permitidos: p.modulos_permitidos.includes(key)
+        ? p.modulos_permitidos.filter(k => k !== key)
+        : [...p.modulos_permitidos, key],
+    }))
+  }
 
   async function handleResetPassword() {
     setResetting(true)
@@ -69,8 +96,9 @@ function ProfileModal({ profile, onClose, onSaved }) {
     setSaving(true)
     setError('')
     try {
+      const modulosAGuardar = ROLES_ACCESO_RESTRINGIBLE.includes(form.rol) ? form.modulos_permitidos : null
       if (isEdit) {
-        const update = { nombre: form.nombre, rol: form.rol, activo: form.activo }
+        const update = { nombre: form.nombre, rol: form.rol, activo: form.activo, modulos_permitidos: modulosAGuardar }
         const { error: err } = await supabase
           .from('user_profiles').update(update).eq('id', profile.id)
         if (err) throw err
@@ -89,18 +117,17 @@ function ProfileModal({ profile, onClose, onSaved }) {
         // recuperamos por email para obtener su id y aplicar el estado activo.
         const { data: nuevoPerfil, error: fetchErr } = await supabase
           .from('user_profiles')
-          .select('id, nombre, email, rol, activo')
+          .select('id, nombre, email, rol, activo, modulos_permitidos')
           .eq('email', form.email)
           .single()
         if (fetchErr || !nuevoPerfil) {
           throw new Error('El usuario se creó, pero no se pudo confirmar el perfil. Recarga la página para verlo.')
         }
-        if (nuevoPerfil.activo !== form.activo) {
-          const { error: updErr } = await supabase
-            .from('user_profiles').update({ activo: form.activo }).eq('id', nuevoPerfil.id)
-          if (updErr) throw updErr
-        }
-        onSaved({ ...nuevoPerfil, activo: form.activo })
+        const ajustes = { activo: form.activo, modulos_permitidos: modulosAGuardar }
+        const { error: updErr } = await supabase
+          .from('user_profiles').update(ajustes).eq('id', nuevoPerfil.id)
+        if (updErr) throw updErr
+        onSaved({ ...nuevoPerfil, ...ajustes })
       }
       onClose()
     } catch (e) {
@@ -186,7 +213,7 @@ function ProfileModal({ profile, onClose, onSaved }) {
             <label className="label">Rol *</label>
             <div className="grid grid-cols-2 gap-2 mt-1">
               {ROLES.map(r => (
-                <button key={r} type="button" onClick={() => setF('rol', r)}
+                <button key={r} type="button" onClick={() => setRol(r)}
                   className={`py-2 px-2 rounded-lg text-xs font-semibold border-2 transition-colors ${
                     form.rol === r
                       ? 'border-brand-500 bg-brand-50 text-brand-700'
@@ -197,6 +224,26 @@ function ProfileModal({ profile, onClose, onSaved }) {
               ))}
             </div>
           </div>
+
+          {ROLES_ACCESO_RESTRINGIBLE.includes(form.rol) && (
+            <div>
+              <label className="label">Formularios permitidos</label>
+              <p className="text-xs text-slate-400 mb-2">
+                Ninguno marcado = acceso a todos. Marca solo los que este usuario debe poder ver.
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {MODULOS_ENCUESTA.map(m => (
+                  <label key={m.key}
+                    className="flex items-center gap-2 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 cursor-pointer hover:border-brand-300">
+                    <input type="checkbox" className="w-3.5 h-3.5 rounded accent-brand-600"
+                      checked={form.modulos_permitidos.includes(m.key)}
+                      onChange={() => toggleModulo(m.key)} />
+                    {m.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <label className="flex items-center gap-2.5 cursor-pointer">
             <input type="checkbox" className="w-4 h-4 rounded accent-brand-600"
               checked={form.activo} onChange={e => setF('activo', e.target.checked)} />
@@ -393,7 +440,7 @@ function UsuariosTab({ showToast }) {
           <div className="text-xs text-blue-700 space-y-1">
             <p className="font-semibold">Gestión de credenciales</p>
             <p>Los nuevos usuarios reciben un correo de confirmación al registrarse. Para cambiar la contraseña de un usuario existente, abra su perfil con el botón editar y use el botón <strong>"Enviar link de restablecimiento"</strong> — el usuario recibirá un enlace seguro en su correo para establecer una nueva contraseña.</p>
-            <p><strong>Roles:</strong> Administrador — acceso total · Coordinador — sin eliminación · Auxiliar — solo lectura y creación · Lector Adherencia Fichas — solo puede ver el listado y el dashboard de Adherencia a Fichas Epidemiológicas, sin acceso al resto del sistema.</p>
+            <p><strong>Roles:</strong> Administrador — acceso total · Coordinador — sin eliminación · Auxiliar — lectura y creación · Lector — solo ve listados y dashboards, nunca captura. En Auxiliar y Lector puedes elegir en "Formularios permitidos" a qué módulos de encuesta tiene acceso cada persona; sin selección, ve todos.</p>
           </div>
         </div>
       </div>

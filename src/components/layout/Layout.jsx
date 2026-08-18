@@ -3,21 +3,29 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import { useAuth } from '../../contexts/AuthContext'
-
-// Rutas a las que puede entrar el rol "lector_adherencia" (solo lectura de
-// un único módulo). Cualquier otra ruta protegida lo redirige de vuelta.
-const RUTAS_LECTOR_ADHERENCIA = [
-  '/encuestas/adherencia-fichas',
-  '/encuestas/adherencia-fichas/dashboard',
-]
+import { MODULOS_ENCUESTA, moduloDeRuta, navPathDeModulo } from '../../lib/modulos'
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { rol } = useAuth()
+  const { rol, tieneAccesoModulo } = useAuth()
   const location = useLocation()
 
-  if (rol === 'lector_adherencia' && !RUTAS_LECTOR_ADHERENCIA.includes(location.pathname)) {
-    return <Navigate to="/encuestas/adherencia-fichas" replace />
+  // Rol de solo-lectura de encuestas: nada fuera de los módulos de encuesta,
+  // y dentro de ellos solo listado/dashboard (nunca captura ni edición).
+  const soloEncuestas = rol === 'lector_adherencia'
+  const modulo = moduloDeRuta(location.pathname)
+  const primerModuloPermitido = () =>
+    navPathDeModulo(MODULOS_ENCUESTA.find(m => tieneAccesoModulo(m.key))?.key)
+
+  // Ruta de un módulo de encuesta al que este usuario no tiene acceso.
+  if (modulo && !tieneAccesoModulo(modulo.key)) {
+    return <Navigate to={primerModuloPermitido()} replace />
+  }
+  if (soloEncuestas) {
+    if (!modulo) return <Navigate to={primerModuloPermitido()} replace />
+    if (location.pathname.endsWith('/nuevo') || /\/editar$/.test(location.pathname)) {
+      return <Navigate to={modulo.basePaths[0]} replace />
+    }
   }
 
   return (

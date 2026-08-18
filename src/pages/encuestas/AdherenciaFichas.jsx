@@ -47,7 +47,7 @@ export default function AdherenciaFichas() {
   const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(true)
   const { rol, puedeCapturar: puedeCapturarModulo } = useAuth()
-  const puedeCapturar = rol !== 'lector_adherencia' && puedeCapturarModulo('adherencia_fichas')
+  const puedeCapturar = puedeCapturarModulo('adherencia_fichas')
 
   useEffect(() => { load() }, [])
 
