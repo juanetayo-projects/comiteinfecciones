@@ -74,11 +74,6 @@ export default function ResetPassword() {
       className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
       style={{ backgroundImage: 'linear-gradient(135deg, #0d2d6b 0%, #16468e 45%, #081c45 100%)' }}
     >
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-accent-500/20 blur-3xl" />
-        <div className="absolute -bottom-28 -right-20 w-96 h-96 rounded-full bg-brand-500/25 blur-3xl" />
-      </div>
-
       <div className="w-full max-w-sm relative">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-accent-gradient mb-4 shadow-neu-dark">

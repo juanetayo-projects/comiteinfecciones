@@ -73,7 +73,7 @@
   .input {
     @apply w-full px-3.5 py-2 text-sm rounded-xl border-0 text-slate-800
            bg-neu-base shadow-neu-in
-           focus:outline-none focus:shadow-neu-in-lg focus:ring-2 focus:ring-brand-400/60
+           focus:outline-none focus:shadow-neu-in-lg
            placeholder:text-slate-400 transition-all duration-200;
   }
   .label {

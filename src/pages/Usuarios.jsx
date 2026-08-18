@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseAuthOnly } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import {
   Users, Plus, Pencil, Trash2, X, Save, ShieldCheck,
@@ -62,22 +62,22 @@ function ProfileModal({ profile, onClose, onSaved }) {
         }
         onSaved({ ...profile, ...update })
       } else {
-        // Create new user via signUp
+        // Create new user via signUp (cliente aislado: no debe tocar la sesión del admin)
         if (!form.email || !form.password) throw new Error('Email y contraseña son requeridos')
-        const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpErr } = await supabaseAuthOnly.auth.signUp({
           email:    form.email,
           password: form.password,
+          options:  { data: { nombre: form.nombre, rol: form.rol } },
         })
         if (signUpErr) throw signUpErr
         const uid = signUpData?.user?.id
         if (!uid) throw new Error('No se pudo obtener el ID del usuario')
-        // Create profile record
-        const { error: profErr } = await supabase.from('user_profiles').upsert({
-          id:     uid,
-          nombre: form.nombre,
-          rol:    form.rol,
-          activo: form.activo,
-        })
+        // El trigger on_auth_user_created ya creó el perfil con nombre/rol correctos;
+        // solo falta aplicar el estado activo/inactivo elegido en el formulario.
+        const { error: profErr } = await supabase
+          .from('user_profiles')
+          .update({ activo: form.activo })
+          .eq('id', uid)
         if (profErr) throw profErr
         onSaved({ id: uid, nombre: form.nombre, email: form.email, rol: form.rol, activo: form.activo })
       }

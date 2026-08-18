@@ -8,3 +8,11 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
+
+// Cliente aislado (sin persistir sesión) para signUp() disparado por un admin
+// desde el módulo de Usuarios. signUp() autentica al usuario recién creado en
+// el cliente que lo ejecuta; usar el cliente `supabase` normal reemplazaría la
+// sesión del admin por la del usuario nuevo (lo saca de su propia sesión).
+export const supabaseAuthOnly = createClient(supabaseUrl, supabaseKey, {
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+})
