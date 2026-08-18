@@ -64,22 +64,30 @@ function ProfileModal({ profile, onClose, onSaved }) {
       } else {
         // Create new user via signUp (cliente aislado: no debe tocar la sesión del admin)
         if (!form.email || !form.password) throw new Error('Email y contraseña son requeridos')
-        const { data: signUpData, error: signUpErr } = await supabaseAuthOnly.auth.signUp({
+        const { error: signUpErr } = await supabaseAuthOnly.auth.signUp({
           email:    form.email,
           password: form.password,
           options:  { data: { nombre: form.nombre, rol: form.rol } },
         })
         if (signUpErr) throw signUpErr
-        const uid = signUpData?.user?.id
-        if (!uid) throw new Error('No se pudo obtener el ID del usuario')
-        // El trigger on_auth_user_created ya creó el perfil con nombre/rol correctos;
-        // solo falta aplicar el estado activo/inactivo elegido en el formulario.
-        const { error: profErr } = await supabase
+        // El proyecto exige confirmación de correo, así que signUp() no devuelve
+        // sesión ni el id del usuario en su respuesta. El trigger
+        // on_auth_user_created ya creó el perfil con nombre/rol correctos; lo
+        // recuperamos por email para obtener su id y aplicar el estado activo.
+        const { data: nuevoPerfil, error: fetchErr } = await supabase
           .from('user_profiles')
-          .update({ activo: form.activo })
-          .eq('id', uid)
-        if (profErr) throw profErr
-        onSaved({ id: uid, nombre: form.nombre, email: form.email, rol: form.rol, activo: form.activo })
+          .select('id, nombre, email, rol, activo')
+          .eq('email', form.email)
+          .single()
+        if (fetchErr || !nuevoPerfil) {
+          throw new Error('El usuario se creó, pero no se pudo confirmar el perfil. Recarga la página para verlo.')
+        }
+        if (nuevoPerfil.activo !== form.activo) {
+          const { error: updErr } = await supabase
+            .from('user_profiles').update({ activo: form.activo }).eq('id', nuevoPerfil.id)
+          if (updErr) throw updErr
+        }
+        onSaved({ ...nuevoPerfil, activo: form.activo })
       }
       onClose()
     } catch (e) {
