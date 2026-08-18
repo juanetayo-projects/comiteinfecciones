@@ -139,8 +139,8 @@ function ProfileModal({ profile, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 w-full max-w-md">
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+      <div className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 w-full max-w-md max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center">
               <User className="w-4 h-4 text-teal-600" />
@@ -151,7 +151,7 @@ function ProfileModal({ profile, onClose, onSaved }) {
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
           <SH>Información del Usuario</SH>
           <div>
             <label className="label">Nombre Completo *</label>
@@ -255,7 +255,7 @@ function ProfileModal({ profile, onClose, onSaved }) {
             </div>
           )}
         </div>
-        <div className="flex justify-end gap-3 p-5 border-t border-slate-100">
+        <div className="flex justify-end gap-3 p-5 border-t border-slate-100 shrink-0">
           <button onClick={onClose} className="btn-secondary">Cancelar</button>
           <button onClick={handleSave} disabled={saving} className="btn-primary">
             {saving

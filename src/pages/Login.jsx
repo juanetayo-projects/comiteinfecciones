@@ -59,11 +59,11 @@ export default function Login() {
       <div className="w-full max-w-sm relative">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4 p-4 rounded-3xl bg-white/5 shadow-neu-dark">
+          <div className="inline-flex items-center justify-center mb-4 p-4 rounded-3xl bg-white/5">
             <img
               src="./logo_cacsb_blanc.png"
               alt="Clínica Santa Bárbara"
-              className="h-16 w-auto drop-shadow-lg"
+              className="h-16 w-auto"
             />
           </div>
           <h1 className="text-xl font-extrabold text-white tracking-tight">Comité de Infecciones</h1>
@@ -74,7 +74,7 @@ export default function Login() {
         {mode === 'login' && (
           <form
             onSubmit={handleSubmit}
-            className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 p-6 space-y-4"
+            className="bg-neu-surface rounded-3xl border border-white/70 p-6 space-y-4"
           >
             <h2 className="text-base font-bold text-brand-900 mb-2">Iniciar Sesión</h2>
 
@@ -141,7 +141,7 @@ export default function Login() {
 
         {/* ─────────── Recuperar contraseña ─────────── */}
         {mode === 'recover' && (
-          <div className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 p-6">
+          <div className="bg-neu-surface rounded-3xl border border-white/70 p-6">
             {sent ? (
               <div className="flex flex-col items-center gap-3 py-3 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-neu-base shadow-neu-in flex items-center justify-center">

@@ -83,7 +83,7 @@ export default function ResetPassword() {
           <p className="text-accent-200 text-sm mt-1">Elige una contraseña segura</p>
         </div>
 
-        <div className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 p-6">
+        <div className="bg-neu-surface rounded-3xl border border-white/70 p-6">
 
           {/* Enlace expirado */}
           {!sessionReady && error && (
