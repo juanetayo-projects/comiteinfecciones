@@ -176,7 +176,6 @@ export default function Registros() {
       TIPOS_CFG.map(cfg =>
         supabase.from(cfg.table).select('*')
           .order(cfg.dateField, { ascending: false })
-          .limit(100)
       )
     ).then(results => {
       const combined = []
@@ -229,7 +228,7 @@ export default function Registros() {
         </div>
         <div>
           <h1 className="page-title">Registros</h1>
-          <p className="page-subtitle">Historial consolidado de todas las encuestas — últimos 100 por tipo</p>
+          <p className="page-subtitle">Historial consolidado de todas las encuestas</p>
         </div>
         <div className="ml-auto">
           <ExportButtons
