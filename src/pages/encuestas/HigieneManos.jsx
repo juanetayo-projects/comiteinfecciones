@@ -5,6 +5,7 @@ import { esEditable } from '../../lib/guardarEncuesta'
 import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
+import StatCards from '../../components/common/StatCards'
 import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
 import { ESTADO_OPTIONS, CUMPLE_OPTIONS } from '../../lib/utils'
 import { Plus, Paperclip, Pencil, Trash2, Hand, BarChart3 , Eye } from 'lucide-react'
@@ -61,6 +62,15 @@ export default function HigieneManos() {
 
   const ft = useTableFilters(data, FILTER_CONFIG)
 
+  const cumple   = ft.filtered.filter(r => r.resultado_cumplimiento === 'CUMPLE').length
+  const noCumple = ft.filtered.filter(r => r.resultado_cumplimiento === 'NO CUMPLE').length
+  const statItems = [
+    { label: 'Total',        value: ft.filtered.length, color: 'indigo' },
+    { label: 'Cumple',       value: cumple,              color: 'emerald' },
+    { label: 'No Cumple',    value: noCumple,            color: 'red' },
+    { label: 'Sin evaluar',  value: ft.filtered.length - cumple - noCumple, color: 'slate' },
+  ]
+
   const columns = [
     { key: 'fecha_evaluacion',   header: 'Fecha',    sortable: true,
       render: v => <span className="text-slate-600">{formatDate(v)}</span> },
@@ -98,6 +108,8 @@ export default function HigieneManos() {
           )}
         </div>
       </div>
+
+      <StatCards items={statItems} />
 
       <div className="card p-4">
         <TableFilters

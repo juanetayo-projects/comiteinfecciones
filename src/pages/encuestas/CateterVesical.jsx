@@ -5,6 +5,7 @@ import { esEditable } from '../../lib/guardarEncuesta'
 import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
+import StatCards from '../../components/common/StatCards'
 import { Plus, Paperclip, Pencil, Trash2, Droplets, ArrowLeft, BarChart3 , Eye } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
@@ -16,6 +17,9 @@ const FILTER_CONFIG = [
   { key: 'ubicacion_cama', label: 'Ubicación/Cama',  type: 'select' },
   { key: 'estado',         label: 'Estado',          type: 'select', options: ESTADO_OPTIONS },
 ]
+
+// Mismos criterios usados en el dashboard para definir "Paquete Completo"
+const CV_KEYS = ['criterio_1_fijacion','criterio_2_posicion_bolsa','criterio_3_rotulacion','criterio_4_indicacion','criterio_5_flujo_continuo','criterio_6_lista_chequeo_sonda']
 
 const EXPORT_COLS = [
   { key: 'fecha_registro',          label: 'Fecha',         width: 12 },
@@ -50,6 +54,13 @@ export default function CateterVesical() {
   }
 
   const ft = useTableFilters(data, FILTER_CONFIG)
+
+  const cumple    = ft.filtered.filter(r => CV_KEYS.every(k => r[k] === true)).length
+  const statItems = [
+    { label: 'Total',                 value: ft.filtered.length, color: 'indigo' },
+    { label: 'Cumple (6/6 criterios)', value: cumple,             color: 'emerald' },
+    { label: 'No Cumple',             value: ft.filtered.length - cumple, color: 'red' },
+  ]
 
   const columns = [
     { key: 'fecha_registro', header: 'Fecha',   sortable: true,
@@ -96,6 +107,8 @@ export default function CateterVesical() {
           )}
         </div>
       </div>
+
+      <StatCards items={statItems} />
 
       <div className="card p-4">
         <TableFilters

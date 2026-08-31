@@ -5,6 +5,7 @@ import { esEditable } from '../../lib/guardarEncuesta'
 import { formatDate, estadoBadgeColor, estadoLabel, ESTADO_OPTIONS } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
+import StatCards from '../../components/common/StatCards'
 import { Plus, Paperclip, Pencil, Trash2, Wind, ArrowLeft, BarChart3, Eye, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
@@ -15,6 +16,10 @@ const FILTER_CONFIG = [
   { key: 'servicio',       label: 'Servicio', type: 'select' },
   { key: 'estado',         label: 'Estado',   type: 'select', options: ESTADO_OPTIONS },
 ]
+
+// Criterios SI/NO/NA — un registro cumple si ninguno quedó en "NO" y la presión
+// del neumotaponador (criterio 5) no quedó fuera de rango (ver banner de la página)
+const NAV_CRIT_KEYS = ['criterio_1_cabecera','criterio_2_higiene_oral','criterio_3_implementos','criterio_4_lista_chequeo','criterio_6_interrupcion_sedacion']
 
 const EXPORT_COLS = [
   { key: 'fecha_registro',                     label: 'Fecha',           width: 12 },
@@ -61,6 +66,14 @@ export default function AdherenciaPrevencionNav() {
   }
 
   const ft = useTableFilters(data, FILTER_CONFIG)
+
+  const cumple    = ft.filtered.filter(r =>
+    NAV_CRIT_KEYS.every(k => r[k] !== 'NO') && !r.criterio_5_fuera_rango).length
+  const statItems = [
+    { label: 'Total',      value: ft.filtered.length, color: 'indigo' },
+    { label: 'Cumple',     value: cumple,              color: 'emerald' },
+    { label: 'No Cumple',  value: ft.filtered.length - cumple, color: 'red' },
+  ]
 
   const columns = [
     { key: 'fecha_registro', header: 'Fecha', sortable: true,
@@ -122,6 +135,8 @@ export default function AdherenciaPrevencionNav() {
           en la tabla y las gráficas del dashboard.
         </p>
       </div>
+
+      <StatCards items={statItems} />
 
       <div className="card p-4">
         <TableFilters

@@ -5,6 +5,7 @@ import { esEditable } from '../../lib/guardarEncuesta'
 import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
+import StatCards from '../../components/common/StatCards'
 import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
 import { ESTADO_OPTIONS } from '../../lib/utils'
 import { Plus, Pencil, Trash2, ClipboardCheck, BarChart3, Eye } from 'lucide-react'
@@ -68,6 +69,14 @@ export default function AdherenciaFichas() {
 
   const ft = useTableFilters(data, FILTER_CONFIG)
 
+  const adecuado  = ft.filtered.filter(r => r.resultado === 'ADECUADO').length
+  const conError  = ft.filtered.filter(r => r.resultado === 'CON ERROR').length
+  const statItems = [
+    { label: 'Total',      value: ft.filtered.length, color: 'indigo' },
+    { label: 'Adecuado',   value: adecuado,            color: 'emerald' },
+    { label: 'Con Error',  value: conError,            color: 'red' },
+  ]
+
   const columns = [
     { key: 'fecha_revision', header: 'Fecha',    sortable: true,
       render: v => <span className="text-slate-600">{formatDate(v)}</span> },
@@ -105,6 +114,8 @@ export default function AdherenciaFichas() {
           )}
         </div>
       </div>
+
+      <StatCards items={statItems} />
 
       <div className="card p-4">
         <TableFilters

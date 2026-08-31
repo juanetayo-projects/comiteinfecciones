@@ -5,6 +5,7 @@ import { esEditable } from '../../lib/guardarEncuesta'
 import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
+import StatCards from '../../components/common/StatCards'
 import { Plus, Paperclip, Pencil, Trash2, Syringe, ArrowLeft, BarChart3 , Eye } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
@@ -16,6 +17,9 @@ const FILTER_CONFIG = [
   { key: 'ubicacion_cama', label: 'Ubicación/Cama',  type: 'select' },
   { key: 'estado',         label: 'Estado',          type: 'select', options: ESTADO_OPTIONS },
 ]
+
+// Mismos criterios usados en el dashboard para definir "Paquete Completo"
+const AVP_KEYS = ['criterio_1_rotulo','criterio_2_fijacion','criterio_3_mantenimiento','criterio_4_pertinencia','criterio_5_educacion']
 
 const EXPORT_COLS = [
   { key: 'fecha_registro',   label: 'Fecha',         width: 12 },
@@ -57,6 +61,13 @@ export default function AccesoVenoso() {
 
   const ft = useTableFilters(data, FILTER_CONFIG)
 
+  const cumple    = ft.filtered.filter(r => AVP_KEYS.every(k => r[k] === true)).length
+  const statItems = [
+    { label: 'Total',                 value: ft.filtered.length, color: 'indigo' },
+    { label: 'Cumple (5/5 criterios)', value: cumple,             color: 'emerald' },
+    { label: 'No Cumple',             value: ft.filtered.length - cumple, color: 'red' },
+  ]
+
   const columns = [
     { key: 'fecha_registro', header: 'Fecha',        sortable: true,
       render: v => <span className="text-slate-600">{formatDate(v)}</span> },
@@ -97,6 +108,8 @@ export default function AccesoVenoso() {
           )}
         </div>
       </div>
+
+      <StatCards items={statItems} />
 
       <div className="card p-4">
         <TableFilters

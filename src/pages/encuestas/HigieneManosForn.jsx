@@ -80,6 +80,15 @@ const PORTA_ACCESORIOS_OPC = [
   { value: 'RELOJ',               label: 'Reloj' },
 ]
 
+// Soporte del No Cumplimiento — fallback si el catálogo de la BD está vacío.
+// Fuente de verdad: listas_desplegables (categoria = 'soporte_no_cumplimiento').
+const SOPORTE_NO_CUMPLIMIENTO = [
+  'No aplica',
+  'Error en la técnica de lavado o higiene de manos',
+  'No realizo higiene o lavado de manos',
+  'Realizo Frote de manos con gel glicerinado no corresponde al momento evaluado',
+]
+
 const MOMENTOS = [
   { name: 'momento_1', label: 'Momento 1 — Antes de tocar al paciente' },
   { name: 'momento_2', label: 'Momento 2 — Antes de procedimiento aséptico' },
@@ -155,6 +164,7 @@ export default function HigieneManosForn() {
   const servicios = useLista('servicio', SERVICIOS_HM)
   // El catálogo manda; PERFILES sólo actúa de respaldo si la BD no responde
   const perfiles  = useLista('perfil_colaborador', PERFILES)
+  const soportesNoCumplimiento = useLista('soporte_no_cumplimiento', SOPORTE_NO_CUMPLIMIENTO)
   const values    = watch()
   const sumatoria = calcSumatoria(values)
   // Columna L: CUMPLE solo si sumatoria === 5
@@ -335,8 +345,10 @@ export default function HigieneManosForn() {
             </div>
             <div>
               <label className="label">Soporte de No Cumplimiento</label>
-              <input className="input" placeholder="Nro. acta, correo, etc."
-                {...register('soporte_no_cumplimiento')} />
+              <select className="input" {...register('soporte_no_cumplimiento')}>
+                <option value="">Seleccionar...</option>
+                {soportesNoCumplimiento.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
             </div>
             <div>
               <label className="label">Estado</label>

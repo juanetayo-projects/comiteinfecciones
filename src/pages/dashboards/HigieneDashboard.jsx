@@ -9,7 +9,7 @@ import { ArrowLeft, Hand, Filter, X } from 'lucide-react'
 import DashboardPdfButton from '../../components/common/DashboardPdfButton'
 import DetalleGraficaModal, { COL_FECHA, COL_ESTADO, colCumple }
   from '../../components/common/DetalleGraficaModal'
-import { filtrosResumen } from '../../lib/utils'
+import { filtrosResumen, porcentaje } from '../../lib/utils'
 import {
   buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
   BAR_CUMPLE, BAR_NO_CUMPLE, PIE_COLORS, PCT_HINT, useSeriesToggle,
@@ -134,6 +134,18 @@ export default function HigieneDashboard() {
     })),
     'cantidad', total
   )
+
+  // Soporte de No Cumplimiento — solo tiene sentido sobre los registros NO CUMPLE
+  const soporteData = Object.entries(
+    filtered
+      .filter(r => r.resultado_cumplimiento === 'NO CUMPLE' && r.soporte_no_cumplimiento)
+      .reduce((acc, r) => {
+        acc[r.soporte_no_cumplimiento] = (acc[r.soporte_no_cumplimiento] ?? 0) + 1
+        return acc
+      }, {})
+  )
+    .map(([name, cantidad]) => ({ name, cantidad }))
+    .sort((a, b) => b.cantidad - a.cantidad)
 
   return (
     <div ref={pdfRef} className="p-6 lg:p-8 animate-fade-in space-y-6">
@@ -301,6 +313,43 @@ export default function HigieneDashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+          </div>
+
+          {/* Soporte de No Cumplimiento — solo aplica a registros NO CUMPLE */}
+          <div className="card p-5">
+            <h3 className="section-title mb-1">Soporte de No Cumplimiento</h3>
+            <p className="text-xs text-slate-400 mb-3">
+              Motivo registrado en las observaciones con resultado NO CUMPLE — {noCumple} registro(s)
+            </p>
+            {soporteData.length === 0 ? (
+              <p className="text-xs text-slate-400 py-4 text-center">
+                No hay motivos de no cumplimiento registrados para los filtros seleccionados
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="table-head-brand">
+                      <th className="text-left px-3 py-2 font-semibold rounded-tl-lg">Motivo</th>
+                      <th className="text-center px-3 py-2 font-semibold">Registros</th>
+                      <th className="text-center px-3 py-2 font-semibold rounded-tr-lg">% del NO CUMPLE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {soporteData.map((s, i) => (
+                      <tr key={i}
+                        className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''} hover:bg-red-50 transition-colors cursor-pointer`}
+                        onClick={() => abrirDetalle(`Soporte — ${s.name}`,
+                          filtered.filter(r => r.soporte_no_cumplimiento === s.name))}>
+                        <td className="px-3 py-2 font-medium text-slate-700">{s.name}</td>
+                        <td className="px-3 py-2 text-center font-semibold text-red-600">{s.cantidad}</td>
+                        <td className="px-3 py-2 text-center text-slate-500">{porcentaje(s.cantidad, noCumple)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Tablas independientes por servicio — 2 columnas */}

@@ -195,7 +195,17 @@ export default function RondaCirugiaForm() {
   async function onSubmit(values) {
     setSaving(true)
     setSaveError('')
-    const payload = { ...values, adjuntos, registrado_por: isEdit ? undefined : user?.id }
+    const payload = {
+      ...values,
+      // Los campos de hora son columnas `time` en la BD: "" no es una hora válida
+      // (Postgres la rechaza con 22007) y por eso el guardado fallaba en silencio
+      // al editar un registro con alguna hora vacía.
+      hora_administracion:       values.hora_administracion || null,
+      hora_inicio_cirugia:       values.hora_inicio_cirugia || null,
+      hora_finalizacion_cirugia: values.hora_finalizacion_cirugia || null,
+      adjuntos,
+      registrado_por: isEdit ? undefined : user?.id,
+    }
     const { error } = await guardarEncuesta('encuesta_ronda_cirugia', payload, isEdit ? id : undefined)
     if (error) {
       setSaveError(error)

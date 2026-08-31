@@ -5,6 +5,7 @@ import { esEditable } from '../../lib/guardarEncuesta'
 import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
+import StatCards from '../../components/common/StatCards'
 import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
 import { ESTADO_OPTIONS } from '../../lib/utils'
 import { Plus, Paperclip, Pencil, Trash2, ShieldAlert, BarChart3 , Eye } from 'lucide-react'
@@ -74,6 +75,15 @@ export default function Aislamiento() {
     estado: estadoLabel(r.estado),
   }))
 
+  const cumple    = ft.filtered.filter(r => r.adherencia === 'CUMPLE').length
+  const noCumple  = ft.filtered.filter(r => r.adherencia === 'NO CUMPLE').length
+  const statItems = [
+    { label: 'Total',       value: ft.filtered.length, color: 'indigo' },
+    { label: 'Cumple',      value: cumple,              color: 'emerald' },
+    { label: 'No Cumple',   value: noCumple,            color: 'red' },
+    { label: 'Sin evaluar', value: ft.filtered.length - cumple - noCumple, color: 'slate' },
+  ]
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       {/* Encabezado */}
@@ -98,6 +108,8 @@ export default function Aislamiento() {
           )}
         </div>
       </div>
+
+      <StatCards items={statItems} />
 
       {/* Tabla */}
       <div className="card p-4">

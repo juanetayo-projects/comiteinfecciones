@@ -5,6 +5,7 @@ import { esEditable } from '../../lib/guardarEncuesta'
 import { formatDate, estadoBadgeColor, estadoLabel, ESTADO_OPTIONS } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
+import StatCards from '../../components/common/StatCards'
 import { Plus, Paperclip, Pencil, Trash2, Stethoscope, ArrowLeft, BarChart3, Eye } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
@@ -15,6 +16,9 @@ const FILTER_CONFIG = [
   { key: 'servicio',       label: 'Servicio', type: 'select' },
   { key: 'estado',         label: 'Estado',   type: 'select', options: ESTADO_OPTIONS },
 ]
+
+// Criterios SI/NO/NA — un registro cumple si ninguno quedó en "NO"
+const NC_CRIT_KEYS = ['criterio_1_cabecera','criterio_2_higiene_oral','criterio_3_implementos','criterio_4_movilizacion','criterio_5_riesgo_disfagia']
 
 const EXPORT_COLS = [
   { key: 'fecha_registro',           label: 'Fecha',        width: 12 },
@@ -61,6 +65,13 @@ export default function AdherenciaPrevencionNc() {
 
   const ft = useTableFilters(data, FILTER_CONFIG)
 
+  const cumple    = ft.filtered.filter(r => NC_CRIT_KEYS.every(k => r[k] !== 'NO')).length
+  const statItems = [
+    { label: 'Total',      value: ft.filtered.length, color: 'indigo' },
+    { label: 'Cumple',     value: cumple,              color: 'emerald' },
+    { label: 'No Cumple',  value: ft.filtered.length - cumple, color: 'red' },
+  ]
+
   const columns = [
     { key: 'fecha_registro', header: 'Fecha', sortable: true,
       render: v => <span className="text-slate-600 whitespace-nowrap">{formatDate(v)}</span> },
@@ -102,6 +113,8 @@ export default function AdherenciaPrevencionNc() {
           )}
         </div>
       </div>
+
+      <StatCards items={statItems} />
 
       <div className="card p-4">
         <TableFilters

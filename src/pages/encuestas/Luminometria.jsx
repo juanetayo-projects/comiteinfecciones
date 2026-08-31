@@ -5,6 +5,7 @@ import { esEditable } from '../../lib/guardarEncuesta'
 import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
+import StatCards from '../../components/common/StatCards'
 import { Plus, Paperclip, Pencil, Trash2, Microscope, BarChart3 , Eye } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
@@ -61,6 +62,15 @@ export default function Luminometria() {
 
   const ft = useTableFilters(data, FILTER_CONFIG)
 
+  const cumple    = ft.filtered.filter(r => r.rango === 'CUMPLE').length
+  const noCumple  = ft.filtered.filter(r => r.rango === 'NO CUMPLE').length
+  const statItems = [
+    { label: 'Total',       value: ft.filtered.length, color: 'indigo' },
+    { label: 'Cumple',      value: cumple,              color: 'emerald' },
+    { label: 'No Cumple',   value: noCumple,            color: 'red' },
+    { label: 'Sin evaluar', value: ft.filtered.length - cumple - noCumple, color: 'slate' },
+  ]
+
   const columns = [
     { key: 'fecha_registro',    header: 'Fecha',        sortable: true,
       render: v => <span className="text-slate-600">{formatDate(v)}</span> },
@@ -99,6 +109,8 @@ export default function Luminometria() {
           )}
         </div>
       </div>
+
+      <StatCards items={statItems} />
 
       <div className="card p-4">
         <TableFilters
