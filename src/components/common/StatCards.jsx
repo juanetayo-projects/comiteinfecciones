@@ -6,7 +6,10 @@ export default function StatCards({ items }) {
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
       {items.map((it, i) => (
         <div key={i} className={`card p-3.5 kpi-tile kpi-${it.color ?? 'slate'}`}>
-          <p className="text-xl font-bold">{it.value}</p>
+          <p className="text-xl font-bold">
+            {it.value}
+            {it.pct != null && <span className="text-sm font-semibold opacity-70 ml-1">({it.pct}%)</span>}
+          </p>
           <p className="text-xs font-medium mt-0.5">{it.label}</p>
         </div>
       ))}

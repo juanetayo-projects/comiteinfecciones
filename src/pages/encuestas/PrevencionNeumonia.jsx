@@ -10,7 +10,7 @@ import { Plus, Paperclip, Pencil, Trash2, Wind, ArrowLeft, BarChart3 , Eye } fro
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
 import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
-import { ESTADO_OPTIONS } from '../../lib/utils'
+import { ESTADO_OPTIONS, porcentaje } from '../../lib/utils'
 
 const FILTER_CONFIG = [
   { key: 'fecha_registro', label: 'Fecha',          type: 'daterange' },
@@ -55,11 +55,13 @@ export default function PrevencionNeumonia() {
 
   const ft = useTableFilters(data, FILTER_CONFIG)
 
+  const total     = ft.filtered.length
   const cumple    = ft.filtered.filter(r => PN_KEYS.every(k => r[k] === true)).length
+  const noCumple  = total - cumple
   const statItems = [
-    { label: 'Total',                 value: ft.filtered.length, color: 'indigo' },
-    { label: 'Cumple (4/4 criterios)', value: cumple,             color: 'emerald' },
-    { label: 'No Cumple',             value: ft.filtered.length - cumple, color: 'red' },
+    { label: 'Total',                 value: total,    color: 'indigo' },
+    { label: 'Cumple (4/4 criterios)', value: cumple,   pct: porcentaje(cumple, total),   color: 'emerald' },
+    { label: 'No Cumple',             value: noCumple, pct: porcentaje(noCumple, total), color: 'red' },
   ]
 
   const columns = [
@@ -97,6 +99,14 @@ export default function PrevencionNeumonia() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <ExportButtons
+            data={ft.filtered.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
+            columns={EXPORT_COLS}
+            filename="prevencion_neumonia"
+            title="Prevención de Neumonía (NAV)"
+            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            filtros={ft.summary}
+          />
           <Link to="/encuestas/prevencion-neumonia/dashboard" className="btn-secondary text-xs gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Dashboard
           </Link>
@@ -115,16 +125,6 @@ export default function PrevencionNeumonia() {
           config={FILTER_CONFIG} {...ft}
           total={data.length} shown={ft.filtered.length}
         />
-        <div className="flex justify-end mb-3">
-          <ExportButtons
-            data={ft.filtered.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
-            columns={EXPORT_COLS}
-            filename="prevencion_neumonia"
-            title="Prevención de Neumonía (NAV)"
-            subtitle="Clínica de Alta Complejidad Santa Bárbara"
-            filtros={ft.summary}
-          />
-        </div>
         {loading ? (
           <div className="flex items-center justify-center h-32">
             <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />

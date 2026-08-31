@@ -10,7 +10,7 @@ import { Plus, Paperclip, Pencil, Trash2, Stethoscope, BarChart3 , Eye } from 'l
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
 import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
-import { ESTADO_OPTIONS, CUMPLE_OPTIONS } from '../../lib/utils'
+import { ESTADO_OPTIONS, CUMPLE_OPTIONS, porcentaje } from '../../lib/utils'
 
 const FILTER_CONFIG = [
   { key: 'fecha_registro',          label: 'Fecha',        type: 'daterange' },
@@ -73,13 +73,14 @@ export default function RondaCirugia() {
 
   const ft = useTableFilters(data, FILTER_CONFIG)
 
+  const total     = ft.filtered.length
   const cumple    = ft.filtered.filter(r => r.cumplimiento_profilaxis === 'CUMPLE').length
   const noCumple  = ft.filtered.filter(r => r.cumplimiento_profilaxis === 'NO CUMPLE').length
   const statItems = [
-    { label: 'Total',           value: ft.filtered.length, color: 'indigo' },
-    { label: 'Cumple',          value: cumple,              color: 'emerald' },
-    { label: 'No Cumple',       value: noCumple,            color: 'red' },
-    { label: 'N/A · Sin Dato',  value: ft.filtered.length - cumple - noCumple, color: 'slate' },
+    { label: 'Total',           value: total,   color: 'indigo' },
+    { label: 'Cumple',          value: cumple,   pct: porcentaje(cumple, total),   color: 'emerald' },
+    { label: 'No Cumple',       value: noCumple, pct: porcentaje(noCumple, total), color: 'red' },
+    { label: 'N/A · Sin Dato',  value: total - cumple - noCumple, color: 'slate' },
   ]
 
   const columns = [
@@ -108,6 +109,14 @@ export default function RondaCirugia() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <ExportButtons
+            data={ft.filtered.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
+            columns={EXPORT_COLS}
+            filename="ronda_cirugia"
+            title="Ronda de Cirugía — Control de Infecciones"
+            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            filtros={ft.summary}
+          />
           <Link to="/encuestas/ronda-cirugia/dashboard" className="btn-secondary text-xs gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Dashboard
           </Link>
@@ -126,16 +135,6 @@ export default function RondaCirugia() {
           config={FILTER_CONFIG} {...ft}
           total={data.length} shown={ft.filtered.length}
         />
-        <div className="flex justify-end mb-3">
-          <ExportButtons
-            data={ft.filtered.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
-            columns={EXPORT_COLS}
-            filename="ronda_cirugia"
-            title="Ronda de Cirugía — Control de Infecciones"
-            subtitle="Clínica de Alta Complejidad Santa Bárbara"
-            filtros={ft.summary}
-          />
-        </div>
         {loading ? (
           <div className="flex items-center justify-center h-32">
             <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />

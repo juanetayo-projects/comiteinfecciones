@@ -7,7 +7,7 @@ import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
 import StatCards from '../../components/common/StatCards'
 import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
-import { ESTADO_OPTIONS } from '../../lib/utils'
+import { ESTADO_OPTIONS, porcentaje } from '../../lib/utils'
 import { Plus, Paperclip, Pencil, Trash2, ShieldAlert, BarChart3 , Eye } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AdjuntosModal from '../../components/common/AdjuntosModal'
@@ -75,13 +75,14 @@ export default function Aislamiento() {
     estado: estadoLabel(r.estado),
   }))
 
+  const total     = ft.filtered.length
   const cumple    = ft.filtered.filter(r => r.adherencia === 'CUMPLE').length
   const noCumple  = ft.filtered.filter(r => r.adherencia === 'NO CUMPLE').length
   const statItems = [
-    { label: 'Total',       value: ft.filtered.length, color: 'indigo' },
-    { label: 'Cumple',      value: cumple,              color: 'emerald' },
-    { label: 'No Cumple',   value: noCumple,            color: 'red' },
-    { label: 'Sin evaluar', value: ft.filtered.length - cumple - noCumple, color: 'slate' },
+    { label: 'Total',       value: total,   color: 'indigo' },
+    { label: 'Cumple',      value: cumple,   pct: porcentaje(cumple, total),   color: 'emerald' },
+    { label: 'No Cumple',   value: noCumple, pct: porcentaje(noCumple, total), color: 'red' },
+    { label: 'Sin evaluar', value: total - cumple - noCumple, color: 'slate' },
   ]
 
   return (
@@ -98,6 +99,13 @@ export default function Aislamiento() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <ExportButtons
+            data={exportData} columns={EXPORT_COLS}
+            filename="aislamiento_hospitalario"
+            title="Encuesta de Aislamiento Hospitalario"
+            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            filtros={ft.summary}
+          />
           <Link to="/encuestas/aislamiento/dashboard" className="btn-secondary text-xs gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Dashboard
           </Link>
@@ -117,15 +125,6 @@ export default function Aislamiento() {
           config={FILTER_CONFIG} {...ft}
           total={data.length} shown={ft.filtered.length}
         />
-        <div className="flex justify-end mb-3">
-          <ExportButtons
-            data={exportData} columns={EXPORT_COLS}
-            filename="aislamiento_hospitalario"
-            title="Encuesta de Aislamiento Hospitalario"
-            subtitle="Clínica de Alta Complejidad Santa Bárbara"
-            filtros={ft.summary}
-          />
-        </div>
         {loading ? (
           <div className="flex items-center justify-center h-32">
             <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />

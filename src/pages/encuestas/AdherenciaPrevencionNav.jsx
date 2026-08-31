@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { esEditable } from '../../lib/guardarEncuesta'
-import { formatDate, estadoBadgeColor, estadoLabel, ESTADO_OPTIONS } from '../../lib/utils'
+import { formatDate, estadoBadgeColor, estadoLabel, ESTADO_OPTIONS, porcentaje } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
 import StatCards from '../../components/common/StatCards'
@@ -67,12 +67,14 @@ export default function AdherenciaPrevencionNav() {
 
   const ft = useTableFilters(data, FILTER_CONFIG)
 
+  const total     = ft.filtered.length
   const cumple    = ft.filtered.filter(r =>
     NAV_CRIT_KEYS.every(k => r[k] !== 'NO') && !r.criterio_5_fuera_rango).length
+  const noCumple  = total - cumple
   const statItems = [
-    { label: 'Total',      value: ft.filtered.length, color: 'indigo' },
-    { label: 'Cumple',     value: cumple,              color: 'emerald' },
-    { label: 'No Cumple',  value: ft.filtered.length - cumple, color: 'red' },
+    { label: 'Total',      value: total,    color: 'indigo' },
+    { label: 'Cumple',     value: cumple,   pct: porcentaje(cumple, total),   color: 'emerald' },
+    { label: 'No Cumple',  value: noCumple, pct: porcentaje(noCumple, total), color: 'red' },
   ]
 
   const columns = [
@@ -116,6 +118,14 @@ export default function AdherenciaPrevencionNav() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <ExportButtons
+            data={ft.filtered.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
+            columns={EXPORT_COLS}
+            filename="adherencia_prevencion_nav"
+            title="Adherencia Prevención NAV"
+            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            filtros={ft.summary}
+          />
           <Link to="/encuestas/adherencia-prevencion-nav/dashboard" className="btn-secondary text-xs gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Dashboard
           </Link>
@@ -143,16 +153,6 @@ export default function AdherenciaPrevencionNav() {
           config={FILTER_CONFIG} {...ft}
           total={data.length} shown={ft.filtered.length}
         />
-        <div className="flex justify-end mb-3">
-          <ExportButtons
-            data={ft.filtered.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
-            columns={EXPORT_COLS}
-            filename="adherencia_prevencion_nav"
-            title="Adherencia Prevención NAV"
-            subtitle="Clínica de Alta Complejidad Santa Bárbara"
-            filtros={ft.summary}
-          />
-        </div>
         {loading ? (
           <div className="flex items-center justify-center h-32">
             <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />

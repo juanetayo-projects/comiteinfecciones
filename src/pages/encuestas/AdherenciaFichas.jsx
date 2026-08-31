@@ -7,7 +7,7 @@ import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
 import StatCards from '../../components/common/StatCards'
 import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
-import { ESTADO_OPTIONS } from '../../lib/utils'
+import { ESTADO_OPTIONS, porcentaje } from '../../lib/utils'
 import { Plus, Pencil, Trash2, ClipboardCheck, BarChart3, Eye } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -69,12 +69,13 @@ export default function AdherenciaFichas() {
 
   const ft = useTableFilters(data, FILTER_CONFIG)
 
+  const total     = ft.filtered.length
   const adecuado  = ft.filtered.filter(r => r.resultado === 'ADECUADO').length
   const conError  = ft.filtered.filter(r => r.resultado === 'CON ERROR').length
   const statItems = [
-    { label: 'Total',      value: ft.filtered.length, color: 'indigo' },
-    { label: 'Adecuado',   value: adecuado,            color: 'emerald' },
-    { label: 'Con Error',  value: conError,            color: 'red' },
+    { label: 'Total',      value: total,     color: 'indigo' },
+    { label: 'Adecuado',   value: adecuado,  pct: porcentaje(adecuado, total), color: 'emerald' },
+    { label: 'Con Error',  value: conError,  pct: porcentaje(conError, total), color: 'red' },
   ]
 
   const columns = [
@@ -104,6 +105,14 @@ export default function AdherenciaFichas() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <ExportButtons
+            data={ft.filtered.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
+            columns={EXPORT_COLS}
+            filename="adherencia_fichas_epidemiologicas"
+            title="Adherencia a Fichas Epidemiológicas"
+            subtitle="Clínica de Alta Complejidad Santa Bárbara"
+            filtros={ft.summary}
+          />
           <Link to="/encuestas/adherencia-fichas/dashboard" className="btn-secondary text-xs gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Dashboard
           </Link>
@@ -122,16 +131,6 @@ export default function AdherenciaFichas() {
           config={FILTER_CONFIG} {...ft}
           total={data.length} shown={ft.filtered.length}
         />
-        <div className="flex justify-end mb-3">
-          <ExportButtons
-            data={ft.filtered.map(r => ({ ...r, estado: estadoLabel(r.estado) }))}
-            columns={EXPORT_COLS}
-            filename="adherencia_fichas_epidemiologicas"
-            title="Adherencia a Fichas Epidemiológicas"
-            subtitle="Clínica de Alta Complejidad Santa Bárbara"
-            filtros={ft.summary}
-          />
-        </div>
         {loading ? (
           <div className="flex items-center justify-center h-32">
             <div className="w-6 h-6 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />

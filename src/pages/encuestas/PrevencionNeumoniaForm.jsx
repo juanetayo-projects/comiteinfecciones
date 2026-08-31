@@ -94,19 +94,30 @@ export default function PrevencionNeumoniaForm() {
   async function onSubmit(values) {
     setSaving(true)
     setSaveError('')
-    const payload = {
-      ...values,
-      // semana_mes is a GENERATED ALWAYS AS column — DB computes it from fecha_registro
-      adjuntos,
-      registrado_por: isEdit ? undefined : user?.id,
-    }
-    const { error } = await guardarEncuesta('encuesta_prevencion_neumonia', payload, isEdit ? id : undefined)
-    if (error) {
-      setSaveError(error)
+    try {
+      const payload = {
+        ...values,
+        // semana_mes is a GENERATED ALWAYS AS column — DB computes it from fecha_registro
+        adjuntos,
+        registrado_por: isEdit ? undefined : user?.id,
+      }
+      const { error } = await guardarEncuesta('encuesta_prevencion_neumonia', payload, isEdit ? id : undefined)
+      if (error) {
+        setSaveError(error)
+        setSaving(false)
+        return
+      }
+      navigate('/encuestas/prevencion-neumonia')
+    } catch (e) {
+      console.error('Error inesperado al guardar:', e)
+      setSaveError(e?.message || 'Error inesperado al guardar. Intenta de nuevo.')
       setSaving(false)
-      return
     }
-    navigate('/encuestas/prevencion-neumonia')
+  }
+
+  function onInvalid(formErrors) {
+    const primero = Object.values(formErrors)[0]
+    setSaveError(primero?.message || 'Revisa los campos marcados en rojo antes de guardar.')
   }
 
   // El rol no tiene habilitada la captura en este módulo (Configuración → Permisos)
@@ -131,7 +142,7 @@ export default function PrevencionNeumoniaForm() {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-5">
 
         {soloLectura && <BannerSoloLectura estado={estadoReg} />}
 

@@ -188,22 +188,33 @@ export default function LuminometriaForm() {
   async function onSubmit(values) {
     setSaving(true)
     setSaveError('')
-    const payload = {
-      ...values,
-      // `resultado` es numeric en la BD: la cadena vacía la rechazaría
-      resultado: sinMedicion || values.resultado === '' ? null : values.resultado,
-      objeto:    sinMedicion ? null : (values.objeto || null),
-      rango:     rango ?? '',
-      adjuntos,
-      registrado_por: isEdit ? undefined : user?.id,
-    }
-    const { error } = await guardarEncuesta('encuesta_luminometria', payload, isEdit ? id : undefined)
-    if (error) {
-      setSaveError(error)
+    try {
+      const payload = {
+        ...values,
+        // `resultado` es numeric en la BD: la cadena vacía la rechazaría
+        resultado: sinMedicion || values.resultado === '' ? null : values.resultado,
+        objeto:    sinMedicion ? null : (values.objeto || null),
+        rango:     rango ?? '',
+        adjuntos,
+        registrado_por: isEdit ? undefined : user?.id,
+      }
+      const { error } = await guardarEncuesta('encuesta_luminometria', payload, isEdit ? id : undefined)
+      if (error) {
+        setSaveError(error)
+        setSaving(false)
+        return
+      }
+      navigate('/encuestas/luminometria')
+    } catch (e) {
+      console.error('Error inesperado al guardar:', e)
+      setSaveError(e?.message || 'Error inesperado al guardar. Intenta de nuevo.')
       setSaving(false)
-      return
     }
-    navigate('/encuestas/luminometria')
+  }
+
+  function onInvalid(formErrors) {
+    const primero = Object.values(formErrors)[0]
+    setSaveError(primero?.message || 'Revisa los campos marcados en rojo antes de guardar.')
   }
 
   // El rol no tiene habilitada la captura en este módulo (Configuración → Permisos)
@@ -222,7 +233,7 @@ export default function LuminometriaForm() {
         <p className="page-subtitle">Control de limpieza ambiental por ATP bioluminiscencia</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-5">
 
         {soloLectura && <BannerSoloLectura estado={estadoReg} />}
 

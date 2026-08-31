@@ -100,18 +100,29 @@ export default function AdherenciaFichasForm() {
   async function onSubmit(vals) {
     setSaving(true)
     setSaveError('')
-    const payload = {
-      ...vals,
-      tipo_error: vals.resultado === 'CON ERROR' ? vals.tipo_error : null,
-      registrado_por: isEdit ? undefined : user?.id,
-    }
-    const { error } = await guardarEncuesta('encuesta_adherencia_fichas', payload, isEdit ? id : undefined)
-    if (error) {
-      setSaveError(error)
+    try {
+      const payload = {
+        ...vals,
+        tipo_error: vals.resultado === 'CON ERROR' ? vals.tipo_error : null,
+        registrado_por: isEdit ? undefined : user?.id,
+      }
+      const { error } = await guardarEncuesta('encuesta_adherencia_fichas', payload, isEdit ? id : undefined)
+      if (error) {
+        setSaveError(error)
+        setSaving(false)
+        return
+      }
+      navigate('/encuestas/adherencia-fichas')
+    } catch (e) {
+      console.error('Error inesperado al guardar:', e)
+      setSaveError(e?.message || 'Error inesperado al guardar. Intenta de nuevo.')
       setSaving(false)
-      return
     }
-    navigate('/encuestas/adherencia-fichas')
+  }
+
+  function onInvalid(formErrors) {
+    const primero = Object.values(formErrors)[0]
+    setSaveError(primero?.message || 'Revisa los campos marcados en rojo antes de guardar.')
   }
 
   if (!loaded) return (
@@ -142,7 +153,7 @@ export default function AdherenciaFichasForm() {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-5">
 
         {soloLectura && <BannerSoloLectura estado={estadoReg} />}
 

@@ -187,20 +187,33 @@ export default function HigieneManosForn() {
   async function onSubmit(vals) {
     setSaving(true)
     setSaveError('')
-    const payload = {
-      ...vals,
-      fecha_registro: new Date().toISOString(),
-      // sumatoria_cumplimiento y resultado_cumplimiento son GENERATED ALWAYS AS — DB los computa
-      adjuntos,
-      registrado_por: isEdit ? undefined : user?.id,
-    }
-    const { error } = await guardarEncuesta('encuesta_higiene_manos', payload, isEdit ? id : undefined)
-    if (error) {
-      setSaveError(error)
+    try {
+      const payload = {
+        ...vals,
+        fecha_registro: new Date().toISOString(),
+        // sumatoria_cumplimiento y resultado_cumplimiento son GENERATED ALWAYS AS — DB los computa
+        adjuntos,
+        registrado_por: isEdit ? undefined : user?.id,
+      }
+      const { error } = await guardarEncuesta('encuesta_higiene_manos', payload, isEdit ? id : undefined)
+      if (error) {
+        setSaveError(error)
+        setSaving(false)
+        return
+      }
+      navigate('/encuestas/higiene-manos')
+    } catch (e) {
+      console.error('Error inesperado al guardar:', e)
+      setSaveError(e?.message || 'Error inesperado al guardar. Intenta de nuevo.')
       setSaving(false)
-      return
     }
-    navigate('/encuestas/higiene-manos')
+  }
+
+  // Si react-hook-form/zod bloquea el envío por un campo inválido, avisar en
+  // lugar de dejar el botón sin reacción visible.
+  function onInvalid(formErrors) {
+    const primero = Object.values(formErrors)[0]
+    setSaveError(primero?.message || 'Revisa los campos marcados en rojo antes de guardar.')
   }
 
   // El rol no tiene habilitada la captura en este módulo (Configuración → Permisos)
@@ -225,7 +238,7 @@ export default function HigieneManosForn() {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-5">
 
         {soloLectura && <BannerSoloLectura estado={estadoReg} />}
 

@@ -101,20 +101,31 @@ export default function CateterVesicalForm() {
   async function onSubmit(values) {
     setSaving(true)
     setSaveError('')
-    const payload = {
-      ...values,
-      // semana_mes is a GENERATED ALWAYS AS column — DB computes it from fecha_registro
-      fecha_no_cumple_lista: values.fecha_no_cumple_lista || null,
-      adjuntos,
-      registrado_por: isEdit ? undefined : user?.id,
-    }
-    const { error } = await guardarEncuesta('encuesta_cateter_vesical', payload, isEdit ? id : undefined)
-    if (error) {
-      setSaveError(error)
+    try {
+      const payload = {
+        ...values,
+        // semana_mes is a GENERATED ALWAYS AS column — DB computes it from fecha_registro
+        fecha_no_cumple_lista: values.fecha_no_cumple_lista || null,
+        adjuntos,
+        registrado_por: isEdit ? undefined : user?.id,
+      }
+      const { error } = await guardarEncuesta('encuesta_cateter_vesical', payload, isEdit ? id : undefined)
+      if (error) {
+        setSaveError(error)
+        setSaving(false)
+        return
+      }
+      navigate('/encuestas/cateter-vesical')
+    } catch (e) {
+      console.error('Error inesperado al guardar:', e)
+      setSaveError(e?.message || 'Error inesperado al guardar. Intenta de nuevo.')
       setSaving(false)
-      return
     }
-    navigate('/encuestas/cateter-vesical')
+  }
+
+  function onInvalid(formErrors) {
+    const primero = Object.values(formErrors)[0]
+    setSaveError(primero?.message || 'Revisa los campos marcados en rojo antes de guardar.')
   }
 
   // El rol no tiene habilitada la captura en este módulo (Configuración → Permisos)
@@ -139,7 +150,7 @@ export default function CateterVesicalForm() {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-5">
 
         {soloLectura && <BannerSoloLectura estado={estadoReg} />}
 

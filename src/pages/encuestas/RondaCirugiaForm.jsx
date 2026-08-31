@@ -195,24 +195,35 @@ export default function RondaCirugiaForm() {
   async function onSubmit(values) {
     setSaving(true)
     setSaveError('')
-    const payload = {
-      ...values,
-      // Los campos de hora son columnas `time` en la BD: "" no es una hora válida
-      // (Postgres la rechaza con 22007) y por eso el guardado fallaba en silencio
-      // al editar un registro con alguna hora vacía.
-      hora_administracion:       values.hora_administracion || null,
-      hora_inicio_cirugia:       values.hora_inicio_cirugia || null,
-      hora_finalizacion_cirugia: values.hora_finalizacion_cirugia || null,
-      adjuntos,
-      registrado_por: isEdit ? undefined : user?.id,
-    }
-    const { error } = await guardarEncuesta('encuesta_ronda_cirugia', payload, isEdit ? id : undefined)
-    if (error) {
-      setSaveError(error)
+    try {
+      const payload = {
+        ...values,
+        // Los campos de hora son columnas `time` en la BD: "" no es una hora válida
+        // (Postgres la rechaza con 22007) y por eso el guardado fallaba en silencio
+        // al editar un registro con alguna hora vacía.
+        hora_administracion:       values.hora_administracion || null,
+        hora_inicio_cirugia:       values.hora_inicio_cirugia || null,
+        hora_finalizacion_cirugia: values.hora_finalizacion_cirugia || null,
+        adjuntos,
+        registrado_por: isEdit ? undefined : user?.id,
+      }
+      const { error } = await guardarEncuesta('encuesta_ronda_cirugia', payload, isEdit ? id : undefined)
+      if (error) {
+        setSaveError(error)
+        setSaving(false)
+        return
+      }
+      navigate('/encuestas/ronda-cirugia')
+    } catch (e) {
+      console.error('Error inesperado al guardar:', e)
+      setSaveError(e?.message || 'Error inesperado al guardar. Intenta de nuevo.')
       setSaving(false)
-      return
     }
-    navigate('/encuestas/ronda-cirugia')
+  }
+
+  function onInvalid(formErrors) {
+    const primero = Object.values(formErrors)[0]
+    setSaveError(primero?.message || 'Revisa los campos marcados en rojo antes de guardar.')
   }
 
   // El rol no tiene habilitada la captura en este módulo (Configuración → Permisos)
@@ -231,7 +242,7 @@ export default function RondaCirugiaForm() {
         <p className="page-subtitle">Control de infecciones y profilaxis antibiótica en área quirúrgica</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-5">
 
         {soloLectura && <BannerSoloLectura estado={estadoReg} />}
 
