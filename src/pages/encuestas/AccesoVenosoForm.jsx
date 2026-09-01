@@ -85,7 +85,14 @@ export default function AccesoVenosoForm() {
       supabase.from('encuesta_acceso_venoso').select('*').eq('id', id).single()
         .then(({ data }) => {
           if (data) {
-            reset(data)
+            reset({
+              ...data,
+              // `lista_chequeo_cvc` quedó creada como columna TEXT en la BD
+              // (guarda literalmente "true"/"false") mientras el schema la trata
+              // como boolean — si el checkbox no se tocaba al editar, ese string
+              // llegaba tal cual a zod y bloqueaba el guardado sin aviso.
+              lista_chequeo_cvc: data.lista_chequeo_cvc === true || data.lista_chequeo_cvc === 'true',
+            })
             setAdjuntos(data.adjuntos ?? [])
             setEstadoReg(data.estado)
             setSoloLectura(!esEditable(data.estado, rol))

@@ -175,7 +175,14 @@ export default function HigieneManosForn() {
       supabase.from('encuesta_higiene_manos').select('*').eq('id', id).single()
         .then(({ data }) => {
           if (data) {
-            reset(data)
+            reset({
+              ...data,
+              // `unas_cortas_esmalte` quedó creada como columna TEXT en la BD
+              // (guarda literalmente "true"/"false") mientras el schema la trata
+              // como boolean — si el checkbox no se tocaba al editar, ese string
+              // llegaba tal cual a zod y bloqueaba el guardado sin aviso.
+              unas_cortas_esmalte: data.unas_cortas_esmalte === true || data.unas_cortas_esmalte === 'true',
+            })
             setAdjuntos(data.adjuntos ?? [])
             setEstadoReg(data.estado)
             setSoloLectura(!esEditable(data.estado, rol))
