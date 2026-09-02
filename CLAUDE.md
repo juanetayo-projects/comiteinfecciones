@@ -95,6 +95,7 @@ src/
 |-------|-------------|
 | `user_profiles` | Perfil de usuario: id, nombre, email, rol, activo |
 | `listas_desplegables` | Catálogos configurables: categoria, valor, orden, activo, encuesta_tipo |
+| `medicos` | Catálogo dedicado de médicos (id, nombre, activo) — alimenta el campo Médico de Adherencia a Fichas. CRUD en `Configuración → Médicos` |
 | `encuesta_higiene_manos` | 5 momentos OMS — resultado_cumplimiento (GENERATED AS) |
 | `encuesta_aislamiento` | Criterios de aislamiento hospitalario |
 | `encuesta_luminometria` | Mediciones ATP (RLU) — rango calculado |
@@ -164,6 +165,11 @@ export function useLista(categoria, fallback = []) {
 - `'tipo_aislamiento'` — AislamientoForm
 - `'especialidad'` — RondaCirugiaForm
 - `'objeto'` — LuminometriaForm (fallback para objetos no mapeados)
+
+> El campo **Médico** de `AdherenciaFichasForm` ya NO usa `useLista` /
+> `listas_desplegables` (categoria `adherencia_medico` fue retirada). Usa el
+> hook `useMedicos()` (`src/hooks/useMedicos.js`), que lee la tabla dedicada
+> `medicos`, gestionable con CRUD propio en `Configuración → Médicos`.
 
 ---
 

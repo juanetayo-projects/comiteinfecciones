@@ -11,6 +11,7 @@ import SinPermisoCaptura from '../../components/common/SinPermisoCaptura'
 import SearchableSelect from '../../components/common/SearchableSelect'
 import { ArrowLeft, Save, BarChart3 } from 'lucide-react'
 import { useLista } from '../../hooks/useLista'
+import { useMedicos } from '../../hooks/useMedicos'
 
 const SEDES_FALLBACK = ['TORRE CACSB', 'URGENCIAS CACSB']
 
@@ -77,7 +78,7 @@ export default function AdherenciaFichasForm() {
 
   const sedes      = useLista('adherencia_sede', SEDES_FALLBACK)
   const servicios  = useLista('adherencia_servicio', SERVICIOS_FALLBACK)
-  const medicos    = useLista('adherencia_medico', [])
+  const medicos    = useMedicos()
   const codigos    = useLista('adherencia_codigo_evento', CODIGOS_FALLBACK)
   const tiposError = useLista('adherencia_tipo_error', TIPOS_ERROR_FALLBACK)
 
