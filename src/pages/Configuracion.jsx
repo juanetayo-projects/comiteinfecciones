@@ -54,8 +54,28 @@ function ProfileModal({ profile, onClose, onSaved }) {
   const [error,      setError]      = useState('')
   const [resetting,  setResetting]  = useState(false)
   const [resetSent,  setResetSent]  = useState(false)
+  const [newPw,      setNewPw]      = useState('')
+  const [newPw2,     setNewPw2]     = useState('')
+  const [settingPw,  setSettingPw]  = useState(false)
+  const [pwSet,      setPwSet]      = useState(false)
 
   function setF(k, v) { setForm(p => ({ ...p, [k]: v })) }
+
+  // Asignación directa por el administrador (RPC admin_set_password, ver
+  // supabase_migration_v7). No envía correo y deja el email confirmado.
+  async function handleSetPassword() {
+    setError('')
+    setPwSet(false)
+    if (newPw.length < 6) { setError('La contraseña debe tener mínimo 6 caracteres'); return }
+    if (newPw !== newPw2) { setError('Las contraseñas no coinciden'); return }
+    setSettingPw(true)
+    const { error: err } = await supabase.rpc('admin_set_password', {
+      p_user_id: profile.id, p_password: newPw,
+    })
+    if (err) setError(err.message)
+    else { setPwSet(true); setNewPw(''); setNewPw2('') }
+    setSettingPw(false)
+  }
 
   function setRol(r) {
     setForm(p => ({
@@ -123,6 +143,12 @@ function ProfileModal({ profile, onClose, onSaved }) {
         if (fetchErr || !nuevoPerfil) {
           throw new Error('El usuario se creó, pero no se pudo confirmar el perfil. Recarga la página para verlo.')
         }
+        // Confirma el correo y fija la contraseña para que el usuario pueda
+        // ingresar de inmediato, sin depender del correo de confirmación.
+        const { error: pwErr } = await supabase.rpc('admin_set_password', {
+          p_user_id: nuevoPerfil.id, p_password: form.password,
+        })
+        if (pwErr) throw pwErr
         const ajustes = { activo: form.activo, modulos_permitidos: modulosAGuardar }
         const { error: updErr } = await supabase
           .from('user_profiles').update(ajustes).eq('id', nuevoPerfil.id)
@@ -177,6 +203,38 @@ function ProfileModal({ profile, onClose, onSaved }) {
               {profile?.email && (
                 <p className="text-xs text-slate-400 mb-2 font-mono">{profile.email}</p>
               )}
+              <p className="text-xs text-slate-500 mb-2">
+                Asigna directamente una nueva contraseña (no se envía correo al usuario).
+              </p>
+              <div className="space-y-2 mb-2">
+                <div className="relative">
+                  <Lock className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                  <input type="password" className="input pl-9" autoComplete="new-password"
+                    placeholder="Nueva contraseña (mínimo 6 caracteres)"
+                    value={newPw} onChange={e => { setNewPw(e.target.value); setPwSet(false) }} />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                  <input type="password" className="input pl-9" autoComplete="new-password"
+                    placeholder="Confirmar contraseña"
+                    value={newPw2} onChange={e => { setNewPw2(e.target.value); setPwSet(false) }} />
+                </div>
+              </div>
+              {pwSet && (
+                <div className="flex items-center gap-2 text-emerald-600 mb-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <p className="text-xs">Contraseña asignada correctamente</p>
+                </div>
+              )}
+              <button type="button" onClick={handleSetPassword}
+                disabled={settingPw || !newPw}
+                className="w-full py-2 mb-3 rounded-lg text-xs font-semibold border-2 border-brand-500 bg-brand-600 text-white hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                {settingPw
+                  ? <><span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> Asignando...</>
+                  : <><KeyRound className="w-3 h-3" /> Asignar contraseña</>
+                }
+              </button>
+              <p className="text-xs text-slate-400 mb-2 text-center">— o —</p>
               {resetSent ? (
                 <div className="flex items-center gap-2 text-emerald-600">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
