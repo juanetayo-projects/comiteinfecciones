@@ -11,7 +11,7 @@ import DataTable from '../../components/common/DataTable'
 import { exportToExcel } from '../../lib/exportUtils'
 import DetalleGraficaModal, { COL_FECHA, COL_ESTADO, colCumple }
   from '../../components/common/DetalleGraficaModal'
-import { filtrosResumen, porcentaje, formatDate, estadoLabel } from '../../lib/utils'
+import { filtrosResumen, formatDate, estadoLabel } from '../../lib/utils'
 import {
   buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
   BAR_CUMPLE, BAR_NO_CUMPLE, PIE_COLORS, PCT_HINT, useSeriesToggle,
@@ -55,7 +55,11 @@ const MOMENTO_TITULOS = [
   'Después del entorno del paciente',
 ]
 
-const MOMENTO_CORTOS = ['M1 Antes de tocar', 'M2 Antes aséptico', 'M3 Tras fluidos', 'M4 Tras tocar', 'M5 Tras entorno']
+// Porcentaje con un decimal y coma decimal (52 / 495 → "10,5")
+const pct1 = (n, d) => (d > 0 ? (n / d) * 100 : 0)
+  .toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+const MOMENTO_CORTOS =['M1 Antes de tocar', 'M2 Antes aséptico', 'M3 Tras fluidos', 'M4 Tras tocar', 'M5 Tras entorno']
 
 function momentoBadge(v) {
   if (v === 'CUMPLE')    return 'bg-emerald-100 text-emerald-800'
@@ -462,7 +466,8 @@ export default function HigieneDashboard() {
           <div className="card p-5">
             <h3 className="section-title mb-1">Soporte de No Cumplimiento</h3>
             <p className="text-xs text-slate-400 mb-3">
-              Motivo registrado en las observaciones con resultado NO CUMPLE — {noCumple} registro(s)
+              Motivo registrado en las observaciones con resultado NO CUMPLE — {noCumple} registro(s) NO CUMPLE
+              de {total} observaciones · el % se calcula sobre el total de observaciones del periodo
             </p>
             {soporteData.length === 0 ? (
               <p className="text-xs text-slate-400 py-4 text-center">
@@ -475,7 +480,7 @@ export default function HigieneDashboard() {
                     <tr className="table-head-brand">
                       <th className="text-left px-3 py-2 font-semibold rounded-tl-lg">Motivo</th>
                       <th className="text-center px-3 py-2 font-semibold">Registros</th>
-                      <th className="text-center px-3 py-2 font-semibold rounded-tr-lg">% del NO CUMPLE</th>
+                      <th className="text-center px-3 py-2 font-semibold rounded-tr-lg">% del Total Observaciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -486,7 +491,7 @@ export default function HigieneDashboard() {
                           filtered.filter(r => r.soporte_no_cumplimiento === s.name))}>
                         <td className="px-3 py-2 font-medium text-slate-700">{s.name}</td>
                         <td className="px-3 py-2 text-center font-semibold text-red-600">{s.cantidad}</td>
-                        <td className="px-3 py-2 text-center text-slate-500">{porcentaje(s.cantidad, noCumple)}%</td>
+                        <td className="px-3 py-2 text-center text-slate-500">{pct1(s.cantidad, total)}%</td>
                       </tr>
                     ))}
                   </tbody>
