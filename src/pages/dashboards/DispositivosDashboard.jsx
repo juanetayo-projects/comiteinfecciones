@@ -77,26 +77,26 @@ function SummaryTableDisp({ rows, title, accentColor }) {
     violet: 'bg-violet-100 text-violet-700',
   }[accentColor] ?? 'bg-slate-100 text-slate-700'
   return (
-    <div className="card p-5">
+    <div className="card p-4 min-w-0">
       <SH>{title}</SH>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-slate-200">
-              <th className="text-left pb-2 pr-4 font-medium text-slate-600">Ubicación / Cama</th>
-              <th className="text-center pb-2 px-2 font-medium text-slate-600">Registros</th>
-              <th className="text-center pb-2 px-2 font-medium text-emerald-600">Criterios Cumplidos</th>
-              <th className="text-center pb-2 font-medium text-slate-600">% Adherencia</th>
+            <tr className="table-head-brand">
+              <th className="text-left px-2 py-2 font-semibold rounded-tl-md">Ubicación / Cama</th>
+              <th className="text-center px-1.5 py-2 font-semibold" title="Registros">Reg.</th>
+              <th className="text-center px-1.5 py-2 font-semibold text-emerald-300" title="Criterios cumplidos / evaluados">Cumplidos</th>
+              <th className="text-center px-1.5 py-2 font-semibold rounded-tr-md">%</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} className="border-b border-white/70 hover:bg-slate-50 transition-colors">
-                <td className="py-2 pr-4 text-slate-700 font-medium">{r.nombre}</td>
-                <td className="py-2 px-2 text-center text-slate-500">{r.registros}</td>
-                <td className="py-2 px-2 text-center font-semibold text-emerald-600">{r.cumpleCrit} / {r.totalCrit}</td>
-                <td className="py-2 text-center">
-                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold
+              <tr key={i} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''}`}>
+                <td className="px-2 py-1.5 text-slate-700 font-medium">{r.nombre}</td>
+                <td className="px-1.5 py-1.5 text-center text-slate-500">{r.registros}</td>
+                <td className="px-1.5 py-1.5 text-center font-semibold text-emerald-600 whitespace-nowrap">{r.cumpleCrit} / {r.totalCrit}</td>
+                <td className="px-1.5 py-1.5 text-center">
+                  <span className={`inline-block px-1.5 py-0.5 rounded-full font-semibold
                     ${r.pct >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                     {r.pct}%
                   </span>
@@ -118,6 +118,25 @@ const AVP_LABELS = ['Rótulo','Fijación','Mantenimiento','Pertinencia','Educaci
 const CV_LABELS  = ['Fijación','Posic. Bolsa','Rotulación','Indicación','Flujo','Lista Chequeo']
 const PN_LABELS  = ['Cabecera 30°','Hig. Oral','Implementos','Lista NAV']
 
+const DISPOSITIVOS = [
+  { key: 'avp', label: 'AVP',             color: '#6366f1', keys: AVP_KEYS },
+  { key: 'cv',  label: 'Catéter Vesical', color: '#06b6d4', keys: CV_KEYS  },
+  { key: 'pn',  label: 'Prevención NAV',  color: '#8b5cf6', keys: PN_KEYS  },
+]
+const MESES_LABEL = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC']
+
+// Lista de meses 'AAAA-MM' entre dos fechas (inclusive)
+function rangoMeses(desde, hasta) {
+  const out = []
+  let [y, m] = desde.slice(0, 7).split('-').map(Number)
+  const [yf, mf] = hasta.slice(0, 7).split('-').map(Number)
+  while (y < yf || (y === yf && m <= mf)) {
+    out.push(`${y}-${String(m).padStart(2, '0')}`)
+    if (++m > 12) { m = 1; y++ }
+  }
+  return out
+}
+
 const INIT_FILTERS = { desde: '', hasta: '', ubicacion: '' }
 // Etiquetas legibles de los filtros — se imprimen en el encabezado del PDF
 const FILTER_LABELS = { desde:'Desde', hasta:'Hasta', ubicacion:'Ubicación/Cama' }
@@ -132,6 +151,7 @@ export default function DispositivosDashboard() {
   const tglAvp = useSeriesToggle()
   const tglCv = useSeriesToggle()
   const tglPn = useSeriesToggle()
+  const tglMes = useSeriesToggle()
 
   useEffect(() => {
     Promise.all([
@@ -167,6 +187,35 @@ export default function DispositivosDashboard() {
   const avp = useMemo(() => applyFilter(avpRaw), [avpRaw, filters])
   const cv  = useMemo(() => applyFilter(cvRaw),  [cvRaw,  filters])
   const pn  = useMemo(() => applyFilter(pnRaw),  [pnRaw,  filters])
+
+  // Adherencia mensual por servicio (ubicación/cama): respeta el rango de
+  // fechas y muestra todos los meses del periodo, con o sin registros. El
+  // servicio se elige en la propia gráfica (por defecto, el del filtro general).
+  const [servicioGraf, setServicioGraf] = useState('')
+  useEffect(() => { setServicioGraf(filters.ubicacion) }, [filters.ubicacion])
+
+  const adherenciaMensual = useMemo(() => {
+    const enRango = r => r.fecha_registro
+      && (!filters.desde || r.fecha_registro >= filters.desde)
+      && (!filters.hasta || r.fecha_registro <= filters.hasta)
+      && (!servicioGraf || r.ubicacion_cama === servicioGraf)
+    const fuentes = { avp: avpRaw.filter(enRango), cv: cvRaw.filter(enRango), pn: pnRaw.filter(enRango) }
+    const fechas = Object.values(fuentes).flat().map(r => r.fecha_registro).sort()
+    const desde = filters.desde || fechas[0]
+    const hasta = filters.hasta || fechas[fechas.length - 1]
+    if (!desde || !hasta || desde > hasta) return []
+    return rangoMeses(desde, hasta).map(ym => {
+      const [y, m] = ym.split('-')
+      const row = { mes: `${MESES_LABEL[Number(m) - 1]} ${y.slice(2)}` }
+      DISPOSITIVOS.forEach(d => {
+        const rows = fuentes[d.key].filter(r => r.fecha_registro.startsWith(ym))
+        row[d.key] = rows.length ? calcAdherencia(rows, d.keys) : null
+        row[`${d.key}Lbl`] = rows.length ? `${row[d.key]}%` : ''
+        row[`${d.key}N`] = rows.length
+      })
+      return row
+    })
+  }, [avpRaw, cvRaw, pnRaw, filters.desde, filters.hasta, servicioGraf])
 
   const hasFilters = Object.values(filters).some(Boolean)
   function clearFilters() { setFilters(INIT_FILTERS) }
@@ -392,16 +441,57 @@ export default function DispositivosDashboard() {
             )}
           </div>
 
-          {/* Tablas resumen de indicadores por dispositivo */}
-          {avp.length > 0 && (
-            <SummaryTableDisp rows={summaryAvp} title="Resumen AVP por Ubicación / Cama" accentColor="indigo" />
-          )}
-          {cv.length > 0 && (
-            <SummaryTableDisp rows={summaryCv}  title="Resumen Catéter Vesical por Ubicación / Cama" accentColor="cyan" />
-          )}
-          {pn.length > 0 && (
-            <SummaryTableDisp rows={summaryPn}  title="Resumen Prevención NAV por Ubicación / Cama" accentColor="violet" />
-          )}
+          {/* Adherencia mensual por servicio */}
+          <div className="card p-5">
+            <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
+              <div>
+                <h3 className="section-title mb-1">
+                  Adherencia Mensual por Servicio — {servicioGraf || 'Todos los servicios'}
+                </h3>
+                <p className="text-[10px] text-slate-500">
+                  % de criterios cumplidos por dispositivo en cada mes del periodo · los meses sin registros quedan vacíos
+                </p>
+              </div>
+              <select className="input w-64 max-w-full text-xs" value={servicioGraf}
+                onChange={e => setServicioGraf(e.target.value)} data-pdf-hide>
+                <option value="">Todos los servicios</option>
+                {ubicaciones.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+            {adherenciaMensual.length === 0 ? (
+              <p className="py-10 text-center text-sm text-slate-400">Sin registros para el servicio y periodo seleccionados</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={adherenciaMensual} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
+                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} interval={0} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
+                  <Tooltip formatter={(v, n, { payload, dataKey }) =>
+                    v == null ? ['Sin registros', n] : [`${v}% (${payload[`${dataKey}N`]} reg.)`, n]} />
+                  <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglMes.onLegendClick} formatter={tglMes.legendFormatter} />
+                  {DISPOSITIVOS.map(d => (
+                    <Bar key={d.key} dataKey={d.key} name={d.label} fill={d.color} radius={[3, 3, 0, 0]}
+                      hide={tglMes.hidden.has(d.key)} isAnimationActive={false}>
+                      <LabelList dataKey={`${d.key}Lbl`} content={TopLabel} />
+                    </Bar>
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Tablas resumen de indicadores por dispositivo — un bloque en 3 columnas */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            {avp.length > 0 && (
+              <SummaryTableDisp rows={summaryAvp} title="AVP por Ubicación / Cama" accentColor="indigo" />
+            )}
+            {cv.length > 0 && (
+              <SummaryTableDisp rows={summaryCv}  title="Catéter Vesical por Ubicación / Cama" accentColor="cyan" />
+            )}
+            {pn.length > 0 && (
+              <SummaryTableDisp rows={summaryPn}  title="Prevención NAV por Ubicación / Cama" accentColor="violet" />
+            )}
+          </div>
         </>
       )}
     </div>
