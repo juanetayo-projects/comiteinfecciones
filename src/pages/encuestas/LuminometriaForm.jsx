@@ -75,7 +75,7 @@ const SERVICIOS_LUM = Object.keys(SERVICIOS_OBJETOS)
 function calcRango(rlu) {
   const n = Number(rlu)
   if (isNaN(n) || rlu === '' || rlu === undefined || rlu === null) return null
-  return n < 100 ? 'CUMPLE' : 'NO CUMPLE'
+  return n <= 150 ? 'CUMPLE' : 'NO CUMPLE'
 }
 
 const RANGO_STYLE = {
@@ -83,8 +83,8 @@ const RANGO_STYLE = {
   'NO CUMPLE': 'bg-red-50 text-red-800 border-red-200',
 }
 const RANGO_DESC = {
-  'CUMPLE':    '< 100 RLU — Superficie limpia',
-  'NO CUMPLE': '≥ 100 RLU — Requiere acción de limpieza',
+  'CUMPLE':    '≤ 150 RLU — Superficie limpia',
+  'NO CUMPLE': '> 150 RLU — Requiere acción de limpieza',
 }
 
 /**

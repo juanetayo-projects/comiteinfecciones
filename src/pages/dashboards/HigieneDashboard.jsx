@@ -5,11 +5,13 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
   PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts'
-import { ArrowLeft, Hand, Filter, X } from 'lucide-react'
+import { ArrowLeft, Hand, Filter, X, FileSpreadsheet, Loader2 } from 'lucide-react'
 import DashboardPdfButton from '../../components/common/DashboardPdfButton'
+import DataTable from '../../components/common/DataTable'
+import { exportToExcel } from '../../lib/exportUtils'
 import DetalleGraficaModal, { COL_FECHA, COL_ESTADO, colCumple }
   from '../../components/common/DetalleGraficaModal'
-import { filtrosResumen, porcentaje } from '../../lib/utils'
+import { filtrosResumen, porcentaje, formatDate, estadoLabel } from '../../lib/utils'
 import {
   buildBarData, withPct, withCriterioPct, SegmentLabel, TotalPctLabel, TopLabel, BarTooltip,
   BAR_CUMPLE, BAR_NO_CUMPLE, PIE_COLORS, PCT_HINT, useSeriesToggle,
@@ -42,6 +44,59 @@ function KpiCard({ label, value, sub, color = 'slate' }) {
     </div>
   )
 }
+
+// ── Tabla de registros del periodo (con los 5 momentos) ───────
+const MOMENTOS = [1, 2, 3, 4, 5].map(n => `momento_${n}`)
+const MOMENTO_TITULOS = [
+  'Antes de tocar al paciente',
+  'Antes de procedimiento aséptico',
+  'Tras riesgo de exposición a fluidos',
+  'Después de tocar al paciente',
+  'Después del entorno del paciente',
+]
+
+function momentoBadge(v) {
+  if (v === 'CUMPLE')    return 'bg-emerald-100 text-emerald-800'
+  if (v === 'NO CUMPLE') return 'bg-red-100 text-red-800'
+  return 'bg-slate-100 text-slate-500'
+}
+
+// unas_cortas_esmalte / porta_accesorios se guardan como texto 'true'/'false'
+const siNo = v => v === true || v === 'true' ? 'SI' : v === false || v === 'false' ? 'NO' : ''
+
+const COLS_REGISTROS = [
+  { key: 'fecha_evaluacion',   header: 'Fecha', sortable: true,
+    render: v => <span className="whitespace-nowrap">{formatDate(v)}</span> },
+  { key: 'servicio_evaluado',  header: 'Servicio', sortable: true },
+  { key: 'nombre_evaluado',    header: 'Evaluado', sortable: true },
+  { key: 'perfil_colaborador', header: 'Perfil', sortable: true },
+  ...MOMENTOS.map((k, i) => ({
+    key: k, header: `M${i + 1}`,
+    render: v => v
+      ? <span className={`badge whitespace-nowrap ${momentoBadge(v)}`} title={MOMENTO_TITULOS[i]}>{v}</span>
+      : '—',
+  })),
+  { key: 'sumatoria_cumplimiento', header: 'Suma', sortable: true, render: v => `${v ?? 0}/5` },
+  { key: 'resultado_cumplimiento', header: 'Resultado', sortable: true,
+    render: v => <span className={`badge ${momentoBadge(v)}`}>{v || '—'}</span> },
+]
+
+const EXPORT_COLS_REGISTROS = [
+  { key: 'fecha_evaluacion',   label: 'Fecha',    width: 12 },
+  { key: 'servicio_evaluado',  label: 'Servicio', width: 20 },
+  { key: 'nombre_evaluado',    label: 'Evaluado', width: 26 },
+  { key: 'perfil_colaborador', label: 'Perfil',   width: 18 },
+  ...MOMENTOS.map((k, i) => ({ key: k, label: `M${i + 1} ${MOMENTO_TITULOS[i]}`, width: 18 })),
+  { key: 'sumatoria_cumplimiento',  label: 'Sumatoria',          width: 10 },
+  { key: 'resultado_cumplimiento',  label: 'Resultado',          width: 12 },
+  { key: 'soporte_no_cumplimiento', label: 'Soporte No Cumpl.',  width: 24 },
+  { key: 'unas_cortas_esmalte',     label: 'Uñas cortas/sin esmalte', width: 12 },
+  { key: 'porta_accesorios',        label: 'Porta accesorios',   width: 12 },
+  { key: 'retroalimenta_trabajador', label: 'Retroalimenta',     width: 12 },
+  { key: 'observaciones',           label: 'Observaciones',      width: 30 },
+  { key: 'nombre_quien_diligencia', label: 'Diligenciado por',   width: 22 },
+  { key: 'estado',                  label: 'Estado',             width: 12 },
+]
 
 const INIT_FILTERS = { desde: '', hasta: '', servicio: '', perfil: '' }
 // Etiquetas legibles de los filtros — se imprimen en el encabezado del PDF
@@ -76,6 +131,29 @@ export default function HigieneDashboard() {
       return true
     })
   }, [data, filters])
+
+  const [exportando, setExportando] = useState(false)
+  async function exportarRegistros() {
+    setExportando(true)
+    try {
+      await exportToExcel(
+        filtered.map(r => ({
+          ...r,
+          unas_cortas_esmalte:      siNo(r.unas_cortas_esmalte),
+          porta_accesorios:         siNo(r.porta_accesorios),
+          retroalimenta_trabajador: siNo(r.retroalimenta_trabajador),
+          estado:                   estadoLabel(r.estado),
+        })),
+        EXPORT_COLS_REGISTROS,
+        'higiene_manos_registros',
+        'Higiene de Manos — Registros del periodo',
+        'Clínica de Alta Complejidad Santa Bárbara',
+        filtrosResumen(filters, FILTER_LABELS),
+      )
+    } finally {
+      setExportando(false)
+    }
+  }
 
   const hasFilters = Object.values(filters).some(Boolean)
   function clearFilters() { setFilters(INIT_FILTERS) }
@@ -401,6 +479,29 @@ export default function HigieneDashboard() {
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Registros del periodo con el detalle de los 5 momentos */}
+          <div className="card p-5" data-pdf-hide>
+            <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+              <div>
+                <h3 className="section-title mb-1">Registros del Periodo</h3>
+                <p className="text-[10px] text-slate-500">
+                  {total} registro(s) según los filtros · M1–M5 = los 5 momentos OMS (pasa el cursor para ver el nombre)
+                </p>
+              </div>
+              <button onClick={exportarRegistros} disabled={exportando} className="btn-secondary text-xs gap-1.5">
+                {exportando
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                  : <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />}
+                Exportar a Excel
+              </button>
+            </div>
+            <DataTable
+              data={filtered} columns={COLS_REGISTROS} pageSize={15}
+              searchPlaceholder="Buscar por evaluado, servicio, perfil..."
+              emptyMessage="Sin registros para los filtros seleccionados"
+            />
           </div>
         </>
       )}

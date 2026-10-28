@@ -33,7 +33,7 @@ const KPI_SUBTITLES = {
   '':             { total: 'Suma de todos los tipos de encuesta', pct: 'Evaluaciones con CUMPLE ÷ total evaluaciones' },
   aislamiento:    { total: 'Encuestas de aislamiento registradas', pct: 'Aislamientos CUMPLE ÷ total aislamiento' },
   higiene:        { total: 'Observaciones de higiene registradas', pct: 'Observaciones CUMPLE (5/5 momentos) ÷ total' },
-  luminometria:   { total: 'Mediciones RLU registradas',          pct: 'Mediciones CUMPLE (≤100 RLU) ÷ total mediciones' },
+  luminometria:   { total: 'Mediciones RLU registradas',          pct: 'Mediciones CUMPLE (≤150 RLU) ÷ total mediciones' },
   ronda:          { total: 'Rondas de cirugía registradas',       pct: 'Rondas con profilaxis CUMPLE ÷ total rondas' },
   dispositivos:   { total: 'Registros AVP + CV + NAV combinados',  pct: 'Índice de adherencia (en construcción)' },
 }

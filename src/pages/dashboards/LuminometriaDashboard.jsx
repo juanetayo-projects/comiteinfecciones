@@ -168,8 +168,8 @@ export default function LuminometriaDashboard() {
     : 0
 
   const pieData = [
-    { name: 'CUMPLE (<100 RLU)',    value: cumple },
-    { name: 'NO CUMPLE (≥100 RLU)', value: noCumple },
+    { name: 'CUMPLE (≤150 RLU)',    value: cumple },
+    { name: 'NO CUMPLE (>150 RLU)', value: noCumple },
   ].filter(d => d.value > 0)
 
   const barServicio = buildBarData(
@@ -192,7 +192,7 @@ export default function LuminometriaDashboard() {
       avgRLU:    Math.round(o.totalRLU / o.count),
       pctCumple: pct,
       // El promedio RLU es una magnitud, no un %; se etiqueta el valor y
-      // entre paréntesis el % de mediciones que cumplen (<100 RLU).
+      // entre paréntesis el % de mediciones que cumplen (≤150 RLU).
       etiqueta:  `${Math.round(o.totalRLU / o.count)} · ${pct}%`,
     }
   })
@@ -272,7 +272,7 @@ export default function LuminometriaDashboard() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard label="Total Mediciones"  value={total}      color="indigo" />
-        <KpiCard label="CUMPLE (<100 RLU)" value={`${pct}%`} color={pct >= 80 ? 'emerald' : 'red'} sub={`${cumple} superficies`} />
+        <KpiCard label="CUMPLE (≤150 RLU)" value={`${pct}%`} color={pct >= 80 ? 'emerald' : 'red'} sub={`${cumple} superficies`} />
         <KpiCard label="Promedio RLU"      value={avgRLU}     color="amber" sub="valor medio" />
         <KpiCard label="NO CUMPLE"         value={noCumple}   color="red" sub="requieren limpieza" />
         {noAplica.length > 0 && (
@@ -295,7 +295,7 @@ export default function LuminometriaDashboard() {
                     dataKey="value" cursor="pointer"
                     label={({ name, percent }) => `${Math.round(percent * 100)}%`}
                     labelLine
-                    onClick={d => abrirDetalle(`Resultado — ${d.name}`, medidos.filter(r => (r.rango === 'CUMPLE' ? 'CUMPLE (<100 RLU)' : 'NO CUMPLE (≥100 RLU)') === d.name))}>
+                    onClick={d => abrirDetalle(`Resultado — ${d.name}`, medidos.filter(r => (r.rango === 'CUMPLE' ? 'CUMPLE (≤150 RLU)' : 'NO CUMPLE (>150 RLU)') === d.name))}>
                     {pieData.map((e, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
                   </Pie>
                   <Tooltip formatter={(v, n) => [v, n]} />
@@ -332,7 +332,7 @@ export default function LuminometriaDashboard() {
 
             <div className="card p-5 lg:col-span-2">
               <h3 className="section-title mb-1">Promedio RLU por Objeto / Superficie</h3>
-              <p className="text-[10px] text-slate-500 mb-2">Promedio RLU · % de mediciones que cumplen (&lt;100 RLU)</p>
+              <p className="text-[10px] text-slate-500 mb-2">Promedio RLU · % de mediciones que cumplen (&le;150 RLU)</p>
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={barObjeto} margin={{ top: 22, left: -5 }}
                   onClick={(e) => {
@@ -350,7 +350,7 @@ export default function LuminometriaDashboard() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-              <p className="text-xs text-slate-400 mt-2">Línea de corte: 100 RLU (CUMPLE si &lt; 100)</p>
+              <p className="text-xs text-slate-400 mt-2">Línea de corte: 150 RLU (CUMPLE si &le; 150)</p>
             </div>
           </div>
 
