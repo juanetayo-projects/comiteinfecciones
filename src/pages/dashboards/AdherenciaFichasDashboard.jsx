@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
   PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line,
 } from 'recharts'
-import { ArrowLeft, ClipboardCheck, Filter, X } from 'lucide-react'
+import { ArrowLeft, ClipboardCheck, Filter, X, Check } from 'lucide-react'
 import DashboardPdfButton from '../../components/common/DashboardPdfButton'
 import DetalleGraficaModal, { COL_ESTADO } from '../../components/common/DetalleGraficaModal'
 import { filtrosResumen, formatDate } from '../../lib/utils'
@@ -61,9 +62,20 @@ const INIT_FILTERS = { anio: '', mes: '', sede: '', servicio: '' }
 const FILTER_LABELS = { anio: 'Año', mes: 'Mes', sede: 'Sede', servicio: 'Servicio' }
 const MESES_OPTIONS = MESES_LABEL.map((label, i) => ({ value: i + 1, label }))
 
+// Mes actual como AAAAMM: el Total Notificadas manual sólo se admite hasta aquí
+function periodoActual() {
+  const d = new Date()
+  return d.getFullYear() * 100 + d.getMonth() + 1
+}
+
 export default function AdherenciaFichasDashboard() {
   const [data,       setData]       = useState([])
   const [resumenHist, setResumenHist] = useState([])
+  const [totalesManual, setTotalesManual] = useState([])
+  const [edicionTotal, setEdicionTotal] = useState({})   // mes_num -> texto del input
+  const [guardandoMes, setGuardandoMes] = useState(null)
+  const [errorTotal,   setErrorTotal]   = useState('')
+  const { rol } = useAuth()
   const [loading,    setLoading]    = useState(true)
   const [filters,    setFilters]    = useState(INIT_FILTERS)
   const [anioTabla,  setAnioTabla]  = useState(new Date().getFullYear())
@@ -77,9 +89,11 @@ export default function AdherenciaFichasDashboard() {
     Promise.all([
       supabase.from('encuesta_adherencia_fichas').select('*').order('fecha_revision', { ascending: false }),
       supabase.from('adherencia_resumen_mensual').select('*'),
-    ]).then(([r1, r2]) => {
+      supabase.from('adherencia_total_notificado').select('*'),
+    ]).then(([r1, r2, r3]) => {
       setData(r1.data ?? [])
       setResumenHist(r2.data ?? [])
+      setTotalesManual(r3.data ?? [])
       setLoading(false)
     })
   }, [])
@@ -107,9 +121,18 @@ export default function AdherenciaFichasDashboard() {
   // posteriores (que ya tienen el detalle fila a fila de fichas ADECUADAS y
   // CON ERROR). Es la fuente única de la línea año-a-año, la tabla mensual y
   // el KPI de % adherencia global.
-  const mesesMerged = useMemo(() => {
+  // Si el mes no tiene total histórico pero sí un Total Notificadas ingresado a
+  // mano, ese es el denominador: errores = fichas CON ERROR capturadas y
+  // adecuado = total - errores (normalmente sólo se capturan las de error).
+  const manualMap = useMemo(() => {
+    const m = {}
+    totalesManual.forEach(r => { m[`${r.anio}-${r.mes_num}`] = r })
+    return m
+  }, [totalesManual])
+
+  const { mesesMerged, histMap, compMap } = useMemo(() => {
     const histMap = {}
-    resumenHist.forEach(r => {
+    resumenHist.filter(r => r.total_notificado > 0).forEach(r => {
       histMap[`${r.anio}-${r.mes_num}`] = {
         anio: r.anio, mes_num: r.mes_num,
         total: r.total_notificado, adecuado: r.adecuado, errores: r.errores,
@@ -123,11 +146,21 @@ export default function AdherenciaFichasDashboard() {
       if (r.resultado === 'ADECUADO') compMap[k].adecuado++
       else compMap[k].errores++
     })
-    const keys = new Set([...Object.keys(histMap), ...Object.keys(compMap)])
-    return [...keys]
-      .map(k => histMap[k] ?? compMap[k])
+    const conManual = k => {
+      const man = manualMap[k], comp = compMap[k]
+      if (!man) return comp
+      const errores = comp?.errores ?? 0
+      return {
+        anio: man.anio, mes_num: man.mes_num, total: man.total_notificado,
+        adecuado: Math.max(man.total_notificado - errores, 0), errores,
+      }
+    }
+    const keys = new Set([...Object.keys(histMap), ...Object.keys(compMap), ...Object.keys(manualMap)])
+    const mesesMerged = [...keys]
+      .map(k => histMap[k] ?? conManual(k))
       .sort((a, b) => a.anio - b.anio || a.mes_num - b.mes_num)
-  }, [data, resumenHist])
+    return { mesesMerged, histMap, compMap }
+  }, [data, resumenHist, manualMap])
 
   const aniosDisponibles = useMemo(
     () => [...new Set(mesesMerged.map(m => m.anio))].sort(),
@@ -161,11 +194,47 @@ export default function AdherenciaFichasDashboard() {
     const mes_num = i + 1
     const m = mesesMerged.find(x => x.anio === anioTabla && x.mes_num === mes_num)
     const total = m?.total ?? 0
+    const k = `${anioTabla}-${mes_num}`
+    // Editable: mes actual o anterior, sin total histórico y sin total manual
+    // previo (el administrador puede corregir uno ya ingresado).
+    const editable = anioTabla * 100 + mes_num <= periodoActual()
+      && !histMap[k]
+      && (!manualMap[k] || rol === 'administrador')
     return {
-      mes: mesLabel, total, adecuado: m?.adecuado ?? 0, errores: m?.errores ?? 0,
+      mes: mesLabel, mes_num, total, adecuado: m?.adecuado ?? 0, errores: m?.errores ?? 0,
       pct: total > 0 ? Math.round((m.adecuado / total) * 100) : null,
+      editable, manual: Boolean(manualMap[k]), capturadas: compMap[k]?.total ?? 0,
     }
-  }), [mesesMerged, anioTabla])
+  }), [mesesMerged, anioTabla, histMap, compMap, manualMap, rol])
+
+  async function guardarTotal(fila) {
+    const valor = Number(edicionTotal[fila.mes_num])
+    if (!Number.isInteger(valor) || valor <= 0) {
+      setErrorTotal(`${fila.mes}: ingresa un número entero mayor que 0`)
+      return
+    }
+    if (valor < fila.capturadas) {
+      setErrorTotal(`${fila.mes}: el total no puede ser menor que las ${fila.capturadas} fichas ya registradas`)
+      return
+    }
+    setErrorTotal('')
+    setGuardandoMes(fila.mes_num)
+    const q = fila.manual
+      ? supabase.from('adherencia_total_notificado')
+          .update({ total_notificado: valor, updated_at: new Date().toISOString() })
+          .eq('anio', anioTabla).eq('mes_num', fila.mes_num)
+      : supabase.from('adherencia_total_notificado')
+          .insert({ anio: anioTabla, mes_num: fila.mes_num, total_notificado: valor })
+    // .select() porque un UPDATE bloqueado por RLS no devuelve error (0 filas)
+    const { data: rows, error } = await q.select()
+    setGuardandoMes(null)
+    if (error || !rows?.length) {
+      setErrorTotal(`${fila.mes}: no se pudo guardar${error ? ` (${error.message})` : ' (sin permiso)'}`)
+      return
+    }
+    setTotalesManual(prev => [...prev.filter(r => !(r.anio === anioTabla && r.mes_num === fila.mes_num)), rows[0]])
+    setEdicionTotal(prev => { const n = { ...prev }; delete n[fila.mes_num]; return n })
+  }
 
   // KPI de % adherencia global: suma los meses fusionados que coinciden con el
   // Año/Mes elegido. Solo aplica cuando no hay filtro de sede o servicio (el
@@ -434,6 +503,9 @@ export default function AdherenciaFichasDashboard() {
                 {aniosDisponibles.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
+            {errorTotal && (
+              <p className="text-xs text-red-600 mb-2" data-pdf-hide>{errorTotal}</p>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
@@ -449,7 +521,25 @@ export default function AdherenciaFichasDashboard() {
                   {tablaAnio.map((m, i) => (
                     <tr key={m.mes} className={`border-b border-white/70 ${i % 2 === 1 ? 'bg-white/55' : ''}`}>
                       <td className="px-2.5 py-1.5 text-slate-700 font-medium">{m.mes}</td>
-                      <td className="px-2 py-1.5 text-center text-slate-500">{m.total || '—'}</td>
+                      <td className="px-2 py-1.5 text-center text-slate-500">
+                        {m.editable ? (
+                          <div className="flex items-center justify-center gap-1">
+                            <input type="number" min="1" step="1" inputMode="numeric"
+                              className="input w-20 py-0.5 px-1.5 text-xs text-center"
+                              placeholder={m.total ? String(m.total) : '—'}
+                              title={m.manual ? 'Total ingresado manualmente' : 'Ingresa el total de fichas notificadas del mes'}
+                              value={edicionTotal[m.mes_num] ?? (m.manual ? m.total : '')}
+                              onChange={e => setEdicionTotal(p => ({ ...p, [m.mes_num]: e.target.value }))}
+                              onKeyDown={e => { if (e.key === 'Enter') guardarTotal(m) }} />
+                            {edicionTotal[m.mes_num] != null && edicionTotal[m.mes_num] !== '' && (
+                              <button onClick={() => guardarTotal(m)} disabled={guardandoMes === m.mes_num}
+                                className="p-1 rounded-md hover:bg-emerald-50 text-emerald-600" title="Guardar" data-pdf-hide>
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        ) : (m.total || '—')}
+                      </td>
                       <td className="px-2 py-1.5 text-center font-semibold text-emerald-600">{m.total ? m.adecuado : '—'}</td>
                       <td className="px-2 py-1.5 text-center font-semibold text-red-500">{m.total ? m.errores : '—'}</td>
                       <td className="px-2 py-1.5 text-center">

@@ -6,9 +6,10 @@ import { formatDate, estadoBadgeColor, estadoLabel } from '../../lib/utils'
 import DataTable from '../../components/common/DataTable'
 import ExportButtons from '../../components/common/ExportButtons'
 import StatCards from '../../components/common/StatCards'
+import MedicosManager from '../../components/common/MedicosManager'
 import TableFilters, { useTableFilters } from '../../components/common/TableFilters'
 import { ESTADO_OPTIONS, porcentaje } from '../../lib/utils'
-import { Plus, Pencil, Trash2, ClipboardCheck, BarChart3, Eye } from 'lucide-react'
+import { Plus, Pencil, Trash2, ClipboardCheck, BarChart3, Eye, Stethoscope, X } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const RESULTADO_OPTIONS = ['ADECUADO', 'CON ERROR']
@@ -47,10 +48,17 @@ const EXPORT_COLS = [
 export default function AdherenciaFichas() {
   const [data,    setData]    = useState([])
   const [loading, setLoading] = useState(true)
+  const [verMedicos, setVerMedicos] = useState(false)
+  const [toast,      setToast]      = useState('')
   const { rol, puedeCapturar: puedeCapturarModulo } = useAuth()
   const puedeCapturar = puedeCapturarModulo('adherencia_fichas')
 
   useEffect(() => { load() }, [])
+
+  function showToast(msg) {
+    setToast(msg)
+    setTimeout(() => setToast(''), 3000)
+  }
 
   async function load() {
     const { data: rows } = await supabase
@@ -113,6 +121,9 @@ export default function AdherenciaFichas() {
             subtitle="Clínica de Alta Complejidad Santa Bárbara"
             filtros={ft.summary}
           />
+          <button onClick={() => setVerMedicos(true)} className="btn-secondary text-xs gap-1.5">
+            <Stethoscope className="w-3.5 h-3.5" /> Médicos
+          </button>
           <Link to="/encuestas/adherencia-fichas/dashboard" className="btn-secondary text-xs gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Dashboard
           </Link>
@@ -163,6 +174,33 @@ export default function AdherenciaFichas() {
           />
         )}
       </div>
+
+      {verMedicos && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-neu-surface rounded-3xl shadow-neu-lg border border-white/70 w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center">
+                  <Stethoscope className="w-4 h-4 text-teal-600" />
+                </div>
+                <h2 className="font-semibold text-slate-800">Gestión de Médicos</h2>
+              </div>
+              <button onClick={() => setVerMedicos(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto">
+              <MedicosManager showToast={showToast} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[60] bg-brand-900 text-white text-sm px-4 py-2.5 rounded-xl shadow-neu-lg">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
