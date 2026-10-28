@@ -55,6 +55,8 @@ const MOMENTO_TITULOS = [
   'Después del entorno del paciente',
 ]
 
+const MOMENTO_CORTOS = ['M1 Antes de tocar', 'M2 Antes aséptico', 'M3 Tras fluidos', 'M4 Tras tocar', 'M5 Tras entorno']
+
 function momentoBadge(v) {
   if (v === 'CUMPLE')    return 'bg-emerald-100 text-emerald-800'
   if (v === 'NO CUMPLE') return 'bg-red-100 text-red-800'
@@ -131,6 +133,30 @@ export default function HigieneDashboard() {
       return true
     })
   }, [data, filters])
+
+  // Cumplimiento por momento para un servicio: respeta fechas y perfil, y el
+  // servicio se elige en la propia gráfica (por defecto, el del filtro general).
+  // Sólo cuentan los momentos evaluados (CUMPLE / NO CUMPLE).
+  const [servicioMom, setServicioMom] = useState('')
+  useEffect(() => { setServicioMom(filters.servicio) }, [filters.servicio])
+  const tglMomentos = useSeriesToggle()
+
+  const momentosServicio = useMemo(() => {
+    const filas = data.filter(r => {
+      if (filters.desde  && r.fecha_evaluacion < filters.desde)      return false
+      if (filters.hasta  && r.fecha_evaluacion > filters.hasta)      return false
+      if (filters.perfil && r.perfil_colaborador !== filters.perfil) return false
+      if (servicioMom    && r.servicio_evaluado !== servicioMom)     return false
+      return true
+    })
+    return withCriterioPct(MOMENTOS.map((k, i) => ({
+      name:     MOMENTO_CORTOS[i],
+      titulo:   MOMENTO_TITULOS[i],
+      cumple:   filas.filter(r => r[k] === 'CUMPLE').length,
+      noCumple: filas.filter(r => r[k] === 'NO CUMPLE').length,
+    })))
+  }, [data, filters.desde, filters.hasta, filters.perfil, servicioMom])
+  const hayMomentos = momentosServicio.some(m => m.cumple + m.noCumple > 0)
 
   const [exportando, setExportando] = useState(false)
   async function exportarRegistros() {
@@ -391,6 +417,45 @@ export default function HigieneDashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+          </div>
+
+          {/* Cumplimiento por momento OMS para el servicio elegido */}
+          <div className="card p-5">
+            <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
+              <div>
+                <h3 className="section-title mb-1">
+                  Cumplimiento por Momento — {servicioMom || 'Todos los servicios'}
+                </h3>
+                <p className="text-[10px] text-slate-500">
+                  {PCT_HINT} · sólo momentos evaluados (excluye NO EVALUADO / NO APLICA)
+                </p>
+              </div>
+              <select className="input w-64 max-w-full text-xs" value={servicioMom}
+                onChange={e => setServicioMom(e.target.value)} data-pdf-hide>
+                <option value="">Todos los servicios</option>
+                {servicios.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            {!hayMomentos ? (
+              <p className="py-10 text-center text-sm text-slate-400">Sin momentos evaluados para el servicio y periodo seleccionados</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={momentosServicio} margin={{ top: 22, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbe4f2" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip labelFormatter={(_l, p) => p?.[0]?.payload?.titulo ?? _l} />
+                  <Legend wrapperStyle={{ fontSize: 11, cursor: 'pointer' }} onClick={tglMomentos.onLegendClick} formatter={tglMomentos.legendFormatter} />
+                  <Bar dataKey="cumple" name="Cumple" fill={BAR_CUMPLE} stackId="a" hide={tglMomentos.hidden.has('cumple')} isAnimationActive={false}>
+                    <LabelList dataKey="pctCumple" content={SegmentLabel} />
+                  </Bar>
+                  <Bar dataKey="noCumple" name="No Cumple" fill={BAR_NO_CUMPLE} stackId="a" radius={[4,4,0,0]} hide={tglMomentos.hidden.has('noCumple')} isAnimationActive={false}>
+                    <LabelList dataKey="pctNoCumple" content={SegmentLabel} />
+                    <LabelList dataKey="pctCumple"   content={TotalPctLabel} position="top" />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
 
           {/* Soporte de No Cumplimiento — solo aplica a registros NO CUMPLE */}

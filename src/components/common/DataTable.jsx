@@ -12,7 +12,7 @@ export default function DataTable({
   const [search,  setSearch]  = useState('')
   const [sortKey, setSortKey] = useState(null)
   const [sortDir, setSortDir] = useState('asc')
-  const [page,    setPage]    = useState(1)
+  const [pageSel, setPage]    = useState(1)
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
@@ -33,6 +33,8 @@ export default function DataTable({
   }, [filtered, sortKey, sortDir])
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
+  // Si los filtros externos reducen los datos, no quedarse en una página que ya no existe
+  const page = Math.min(pageSel, totalPages)
   const paged = sorted.slice((page - 1) * pageSize, page * pageSize)
 
   function toggleSort(key) {
@@ -113,10 +115,14 @@ export default function DataTable({
             Página {page} de {totalPages}
           </p>
           <div className="flex gap-1">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+            <button onClick={() => setPage(1)} disabled={page === 1} title="Ir a la primera página"
+              className="btn-secondary px-2 py-1 text-xs disabled:opacity-40">« Primero</button>
+            <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}
               className="btn-secondary px-2 py-1 text-xs disabled:opacity-40">← Anterior</button>
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+            <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}
               className="btn-secondary px-2 py-1 text-xs disabled:opacity-40">Siguiente →</button>
+            <button onClick={() => setPage(totalPages)} disabled={page === totalPages} title="Ir a la última página"
+              className="btn-secondary px-2 py-1 text-xs disabled:opacity-40">Último »</button>
           </div>
         </div>
       )}
